@@ -1,0 +1,17 @@
+zch
+  1. 继续完善导入平台demo的结果对比场景，如使用不同版本包可以在demo case中体现结果不同等；
+2. 为导入平台demo case撰写文档说明，体现操作流程和结果期望。
+  
+  xll
+1.参与导入平台demo case内部会议
+2.模拟导入平台操作写流程脚本，优化run sg、run ecdc、run comparison的模板脚本，并简单测试了脚本功能
+ 
+  HQ
+今日分析msg数：121
+今日发现issue数：5
+今日回传case数：5
+日报：
+1、关于常值推导相关的case，跑lec结果，并贴图，已完成全部的ac,builtin,setup的贴图
+2、分析121条setup的1125号yangw_changeTOP这个包的漏报误报，发现很多是软件本身问题，使用get_nets/get_ports/get_pins *拿不到结果，但是后面如果是具体obj，有时可以拿到，有时拿不到
+3、解决今日Ac的冲突和新增
+4、查看SetupDataTiedToConst的随机性问题，脚本共跑300+次，数量稳定在5056,未出现随机性
