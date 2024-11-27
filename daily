@@ -15,3 +15,33 @@ zch
 2、分析121条setup的1125号yangw_changeTOP这个包的漏报误报，发现很多是软件本身问题，使用get_nets/get_ports/get_pins *拿不到结果，但是后面如果是具体obj，有时可以拿到，有时拿不到
 3、解决今日Ac的冲突和新增
 4、查看SetupDataTiedToConst的随机性问题，脚本共跑300+次，数量稳定在5056,未出现随机性
+
+
+zwl
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1、回归ar issue CDC-3621，已修复；按照comment描述，针对在Z态net上的设置的时钟连接到FF/Ck，enno同时报SetupClkNetUndefined和SetupClkNotPropagated，Diff129则应该失效，因此需要自检有没有标记diff129的差异
+2、协助艺豪修改脚本，由于我们的-name能修改clk name，在net/port上设置clk跟-name 跟不是net/port name时，get_clocks跟net/port name就拿不到clock
+
+LFR
+今日分析msg数：22
+今日发现issue数：
+今日回传case数：
+日报：
+1.分析Ac、Conv和Setup的新增
+a.Conv(2):脚本问题CDC-3666
+b.Setup(2):差异Diff53
+c.Ac（18）:脚本问题CDC-3668
+2.分析并解决Setup和Builtin表格中的新增和冲突
+3.协助冯敏调研CDC-3657 -- 决定修改ecdc工具对这种case的行为
+
+cxy
+今日分析msg数：
+今日发现issue数：12
+今日回传case数：10
+日报：
+1.跑TOP.改成TOP/分支的工具包和对比脚本，分析跑出来的builtin的结果，回传case提issue，debug现场setup不匹配的原因
+2.对接Diff174的修改，帮助家里确认diff31在现场涉及到的case以及出现的场景
+3.帮助景烁跑大泛化以及门禁case
