@@ -1,37 +1,54 @@
 zch
-1. 和客户讨论，评审虚拟时钟命名带TOP.的特殊情况，客户同意差异。（CDC-3609）
-2. 模排builtin ecdc多报问题；
+1. 摸排built_in msg多报问题，确定是脚本统计导致；
+2. 以ObjectIsNotFound为例，举证ecdc和sg的rule难以在测试报告中做到一一对应的精确匹配；
+3. 回传两个典型测例；
+4. 以泛化测例当前问题出发，筛选出一批相关门禁测例待回传；
+5. 整理builtin差异，把builtin diff分类合并进整体差异PPT中。
   xll
-1.参与导入平台demo case内部会议
-2.模拟导入平台操作写流程脚本，优化run sg、run ecdc、run comparison的模板脚本，并简单测试了脚本功能
+1.脚本支持read_sgdc生成sdc文件，并read_这个sdc文件，read报错返回转换出来的脚本路径
+2.与罗超开会讨论sg的waive和rule功能，试了下waive是可以的，sg的waive功能脚本已经实现。rule功能后还要持续调研下
+3.修复了2个转换成json出错的bug，一个是误报漏报结果对比时，结果与预期不一致；另一个是当load_session拿到的ecdc log中不包含memory和runtime数据时，需要做置零处理，且规避掉除数为0的情况。
  
   HQ
-今日分析msg数：117
-今日发现issue数：2
-今日回传case数：2
-日报：
-1、分析yangw_changeTOP这个包的漏报误报，已完成setup部分的分析，buildin部分发现两个问题：
-CDC-3683: sgdc约束clock后面没有-domain选项，但是转化后的sdc里有了assign_clock_domain命令
-CDC-3684:create_reset [get_ports TOP/Rs;#t]，加了分号";"后这条约束后面的builtin错误就不报了
-2、解决今日Buildin的冲突和新增,因为改了verilog里的interface为module，都是差异，没有新增问题
-3、查看SetupDataTiedToConst的随机性问题，脚本共跑1000次，数量稳定在5056,未出现随机性
-
-
-
-LFR
-今日分析msg数：20
+今日分析msg数：109
 今日发现issue数：
 今日回传case数：
 日报：
-1.ecdc将同步器设为两拍的性能数据：
-Elapse Time:43mins : 11.022 secs
-Peak Memory:22579.840MB
+1、分析yangw_changeTOP这个包的漏报误报43条，分析buildin部分
+2、分析OutputPortUndriven的误报，61条，对比SG的lint结果，发现我们报的都是正确的
+3、分析门禁ac，setup，buildin的新增和差异冲突，没有发现新的问题
+4、门禁setup与buildin有1000+条message图片丢失，debug原因发现是message名字改变导致，已进行修改，等待明日重新merge excel表
+
+
+LFR
+今日分析msg数：36
+今日发现issue数：4
+今日回传case数：1
+1.解决Setup表格的相应冲突
+2.协助艺豪分析泛化SetupBlackBox...的相关漏报
+3.分析验收泛化case(同步器为两拍的情况)的Ac_conv的误报和漏报
+a.CDC-GEN-B-2-244:将参数cdc.display_conv_all设为true后，如果电路存在多条qualifier汇聚的情况，ecdc在电路图中只会将其中两条qualifier的source给展示出来，期望能将所有存在汇聚的qualifier的source给展示出来
+b.CDC-GEN-B-2-245（已成共构建小case复现问题）:
+对于代码：
+always @(*)begin
+case({sel0,sel1,sel2,sel3})
+4'b0000:dout <= sync_ff1[2];
+4'b0101:dout <= sync_ff2[2];
+4'b0110:dout <= sync_ff3[2];
+4'b1010:dout <= sync_ff4[2];
+4'b1111:dout <= sync_ff5[2];
+endcase
+end
+ecdc和sg的综合结果不一致，其在Ac_conv的功能性检查上也存在不同，暂不清楚ecdc的检查是否存在问题，待在VC上确认
+c.CDC-GEN-B-2-246:脚本问题
+4.帮助何琴跑优化memory的包
+
 
 cxy
-今日分析msg数：
-今日发现issue数：2
-今日回传case数：2
+今日分析msg数：72
+今日发现issue数：1
+今日回传case数：
 日报：
-1.跑TOP.改成TOP/分支的工具包和对比脚本，分析跑出来的ac和builtin的结果，回传case提issue，ac部分已经全部分析完，目前没有脚本问题，TOP/包还存在不能识别约束文件中的通配符问题
-2.对接Diff31的修改，debug现场脚本diff123脚本block问题
-3.帮助景烁跑大泛化以及门禁case
+1.跑TOP.改成TOP/分支的工具包和对比脚本，分析跑出来的ac的结果，目前TOP/包的不匹配不涉及脚本问题，工具问题涉及issue：CDC-3674 CDC-3658 CDC-3659
+2.对接家里的diff150，diff31的修改，在现场debug diff31，对应修复家里无法复现的Clock_info05的场景，补充Reset_info09a的部分
+3.分析TOP/包 setup部分，今天有比较多的Clock_info05b的rule没有match上，属于同种原因，issue号CDC-3687
