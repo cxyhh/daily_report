@@ -1,54 +1,46 @@
-zch
-1. 摸排built_in msg多报问题，确定是脚本统计导致；
-2. 以ObjectIsNotFound为例，举证ecdc和sg的rule难以在测试报告中做到一一对应的精确匹配；
-3. 回传两个典型测例；
-4. 以泛化测例当前问题出发，筛选出一批相关门禁测例待回传；
-5. 整理builtin差异，把builtin diff分类合并进整体差异PPT中。
-  xll
-1.脚本支持read_sgdc生成sdc文件，并read_这个sdc文件，read报错返回转换出来的脚本路径
-2.与罗超开会讨论sg的waive和rule功能，试了下waive是可以的，sg的waive功能脚本已经实现。rule功能后还要持续调研下
-3.修复了2个转换成json出错的bug，一个是误报漏报结果对比时，结果与预期不一致；另一个是当load_session拿到的ecdc log中不包含memory和runtime数据时，需要做置零处理，且规避掉除数为0的情况。
- 
-  HQ
-今日分析msg数：109
+yyh
+今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1、分析yangw_changeTOP这个包的漏报误报43条，分析buildin部分
-2、分析OutputPortUndriven的误报，61条，对比SG的lint结果，发现我们报的都是正确的
-3、分析门禁ac，setup，buildin的新增和差异冲突，没有发现新的问题
-4、门禁setup与buildin有1000+条message图片丢失，debug原因发现是message名字改变导致，已进行修改，等待明日重新merge excel表
+1.diff191已开发完成；小case验证完毕；待大泛化验证
+2.diff174开发完成；门禁通过；泛化上测出工具bug；需要suli辅助定位
+3.ar脚本调整优化
+4.两拍的情况测出来脚本问题 ac_conv03,debug后发现不是脚本问题，而是当：clock是被set_abstract_port -port xxx -clock vclk -module abcd;这种形式创建时，其实是一个虚拟时钟，三方对于这个时钟的名字是TOP.u_abcd_vclk，(这里的u_abcd是abcd这个module实例化出来的inst name)而ecdc就叫TOP.vclk;
+ 
+  HQ
+今日分析msg数：72
+今日发现issue数：
+今日回传case数：
+日报：
+1、分析今日门禁新增漏报误报，以及解决差异冲突，setup、builtin有sdc修改导致的新增，为差异，ac有一条MissingSynchronizer的Obj顺序不一样导致差异反标失败（11月28号的包和11月29号的包obj顺序不一致），已提issue:CDC-3688
+2、分析Builtin里标Diff197的差异，发现这个Diff197标的有两类现象：
+1. sgdc约束语法错误，SG只做了clock检查，未做reset相关检查，导致我们误报reset相关报错
+2. Enno对于sgdc fatal及ERROR所有检查都不做，导致Propagated clock的漏报
+看上去没有进行统一，这两种现象都存在，问了研发做到统一比较麻烦，且客户之前没有提出异议，后面再和川皓他们对这个问题进行评估
+3、帮助解决门禁case图片丢失问题
+4、帮助心雨分析Diff150 proc的逻辑
+5、自动取包脚本里改进自动删除逻辑，各路径内超过一定时间的包，自动删除，防止占满空间内存
 
+zwl
+今日分析msg数：18
+今日发现issue数：1
+今日回传case数：1
+日报：
+1、帮家里RD确认GUI的搜索问题（11.11-trace-two-points-5），SG支持多比特的搜索，比如：TOP.dout[3:0]/q，SG会搜索到TOP.dout[3]/q，是按照哪一个比特位写在前面，就搜索哪一位
+2、分析大泛化漏报误报Setup_prot01；已提issue CDC-GEN-B-2-249；和comb、虚拟时钟有关
+3、参加泛化会议
 
 LFR
-今日分析msg数：36
-今日发现issue数：4
-今日回传case数：1
-1.解决Setup表格的相应冲突
-2.协助艺豪分析泛化SetupBlackBox...的相关漏报
-3.分析验收泛化case(同步器为两拍的情况)的Ac_conv的误报和漏报
-a.CDC-GEN-B-2-244:将参数cdc.display_conv_all设为true后，如果电路存在多条qualifier汇聚的情况，ecdc在电路图中只会将其中两条qualifier的source给展示出来，期望能将所有存在汇聚的qualifier的source给展示出来
-b.CDC-GEN-B-2-245（已成共构建小case复现问题）:
-对于代码：
-always @(*)begin
-case({sel0,sel1,sel2,sel3})
-4'b0000:dout <= sync_ff1[2];
-4'b0101:dout <= sync_ff2[2];
-4'b0110:dout <= sync_ff3[2];
-4'b1010:dout <= sync_ff4[2];
-4'b1111:dout <= sync_ff5[2];
-endcase
-end
-ecdc和sg的综合结果不一致，其在Ac_conv的功能性检查上也存在不同，暂不清楚ecdc的检查是否存在问题，待在VC上确认
-c.CDC-GEN-B-2-246:脚本问题
-4.帮助何琴跑优化memory的包
 
 
 cxy
-今日分析msg数：72
-今日发现issue数：1
+今日分析msg数：80
+今日发现issue数：
 今日回传case数：
 日报：
-1.跑TOP.改成TOP/分支的工具包和对比脚本，分析跑出来的ac的结果，目前TOP/包的不匹配不涉及脚本问题，工具问题涉及issue：CDC-3674 CDC-3658 CDC-3659
-2.对接家里的diff150，diff31的修改，在现场debug diff31，对应修复家里无法复现的Clock_info05的场景，补充Reset_info09a的部分
-3.分析TOP/包 setup部分，今天有比较多的Clock_info05b的rule没有match上，属于同种原因，issue号CDC-3687
+1.跑TOP.改成TOP/分支的工具包和对比脚本，分析跑出来的setup的结果，目前TOP/包 setup部分没有脚本问题，工具问题同Ac
+2.修复TOP/包中setup部分的脚本问题CDC-3687
+3.对接diff150,diff178的修改
+4.确认ac修改的diff正确性
+5.参加脚本例会
