@@ -1,46 +1,48 @@
 yyh
+
+  HQ
+今日分析msg数：301
+今日发现issue数：
+今日回传case数：
+日报：
+1、分析今日refactor-prop-ff-1包的门禁新增漏报误报，setup和builtin都有，现场与应康确认为两个issue，正在解决中
+2、处理标Diff197的差异，把一部分Enno找不到obj报ObjIsNotFound停止检查，SG报SGDC_qualifier02a/03a未停止检查的case重新标记为Diff134，并更改描述（300+条）
+3、帮助心雨分析部分走Diff150 proc的逻辑是否正确，已解决
+
+zwl
+今日分析msg数：
+今日发现issue数：4
+今日回传case数：
+日报：
+1、找客户确认运行模式是是不是工程模式，总结了部分运行模式---CDC-3689
+2、使用1130的refactor-prop-ff-1跑小泛化的数据并分析，发现有漏报误报SetupDataTiedToConst，发了一个漏报的issue--CDC-GEN-S-251，误报还未分析
+3、验证SG的trace-two-points功能在找56w（ecdc的工具找到的56w个obj，能打开点电路图）的点位时会卡，甚至崩溃
+4、发现一个GUI crash的issue CDC-GEN-S-252；性能问题CDC-GEN-S-253
+
+LFR
+今日分析msg数：18
+今日发现issue数：3
+今日回传case数：
+日报：
+1.分析验收泛化case(同步器为两拍的情况)的Ac_conv的误报和漏报
+1.CDC-3691:对于约束set_abstract_port -port pad_op_mod0_in -clock vclk_BOX2 -module BOX2 
+18版sg生成的时钟名为TOP.U_BOX2_vclk_BOX2,ecdc生成的时钟名为vclk_BOX2,高版本sg的做法似乎和ecdc一致，待确认
+2.CDC-GEN-B-2-250:验收泛化case(两拍同步)，enno报的ChySameSrcConvExcSeq中有35条qualifier汇聚，sg报的Ac_conv01中有
+28条qualifier汇聚，sg报的28条，enno都有包含，但enno多报了7条qualifier,但单独在sg中去看这7条，sg报了Ac_sync01，
+感觉enno报的没问题
+3.CDC-GEN-B-254:验收泛化case(两拍同步)中ChySameSrcConvExcSeq(Ac_conv02)的汇聚点误报
+3.已标记差异：
+a.Diff106-line_no4
+b.Diff115-bug27-version_difference
+c.Diff150-report22-conv
+
+
+cxy
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.diff191已开发完成；小case验证完毕；待大泛化验证
-2.diff174开发完成；门禁通过；泛化上测出工具bug；需要suli辅助定位
-3.ar脚本调整优化
-4.两拍的情况测出来脚本问题 ac_conv03,debug后发现不是脚本问题，而是当：clock是被set_abstract_port -port xxx -clock vclk -module abcd;这种形式创建时，其实是一个虚拟时钟，三方对于这个时钟的名字是TOP.u_abcd_vclk，(这里的u_abcd是abcd这个module实例化出来的inst name)而ecdc就叫TOP.vclk;
- 
-  HQ
-今日分析msg数：72
-今日发现issue数：
-今日回传case数：
-日报：
-1、分析今日门禁新增漏报误报，以及解决差异冲突，setup、builtin有sdc修改导致的新增，为差异，ac有一条MissingSynchronizer的Obj顺序不一样导致差异反标失败（11月28号的包和11月29号的包obj顺序不一致），已提issue:CDC-3688
-2、分析Builtin里标Diff197的差异，发现这个Diff197标的有两类现象：
-1. sgdc约束语法错误，SG只做了clock检查，未做reset相关检查，导致我们误报reset相关报错
-2. Enno对于sgdc fatal及ERROR所有检查都不做，导致Propagated clock的漏报
-看上去没有进行统一，这两种现象都存在，问了研发做到统一比较麻烦，且客户之前没有提出异议，后面再和川皓他们对这个问题进行评估
-3、帮助解决门禁case图片丢失问题
-4、帮助心雨分析Diff150 proc的逻辑
-5、自动取包脚本里改进自动删除逻辑，各路径内超过一定时间的包，自动删除，防止占满空间内存
-
-zwl
-今日分析msg数：18
-今日发现issue数：1
-今日回传case数：1
-日报：
-1、帮家里RD确认GUI的搜索问题（11.11-trace-two-points-5），SG支持多比特的搜索，比如：TOP.dout[3:0]/q，SG会搜索到TOP.dout[3]/q，是按照哪一个比特位写在前面，就搜索哪一位
-2、分析大泛化漏报误报Setup_prot01；已提issue CDC-GEN-B-2-249；和comb、虚拟时钟有关
-3、参加泛化会议
-
-LFR
-
-
-cxy
-今日分析msg数：80
-今日发现issue数：
-今日回传case数：
-日报：
-1.跑TOP.改成TOP/分支的工具包和对比脚本，分析跑出来的setup的结果，目前TOP/包 setup部分没有脚本问题，工具问题同Ac
-2.修复TOP/包中setup部分的脚本问题CDC-3687
-3.对接diff150,diff178的修改
-4.确认ac修改的diff正确性
-5.参加脚本例会
+1.修改diff150，确认proc做好后无多标漏标
+2.跑30号的测试包
+3.跑1813E泛化case DDR_SUB、FE_TSS、NAU_CAU_WRAP的sglog
+4.将TOP/包跑的csv处理反标的结果，个别没有反标上的手动处理
