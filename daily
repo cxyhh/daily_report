@@ -2,26 +2,33 @@ zch
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1. 新一批泛化，目前已经请心雨跑通了比对脚本，请何琦适配了运行脚本，数据的反馈和对接也和景烁泽东安排妥当，明天就可以投入分析。
-今天调试中发现新泛化和之前的泛化相比，运行时间更久，部分case sg需要运行两个小时以上。每次分析时如果和之前一样直接运行sg，会浪费很多时间。经过尝试，发现使用save_project保存sg的结果在固定位置，再用open_project打开工程可以节省很多运行的时间。
+日报：1.安排现场统计新泛化数据，已将性能数据反馈回家，但是对比数据脚本运行较慢，暂时只有DDR_SUB一个case有结果。
+2.分析新泛化DDR_SUB，提出两个issue：
+CDC-GEN-N-259：脚本问题 ac_conv02 ecdc和sg的msg完全一致，但是脚本匹配失败
+CDC-GEN-N-262: (1). ecdc的message contents里，前面描述obj为candidate async set，后面又说这个obj的type是derived reset，前后矛盾。实际上obj是derived set. (2). ecdc中一个obj同时作为set和reset被推断，报两条message。但是这两个msg的增量原理图打开内容一样，都是被推断成set的结构，没有被推断成reset的结构
+
 yyh
 
 xll
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.修复对接导入平台的脚本bug
-2.修改对接导入平台的需求文档
-3.编写部分验收用例文档
-
-  HQ
-今日分析msg数：12
+日报：
+今日分析msg数：
 今日发现issue数：
 今日回传case数：
+日报：1.测试单个多个library、veilog、constraint等的脚本功能，发现了几个脚本bug，均已修复
+2.支持了在sg的log中体现sg运行成功和失败的结果显示，便于导入平台搜索此关键字
+
+  HQ
+今日分析msg数：76
+今日发现issue数：2
+今日回传case数：2
 日报：
-1、分析今日门禁新增漏报误报，是脚本修改导致，不是新增问题
-2、回归门禁issue，目前还剩5条：Buildin：CDC-3392,CDC-3609,CDC-3636;Setup：CDC-3654,CDC-3657
-3、针对新泛化case，搭建分析脚本
+1、分析今日门禁新增漏报误报，是ObjectIsNotFound行为改变，改变后的行为是一致的，都是停止检查，这些漏报为差异Diff134
+2、分析11月28日的yangw_changeTOP这个包的漏报误报buildin部分，提了两个issue
+3、针对新泛化case，完善分析脚本，之前把log文件放在本地，但今天跑完发现log文件太大，会把本地内存占满，所以改了存储位置
+4、跑新泛化case（12个module中的一个），对比部分跑的时间较长（case为3G左右，原因分析是SG的ClockGlitch报了4.7w+条，对比时比较耗时间，但Enno只报了15条，这个跑完之后需要分析一下差距这么大的理由），目前还没有结果
 
 zwl
 今日分析msg数：4
@@ -33,33 +40,30 @@ zwl
 3、提了7个issue
 
 LFR
-今日分析msg数：18
-今日发现issue数：
-今日回传case数：
+今日分析msg数：56
+今日发现issue数：1
+今日回传case数：1
 日报：
-1.分析验收泛化case(同步器为两拍的情况)的Ac_conv的误报和漏报
-a.CDC-GEN-B-254/255 -- 已标差异Diff150
-b.CDC-GEN-B-256 -- 验收泛化case(两拍同步)中ChySameSrcConvExcSeq误报
-Description:enno误报ChySameSrcConvExcSeq，从电路图中看，enno报的那个汇聚点不是真正的汇聚点。而且增量原理图很混乱，converge的那个点只有一条qualifier到达
-2.与子奇讨论Ac_conv报的converge net与sg不一致的电路场景，进分析发现,sg报的不太合理，sg报的converge点在design中并不是真正是汇聚产生的地方,enno报的汇聚点能在design中找到对应的代码，能更好的帮助用户debug,现场的这种场景已标差异Diff150
-3.与袁洁一起看CDC-3567的相关问题，发现是verific综合出的"1"导致lec不通过,而对于这个点来说，其状态是don't care的，所以verific综合成"1"也是合理的，现场标的差异为Diff192
+1..分析验收泛化case(同步器为两拍的情况)的Ac_conv的误报和漏报
+a.已标记差异有：Diff106/Diff115/Diff122/Diff150，并在黄区对应表格中附上清楚的解释和清晰的截图
+b.提了一个issue:CDC-GEN-B-2-261 -- 同样的电路结构，enno在泛化case和小case上的结果不一致，对于这个case的结构而言，enno在泛化case上报ChySameSrcConvIncSeq，在这个case上报ChySameSrcConvExcSeq
+2.与子奇一起分析Ac_conv的相关问题
 
 JR
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.分析SetupDataTiedToConst中标记为CDC-GEN-B-192的message，分析发现都是依赖性问题导致ECDC报的一些message比SG少报了obj，所以ECDC和SG match不上出现误报漏报，今天下午请教了RD，新算法应该能解决这个问题，现在还是标记为CDC-GEN-B-192，后面会持续跟踪；
-2.两拍的SetupDataTiedToConst和三拍的SetupDataTiedToConst情况相同；
-3.分析两拍的ac_conv01，有两条是ECDC和SG报的汇聚点不一致导致的差异
+1.分析新泛化的SetupDataTiedToConst，目前分析到的message都是差异，主要的差异是Diff171，还有一个message在SG和ECDC中综合是一样的，但是ECDC报了，SG没报，复现了小case跑LEC，LEC是通过的，所以ECDC报的是合理的，所以这个message标记为差异Diff192；
+2.点击大泛化中的IntegrityClockConverge的schematic，ECDC直接闪退，闪退后下方出现segmentation fault，已提issue：CDC-GEN-B-258
 
 
 cxy
-今日分析msg数：30
-今日发现issue数：3
-今日回传case数：3
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
 日报：
-1.继续分析read_sgdc环境下的builtin结果
-2.跑大泛化1813E的sg rpt结果
-3.基于1813E目前跑出来的模块debug适配对比脚本，修复diff80和diff157的bug，回传给家里
-4.和王涵沟通之前回传到家里的issue
+1.修复大泛化上发现ac的csv中某些rule没有记录行号和s_message的问题
+2.对接家里完成的diff50，在门禁case上测试
+3.跑大泛化case DDR_SUB和NFI_TOP模块，统计性能数据
+4.debug现场脚本问题
