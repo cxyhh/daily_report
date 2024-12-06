@@ -1,56 +1,64 @@
 zch
+今日分析msg数：124
+今日发现issue数：2
+今日回传case数：0
+日报：1.分析新泛化DDR_SUB，提出两个issue：
+CDC-GEN-N-271 一个异步rst传到第二个FF后，FF/Q出来的信号经过组合逻辑连接到了bbox pin，ecdc会报这个bbox pin被这个rst(propagated) fully constraint。sg不会报。
+CDC-GEN-N-272 一个bbox pin正常和一个instance pin相连，在module原理图中可以看到，通过get_fanin也能看到链接关系。但是单独打开这两个pin的原理图，都没办法正常拓展。
+2. 
 
 yyh
 
 xll
 
   HQ
-今日分析msg数：76
+今日分析msg数：151
 今日发现issue数：2
 今日回传case数：2
 日报：
-1、分析今日门禁新增漏报误报,无新增问题
-2、针对新泛化case，完善分析脚本，之前没有设置blackbox导致执行时间慢以及结果错误，修改后速度提升很大，且message量也大幅减少
-3、针对昨日ClockGlitch报4.7w+条的case，今日改参数后重新跑，一条也不报了
-4、今日又发生传包时内存占满的问题，原因在使用脚本取包时，创建者不同导致删除时没有权限，现在加了判断，如果创建者不是我，则把删除权限打开
+1、分析新泛化case：DDR_SUB，149条，Clock_sync06漏报的原因为：inout pin连接bb，且bb输入有多个时钟，sg会报Clock_sync06，enno未报（CDC-GEN-N-269）；Ac部分为一些差异：Diff157，Diff18，已反馈家里尽快完成proc；一个泛化问题：设置set_param cdc.enable_lint_check true后跑泛化，软件会崩溃（CDC-GEN-N-270）
+2、分析今日Buildin误报漏报，为Diff87，回路FF推断为常值0
+3、分析修改builtin的sdc文件，并写脚本，通过脚本快速比对
 
 
 zwl
-今日分析msg数：9
-今日发现issue数：3
-今日回传case数：
-日报：
-1、分析泛化ar部分，reset_sync04的4条漏报误报为差异，1条待开发确认，并提了一个增量原理图的issue CDC-3711，漏报的ar multiflop是差异diff73，并提了issue给脚本让其写proc，误报正在确认
-2、和家里PV沟通GUI reopen issue的原因，方便家里开发面对面沟通
-
-LFR
-今日分析msg数：26
-今日发现issue数：
-今日回传case数：
-日报：
-1.分析验收泛化case(同步器为两拍的情况)的Ac_conv的误报和漏报 -- 除了新增的已分析完
-a.CDC-GEN-B-2-263 -- enno漏报ChySameSrcConvIncSeq，但是从电路结构来看，是有两条qualifier连到了一个MUX的两个输入端，报converge显然是不合理的，怀疑是sg的bug
-b.depth计算错误：CDC-GEN-B-2-264/CDC-GEN-B-2-266
-2.和何琴一起分析depth的相关问题
-
-
-JR
-今日分析msg数：43
-今日发现issue数：
-今日回传case数：
-日报：
-1.分析今日射频用例新增的SetupDataTiedToConst的误报漏报，目前分析到的message都是差异Diff171，还剩107条新增message待分析；
-2.帮助RD跑并分析SetupDataTiedToConst的debug包，debug的包能在比较器内部推出常值，但是常值没有往和比较器输出端相连的net传，所以还是有问题；
-3.和RD讨论CDC-GEN-B-258，因为看不到堆栈信息，所以没有定位到点击IntegrityClockConverge的schematic就闪退的根本原因，明天再用其他方法定位
-
-
-cxy
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.修改run_sg_case脚本，对应1813E不同模块需要设置不同blackbox的需求
-2.修改1813e跑ecdc工具和对比脚本的tcl文件，对应1813e不同模块有不同的cfg配置以及blackbox
-3.对接家里的diff50，diff53，对家里发来的diff进行debug，修改
-4，debug在大泛化上发现的脚本问题
-5.对应Diff50-tcl-built_in-60刷新部分case的rpt，修改现场case的tc_list以及跑包脚本
+分析DDR_SUB中ar部分，reset_sync04一条误报为source源头不一致导致ecdc会误报，误报multiflop正在分析原因，从原理图来看可能是SG漏报，但还没有复现出问题
+提了两个issue CDC-GEN-N-268、CDC-GEN-N-274
+
+LFR
+今日分析msg数：
+今日发现issue数：1
+今日回传case数：
+日报：
+1.分析泛化case(同步器为三拍的情况)的Ac_conv01的新增误报
+a.CDC-GEN-B-267 -- 发现随包的不同，有一条Ac_conv01的converge net在两个daily_built包里有差别
+2.和子奇一起看泛化case中已标记issue的Ac_conv01/02/03的误报和漏报（同步器为两拍的情况）
+a.CDC-GEN-B-2-263 -- sg的bug,需要新的差异编号
+b.CDC-GEN-B-2-256/CDC-GEN-B-2-264/CDC-GEN-B-2-266 -- 需要何琴修复depth的相关bug
+c.CDC-GEN-B-2-241/CDC-GEN-B-2-243/CDC-GEN-B-2-245 -- 需要子奇修复相关bug
+
+
+JR
+今日分析msg数：75
+今日发现issue数：
+今日回传case数：
+日报：
+1.分析射频用例中SetupDataTiedToConst的误报漏报，目前分析到的message都是差异Diff171和Diff192，复现了三个场景的case，跑LEC都是通过的，今日的包有新增message，还剩189条新增message待分析；
+2.SetupDataTiedToConst比较器不能推常值的问题，RD根据昨天反馈的debug的结果修改了代码，今天有新的debug包，帮助RD跑并分析SetupDataTiedToConst比较器不能推常值的debug包，今天debug的包能在比较器推出常值并继续传播，但传播到MUX_FF回路的input后，MUX_FF回路就没有继续推常值了；
+3.和RD讨论CDC-GEN-B-258，尝试了几种方式还是看不到堆栈信息，明天RD会打debug包来测
+
+
+cxy
+今日分析msg数：80
+今日发现issue数：1
+今日回传case数：
+日报：
+1.确认Diff123-diff19-clock_info-03的修改是否正确
+2.测试海洋修改的until中解析sg的rpt代码部分，目前这部分还有问题，会出现解析ac时行号解析错误以及漏掉setup rule的情况，已经反馈给海洋
+3.跑大泛化DDR_SUB和NFI_PHYG_TOP两个模块的csv，统计性能数据 
+4.测试save_date功能
+5.跑read_sgdc模式，发现新的proc_sgdc在转换num_flop这个约束时存在问题，提issue反馈。对于部分builtin的case，转换脚本做起来比较困难，手动修改这部分case
