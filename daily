@@ -1,50 +1,45 @@
 zch
-今日分析msg数：24
+今日分析msg数：46
 今日发现issue数：2
-今日回传case数：0
-1.参加《ECDC开放选项和配置值随机策略对齐》会议；
-2.分析现场TOP/转换的sdc，提了两个issue。现场整体提了10个sgdc转换相关issue：CDC-3712到CDC-3722；
+今日回传case数：
+日报：
+1、分析英杰带有TOP/修改的个人分支新增不匹配数据，提出两个issue：
+CDC-3728：sgdc里的include ""/a/b/c.sdc""，被转换成了source "".//a/b/c.sdc""
+CDC-3734 sgdc里的reset_synchronizer -name clk/rst -reset clk/rst -clock clk/rst -value 1/0;被转换成了set_reset_synchronizer -name TOP/clk.TOP/rst -reset TOP/clk.TOP/rst -clock TOP/clk/TOP/rst -value 1/0.
+这其中（1）不应该加TOP/，（2）不应该把原有的/转换成."
+2、帮助罗刚复现CDC-GEN-N-272问题
 
 yyh
 
 xll
 
   HQ
-今日分析msg数：89
+今日分析msg数：53
 今日发现issue数：2
 今日回传case数：2
 日报：
-1、帮助海洋分析Diff18 proc的判断逻辑（SG报SG_VCLK字段的同时满足Enno的source和后面相连的FF的clk信息一致）
-2、分析今日门禁新增误报漏报：目前Builtin剩余一个问题：Diff500-diff-built in-046，gui没有画出未被使用的obj：涉及CDC-3392,CDC-3724
-3、分析新泛化case：DDR_SUB，Ac部分，85条
-4、分析修改builtin的sdc文件，适应“TOP/”的包
+1、分析加入TOP的门禁误报漏报（Ac，Setup已看完，无新增问题（存在一个脚本问题：CDC-3726））,Buildin存在一些问题：CDC-3730
+2、今日桃花岛存在问题，包一直进不来，以及依然有磁盘满的问题，导致包迟迟进不来，今日和AE一起解决这个问题，以及修改脚本检测包的数量
+3、帮助家里复现现象：GUI的崩溃，Issue的验证，以及issue现象的补充
 
 
 zwl
-今日分析msg数：
-今日发现issue数：4
-今日回传case数：3
+今日分析msg数：34
+今日发现issue数：7
+今日回传case数：4
 日报：
-1、分析现场TOP.转TOP/失败的sdc，提了4个issue，其中CDC-3718中提到的TOP.vclk，到底需要转换为TOP/Vclk与川皓存在冲突，川皓觉得clock -tag后跟的TOP.vclk只是一个字符串，就不需要传唤，但我觉得TOP.vclk有特殊意义，其他用到这个clock的命令可能会出现其他问题（TOP.代表层级，那应该转换为与我们对应的TOP/）
-2、参加泛化周会
+分析TOP/包跑出来的漏报误报，提了7个issue，其中CDC-3733 RD认为是Diff197，但是差异描述中写的是不检查clock和reset，但是这个issue中是报了clock和reset的msgid的；SETUP_QUALIFIER部分已分析完
 
 LFR
-今日分析msg数：
-今日发现issue数：
-今日回传case数：1
-日报：
-1.协助何琴和子奇分析Ac_conv两拍的相关问题
-2.学习如何抽象出一个depth相关错误的的基础电路
-3.回传一个depth错误的case
 
 JR
-今日分析msg数：164
-今日发现issue数：
-今日回传case数：
+今日分析msg数：53
+今日发现issue数：1
+今日回传case数：1
 日报：
-1.分析射频用例中SetupDataTiedToConst的误报漏报，目前分析到的message都是差异Diff171，分析了164条，还剩25条message待分析；
-2.SetupDataTiedToConst比较器不能推常值的问题，今天的debug包已修好；
-3.继续帮助RD debug CDC-GEN-B-258
+1.分析射频用例中SetupDataTiedToConst的误报漏报，目前分析到的message都是差异Diff171；
+2.在分析射频用例的SetupDataTiedToConst的过程中发现，有的SetupDataTiedToConst的schematic显示得不合理，ff推常值没有依靠回路，但是显示SetupDataTiedToConst的原理图时，却直接把整个回路显示出来了，这样会误导用户，已复现问题并提issue：CDC-GEN-B-276；
+3.帮助RD debug CDC-GEN-B-258，已定位到问题的原因
 
 
 cxy
@@ -52,6 +47,6 @@ cxy
 今日发现issue数：
 今日回传case数：
 日报：
-1.debug大泛化中Ac_conv02匹配不成功的bug
-2.验证家里写的diff18的差异proc的正确性
-3.修改部分builtin case的sdc文件用于对应TOP/包
+1.跑TOP/包，测试周六打包的脚本和工具。目前TOP/包的脚本中的差异proc Diff178.Diff150.Diff123还不能适配TOP/包，已反馈给家里
+2.跑门禁测试的参数，跑不同参数配置下的门禁case的rpt。
+3.测试家里脚本代码的修改
