@@ -1,45 +1,35 @@
 zch
-今日分析msg数：46
-今日发现issue数：2
-今日回传case数：
-日报：
-1、分析英杰带有TOP/修改的个人分支新增不匹配数据，提出两个issue：
-CDC-3728：sgdc里的include ""/a/b/c.sdc""，被转换成了source "".//a/b/c.sdc""
-CDC-3734 sgdc里的reset_synchronizer -name clk/rst -reset clk/rst -clock clk/rst -value 1/0;被转换成了set_reset_synchronizer -name TOP/clk.TOP/rst -reset TOP/clk.TOP/rst -clock TOP/clk/TOP/rst -value 1/0.
-这其中（1）不应该加TOP/，（2）不应该把原有的/转换成."
-2、帮助罗刚复现CDC-GEN-N-272问题
+
 
 yyh
 
 xll
 
   HQ
-今日分析msg数：53
-今日发现issue数：2
-今日回传case数：2
+今日分析msg数：23
+今日发现issue数：
+今日回传case数：
 日报：
-1、分析加入TOP的门禁误报漏报（Ac，Setup已看完，无新增问题（存在一个脚本问题：CDC-3726））,Buildin存在一些问题：CDC-3730
-2、今日桃花岛存在问题，包一直进不来，以及依然有磁盘满的问题，导致包迟迟进不来，今日和AE一起解决这个问题，以及修改脚本检测包的数量
-3、帮助家里复现现象：GUI的崩溃，Issue的验证，以及issue现象的补充
+1、改进run脚本逻辑，增加个人配置，可以在个人配置文件中设置tool version，searching path，save path等
+2、分析门禁Buildin的新增漏报误报，全部为差异无新增问题
 
 
 zwl
-今日分析msg数：34
-今日发现issue数：7
+今日分析msg数：40
+今日发现issue数：8
 今日回传case数：4
 日报：
-分析TOP/包跑出来的漏报误报，提了7个issue，其中CDC-3733 RD认为是Diff197，但是差异描述中写的是不检查clock和reset，但是这个issue中是报了clock和reset的msgid的；SETUP_QUALIFIER部分已分析完
+分析完TOP/包新跑出来的漏报误报，其中CDC-3738为差异Diff500-report-built_in-037，CDC-3737为差异Diff500-report-built_in-062；转换中特别注意双引号会被删除，但不应该删除，还有通配符的转换时匹配到多个obj时，需要创建多个命令
 
 LFR
 
 JR
-今日分析msg数：53
-今日发现issue数：1
-今日回传case数：1
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
 日报：
-1.分析射频用例中SetupDataTiedToConst的误报漏报，目前分析到的message都是差异Diff171；
-2.在分析射频用例的SetupDataTiedToConst的过程中发现，有的SetupDataTiedToConst的schematic显示得不合理，ff推常值没有依靠回路，但是显示SetupDataTiedToConst的原理图时，却直接把整个回路显示出来了，这样会误导用户，已复现问题并提issue：CDC-GEN-B-276；
-3.帮助RD debug CDC-GEN-B-258，已定位到问题的原因
+1.分析完成射频用例中新增的SetupDataTiedToConst、ac_conv01和setup_blackbox01的误报，SetupDataTiedToConst和ac_conv01新增的误报是差异，setup_blackbox01新增的误报是issue，报的message不对，应该报SetupBBoxPinFullyConstrained,但是报的是SetupBBoxPinIgnored,已有issue；
+2.继续帮助RD debug CDC-GEN-B-258，今天的debug包已解决这个问题
 
 
 cxy
@@ -47,6 +37,7 @@ cxy
 今日发现issue数：
 今日回传case数：
 日报：
-1.跑TOP/包，测试周六打包的脚本和工具。目前TOP/包的脚本中的差异proc Diff178.Diff150.Diff123还不能适配TOP/包，已反馈给家里
-2.跑门禁测试的参数，跑不同参数配置下的门禁case的rpt。
-3.测试家里脚本代码的修改
+1.跑TOP/的包和脚本，验证脚本中的diff178.diff150，diff123已经适配TOP/包，将csv传到黄区
+2.测试康凯对于setup.tcl的修改，反馈问题
+3.检查diff18的差异proc，帮助家里定位问题
+4.测试门禁参数配置，目前跑出一版结果，setup和ar影响比较大，数据情况已反馈。另一个配置预计11号上午可以出结果
