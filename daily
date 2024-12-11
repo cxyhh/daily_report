@@ -33,11 +33,22 @@ JR
 
 
 cxy
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1.跑TOP/的包和脚本，验证脚本中的diff178.diff150，diff123已经适配TOP/包，将csv传到黄区
-2.测试康凯对于setup.tcl的修改，反馈问题
-3.检查diff18的差异proc，帮助家里定位问题
-4.测试门禁参数配置，目前跑出一版结果，setup和ar影响比较大，数据情况已反馈。另一个配置预计11号上午可以出结果
+current_design TOP
+clock -name TOP.clk[0] -domain clka
+clock -name TOP.clk[1] -domain clkb
+
+reset -async -name TOP.rst[O] -value 0
+reset -async -name TOP.rst[1] -value 0
+
+abstract_port -ports di_ctrl -clock clk[1]
+abstract_port	-ports di_1 -clock clk[1]
+abstract_port	-ports di 2 -clock clk[1]
+abstract_port	-ports di 3 -clock clk[O]
+abstract_port	-ports di_0 -clock clk[O]
+abstract_port	-ports di_vld -clock clk[O]
+abstract_port	-ports do_0 -clock clk[1]
+abstract_port	-ports do_vld -clock clk[1]
+
+set_case_analysis -name TOP.di_0 -value 1
+set_case_analysis -name TOP.di_0 -value 1
+
