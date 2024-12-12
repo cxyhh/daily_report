@@ -6,20 +6,18 @@ yyh
 xll
 
   HQ
-今日分析msg数：23
-今日发现issue数：
-今日回传case数：
+今日分析msg数：61
+今日发现issue数：1
+今日回传case数：1
 日报：
-1、改进run脚本逻辑，增加个人配置，可以在个人配置文件中设置tool version，searching path，save path等
-2、分析门禁Buildin的新增漏报误报，全部为差异无新增问题
+1、分析今日门禁新增误报漏报，多了一项因回路FF导致的常值推导，跑LEC发现没有问题
+2、分析修改builtin“TOP/”的包的漏报误报，脚本问题偏多，提了一个issue：CDC-3751,无软件问题
+3、遇到隔离区占用问题，排查原因已解决
+4、帮助Lint解决软件包无法传进来的问题，定时任务阻塞，已解决
 
 
 zwl
-今日分析msg数：40
-今日发现issue数：8
-今日回传case数：4
-日报：
-分析完TOP/包新跑出来的漏报误报，其中CDC-3738为差异Diff500-report-built_in-037，CDC-3737为差异Diff500-report-built_in-062；转换中特别注意双引号会被删除，但不应该删除，还有通配符的转换时匹配到多个obj时，需要创建多个命令
+
 
 LFR
 
@@ -28,27 +26,18 @@ JR
 今日发现issue数：
 今日回传case数：
 日报：
-1.分析完成射频用例中新增的SetupDataTiedToConst、ac_conv01和setup_blackbox01的误报，SetupDataTiedToConst和ac_conv01新增的误报是差异，setup_blackbox01新增的误报是issue，报的message不对，应该报SetupBBoxPinFullyConstrained,但是报的是SetupBBoxPinIgnored,已有issue；
-2.继续帮助RD debug CDC-GEN-B-258，今天的debug包已解决这个问题
+1.分析二拍射频用例中的误报漏报，目前分析到的都是差异；
+2.分析新泛化，在分析过程中发现，如果一个module的一个输出在内部没有连接，ECDC和SG都会报SetupPortIgnoredUnconnected，但是如果这个输出经过了buffer，ECDC还是报SetupPortIgnoredUnconnected，但SG就会报unconstrained
 
 
 cxy
-current_design TOP
-clock -name TOP.clk[0] -domain clka
-clock -name TOP.clk[1] -domain clkb
-
-reset -async -name TOP.rst[O] -value 0
-reset -async -name TOP.rst[1] -value 0
-
-abstract_port -ports di_ctrl -clock clk[1]
-abstract_port	-ports di_1 -clock clk[1]
-abstract_port	-ports di 2 -clock clk[1]
-abstract_port	-ports di 3 -clock clk[O]
-abstract_port	-ports di_0 -clock clk[O]
-abstract_port	-ports di_vld -clock clk[O]
-abstract_port	-ports do_0 -clock clk[1]
-abstract_port	-ports do_vld -clock clk[1]
-
-set_case_analysis -name TOP.di_0 -value 1
-set_case_analysis -name TOP.di_0 -value 1
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.在红区merge大家分析过后的builtin的csv，作为oldcsv
+2.跑门禁参数配置测试，测试第二版参数结果
+3.测试Diff18差异prco，将问题反馈给家里
+4.跑大泛化NFI_PHYG_TOP的ar，为性能数据统计做准备
+5.debug10号daily包跑出来的builtin少case的情况，发现是因为CMD-2084的报告格式改变，导致脚本抓漏的情况，修复脚本问题
 
