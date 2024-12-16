@@ -15,6 +15,13 @@ zwl
 1、适配脚本更新小泛化的带TOP的csv，并分析、传漏报误报的数据出来，
 2、验证GUI 会crash的两个issue（CDC-GEN-S-252、CDC-3748），都要reopen，只修了一部分，还有其他类似常值也会crash；CDC-3748有reopen后完整的复现步骤，CDC-GEN-S-252还没有完整复现步骤
 3、开泛化周会
+14
+今日分析msg数：
+今日发现issue数：2
+今日回传case数：
+日报：
+1、从旧表中找新表message的图片进行反标，分析贴图Setup IDT4的xlsx，贴上old xlsx无图片的message
+2、分析cfg1中漏报误报setup_port01的原因，目前发现两个issue （CDC-3758，CDC-3759），都是由于参数原因导致
 
 
 LFR
