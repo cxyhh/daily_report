@@ -7,22 +7,12 @@ xll
 HQ
 
 zwl
-13：
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1、适配脚本更新小泛化的带TOP的csv，并分析、传漏报误报的数据出来，
-2、验证GUI 会crash的两个issue（CDC-GEN-S-252、CDC-3748），都要reopen，只修了一部分，还有其他类似常值也会crash；CDC-3748有reopen后完整的复现步骤，CDC-GEN-S-252还没有完整复现步骤
-3、开泛化周会
-14
-今日分析msg数：
+今日分析msg数：400
 今日发现issue数：2
-今日回传case数：
+今日回传case数：3
 日报：
-1、从旧表中找新表message的图片进行反标，分析贴图Setup IDT4的xlsx，贴上old xlsx无图片的message
-2、分析cfg1中漏报误报setup_port01的原因，目前发现两个issue （CDC-3758，CDC-3759），都是由于参数原因导致
-
+1、分析cfg1中漏报误报setup_port01的msg，发现issue （CDC-3760
+CDC-3761）；还有大部分漏报是由于SG的百分比变了（因为只报input pin，基数变少，导致百分比发现变化）导致没有反标上；分析cfg2中的setup_port01，发现全是漏报，看了两条后，发现也是百分比的问题，因此需要脚本先处理反标在去看比较好
 
 LFR
 
@@ -35,22 +25,11 @@ JR
 1.分析门禁case中setup新增的误报漏报，解决里面标记出现的冲突，回归issue；
 2.参加周会
 cxy
-12：
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.对接测试康凯关于对比脚本中attribute的代码修改
-2.进行ar修改代码后的性能测试，在大泛化case上测试，性能有明显提升，但是生成数据不一致，正在回退代码进行新的测试
-3.修改批量跑门禁case的脚本，以及修改使用到的tc_list
-4.确认昨天跑出的csv和oldcsv之间存在case集合差异的情况
-
-14：
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1.跑门禁case参数测试的rpt以及csv，统计数据
-2.整理大泛化的oldcsv，用于适配TOP/包
-3.整理大泛化的tcl脚本，对应对比脚本的save_data功能
+1.跑门禁参数测试，cfg1和cfg2结果
+2.因为门禁case改了参数配置，导致三方报setup_port01时百分比不同，所以出现很多反标不上的情况，处理这部分情况，merge反标内容
+3.回传现场case和家里不一致的地方，发现家里case的cfg中有一条cfg参数设置不正确，反馈给家里
 
