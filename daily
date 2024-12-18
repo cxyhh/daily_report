@@ -7,29 +7,43 @@ xll
 HQ
 
 zwl
-今日分析msg数：400
-今日发现issue数：2
-今日回传case数：3
+今日分析msg数：
+今日发现issue数：3
+今日回传case数：2
 日报：
-1、分析cfg1中漏报误报setup_port01的msg，发现issue （CDC-3760
-CDC-3761）；还有大部分漏报是由于SG的百分比变了（因为只报input pin，基数变少，导致百分比发现变化）导致没有反标上；分析cfg2中的setup_port01，发现全是漏报，看了两条后，发现也是百分比的问题，因此需要脚本先处理反标在去看比较好
+1、分析cfg1和cfg2的setup_port01，已分析完，多位issue CDC-3758和百分比影响的反标问题，反标问题已解决
+2、分析cfg1的ar部分，发现2个issue CDC-cfg1-3767，CDC-cfg1-3768都与mux的选择端有关；以及发现sg的rpt文件可能不对
 
 LFR
 
 JR
 13：
-今日分析msg数：
+今日分析msg数：45
 今日发现issue数：
 今日回传case数：
 日报：
-1.分析门禁case中setup新增的误报漏报，解决里面标记出现的冲突，回归issue；
-2.参加周会
+分析新配置built-in新增未分析的message，cfg2中built-in未分析的message已分析完成，发现一个SDC写错了，已反馈给脚本的同事并已修改正确，其他message都是差异，cfg1中built-in未分析的message，目前分析到的都是差异，还剩30条message未分析
+
 cxy
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.跑门禁参数测试，cfg1和cfg2结果
-2.因为门禁case改了参数配置，导致三方报setup_port01时百分比不同，所以出现很多反标不上的情况，处理这部分情况，merge反标内容
-3.回传现场case和家里不一致的地方，发现家里case的cfg中有一条cfg参数设置不正确，反馈给家里
+1.修改大泛化射频脚本以及oldcsv
+2.跑大泛化射频cfg2配置
+3.根据Diff500_builtin_060差异的要求刷新SETUP_Qualifier系列case的rpt，因为临近交付，还未测试替换这部分rpt后是否会影响到builtin的数据，所以这部分case的rpt还未更新到指定路径
+4.处理现场分析同学对于脚本的疑惑问题，包括匹配关系以及配置问题等
+5.debug CDC-3766之前跑的rpt中为什么没有抓到sg报的reset_info01的消息。原因是：之前的sg_cfg中将filter_named_clocks/resets按照差异PPT写的设置为空，但是实际上sg要把这个参数设置成no_default_list才会报出来。新的rpt已经刷新，但是因为临近交付，暂时未更新到指定位置
+6.在debug CDC-3766时发现我们的Diff166-bug42并不合理，Diff166-bug42涉及到的case将sg的filter_named_clocks/resets参数设置成no_default_list，sg和我们的行为一致，不需要DIff差异
+
+qjs
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：1.用12.17日的daily build跑大泛化三拍。AC、Ar、setup处于清零状态。conv存在随机值Issue CDC-GEN—B-267.memory：15798.859，存在性能问题。回传数据。
+2.用12.17日的daily build跑大泛化两拍。Ac清零，Setup存在issueCDC-GEN-B-2-249。conv存在issue和新增。回传数据。
+3.用12.17日的daily build跑门禁case。Ac清零，Builtin清零，Ar清零。Setup存在issue CDC-3654。回传数据。门禁存在一个case的工具crash现象，已经反馈给PV和RD。
+4.用12.17日的daily build跑小泛化。无新增，已回传性能数据。
+5.整理csv，请客户帮忙传出21个CDC相关数据。
+6.回传新泛化module FE_TSS的误报漏报情况。
 
