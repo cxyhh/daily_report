@@ -5,6 +5,13 @@ yyh
 
 xll
 HQ
+今日分析msg数：112
+今日发现issue数：1
+今日回传case数：2
+日报：
+1.分析cfg1和cfg2的不包含setup_port01和reset_info01的部分，已分析完
+2.分析正常门禁的新增，有一个crash的case，已提issue：CDC-3765
+3.实现通过脚本设置执行的config文件，选择config文件；以及跑新泛化的对比脚本
 
 zwl
 今日分析msg数：
