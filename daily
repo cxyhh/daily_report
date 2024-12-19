@@ -1,47 +1,26 @@
-zch
-
-
-yyh
-
-xll
 HQ
-今日分析msg数：112
-今日发现issue数：1
-今日回传case数：2
-日报：
-1.分析cfg1和cfg2的不包含setup_port01和reset_info01的部分，已分析完
-2.分析正常门禁的新增，有一个crash的case，已提issue：CDC-3765
-3.实现通过脚本设置执行的config文件，选择config文件；以及跑新泛化的对比脚本
 
 zwl
 今日分析msg数：
-今日发现issue数：3
-今日回传case数：2
-日报：
-1、分析cfg1和cfg2的setup_port01，已分析完，多位issue CDC-3758和百分比影响的反标问题，反标问题已解决
-2、分析cfg1的ar部分，发现2个issue CDC-cfg1-3767，CDC-cfg1-3768都与mux的选择端有关；以及发现sg的rpt文件可能不对
-
-LFR
-
-JR
-13：
-今日分析msg数：45
 今日发现issue数：
 今日回传case数：
 日报：
-分析新配置built-in新增未分析的message，cfg2中built-in未分析的message已分析完成，发现一个SDC写错了，已反馈给脚本的同事并已修改正确，其他message都是差异，cfg1中built-in未分析的message，目前分析到的都是差异，还剩30条message未分析
+1、分析cfg1中ar误报部分，是由于脚本没有办法处理的情况，已标记差异
+2、和RD一起查看CDC-GEN-B-2-249的问题，确认是版本差异，家里使用18版和22版跑出来不一致；22版与ecdc跑出来的结果一致
+3、分析DDR_SUB中误报ar multiflop部分，从clock信号和打拍链来说没有报错，但是SG没报还未找到原因；正在复现case
+
+
 
 cxy
 今日分析msg数：
-今日发现issue数：
+今日发现issue数：1
 今日回传case数：
 日报：
-1.修改大泛化射频脚本以及oldcsv
-2.跑大泛化射频cfg2配置
-3.根据Diff500_builtin_060差异的要求刷新SETUP_Qualifier系列case的rpt，因为临近交付，还未测试替换这部分rpt后是否会影响到builtin的数据，所以这部分case的rpt还未更新到指定路径
-4.处理现场分析同学对于脚本的疑惑问题，包括匹配关系以及配置问题等
-5.debug CDC-3766之前跑的rpt中为什么没有抓到sg报的reset_info01的消息。原因是：之前的sg_cfg中将filter_named_clocks/resets按照差异PPT写的设置为空，但是实际上sg要把这个参数设置成no_default_list才会报出来。新的rpt已经刷新，但是因为临近交付，暂时未更新到指定位置
-6.在debug CDC-3766时发现我们的Diff166-bug42并不合理，Diff166-bug42涉及到的case将sg的filter_named_clocks/resets参数设置成no_default_list，sg和我们的行为一致，不需要DIff差异
+1.和艺豪debug ar脚本
+2.debug对比脚本，解决ac部分在新泛化上block的问题，回传修改代码回家
+3.跑builtin涉及到lint差异的rule和msg
+4.验证SETUP_QUALIFIER系列的case按照Diff500-tcl-built_in-060要求重新跑sg rpt之后是否会影响我们现在的标记结果，发现不会影响，替换这部分case的rpt
+5.验证家里新写的差异Diff18在setup部分，发现一个脚本问题，提issue回去
 
 qjs
 今日分析msg数：
@@ -53,4 +32,26 @@ qjs
 4.用12.17日的daily build跑小泛化。无新增，已回传性能数据。
 5.整理csv，请客户帮忙传出21个CDC相关数据。
 6.回传新泛化module FE_TSS的误报漏报情况。
+
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：1.用12.18日的daily build跑大泛化三拍。AC、setup处于清零状态。Ar出现了反标问题，是TOP/改动所致，需要适配。conv存在随机值Issue CDC-GEN—B-267.性能达标。回传数据。
+2.用12.18日的daily build跑大泛化两拍。Ac清零，Setup存在issueCDC-GEN-B-2-249。conv存在issue和新增。回传数据。
+3.用12.18日的daily build跑门禁case。Ac清零，Builtin清零但今日有修改脚本已标记Diff，Ar清零。Setup存在issue CDC-3654。回传数据。门禁存在一个case的工具crash现象，issue：CDC-3765
+4.用12.18日的daily build跑小泛化。无新增.
+5.帮何琴和子奇跑测试包，反馈数据。
+
+MCH
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1、分析新增的SetupRstInferred，标记差异：
+Diff39-diff7-rst_inferred,7条
+Diff192-diff35-logic-optimization,2条
+Diff186-report29_rst_inferred,3条
+Diff5_bug1-mux_latch,10条
+2、协助家里Debug
+
 
