@@ -1,126 +1,69 @@
+XLL
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：1.适配导入平台单独运行统计脚本时如果没有找到sglog和ecdclog，对应数据处理为0
+2.适配导入平台脚本sg的rule选择功能
+3. 修改runsg运行成功失败的结果判断逻辑
+4. 现场测试Inhouse的diff proc——diff167
+5.梳理了下现场脚本工作，并排了优先级，根据优先级开展现场脚本工作
+
 HQ
-今日分析msg数：40
+今日分析msg数：42
 今日发现issue数：1
 今日回传case数：1
 日报:
-1、分析新泛化case：DDR_SUB，40条均为差异
-2、分析新泛化比对脚本失败原因，对于11号的包是可以比对的，应当是没有适配TOP/的逻辑
-3、提出关于脚本proc的改进建议，因为最近涉及到这类现象较多，新泛化分析贴图较慢，如果脚本可以实现会大大缩短分析时间：
-CDC-3773:
-对于Diff157的clk差异，我认为是独立于其他差异之外的，是否可以做到：脚本先去判断clk是否符合Diff157的proc，再去判断obj或者message id是否是其他差异，如果obj等match，则差异为Diff157，如果obj等符合另一个差异，则为Diff157+另一个差异
-还有一种类似情况是Diff9，这个是判断message id的，同样可以这么做，判断逻辑参考如下：
-if (Diff157)
- if(Diff9)
-  if(Match)
-   echo(Diff157;Diff9)
-  else if(OtherDiff)
-   echo(Diff157;Diff9;OtherDiff)
-  else
-   echo(Misreport/false report)
- else
-  if(Match)
-   echo(Diff157)
-  else if(OtherDiff)
-   echo(Diff157;OtherDiff)
-  else
-   echo(Misreport/false report)
-else if(Diff9)
- if(Match)
-  echo(Diff9)
- else if(OtherDiff)
-  echo(Diff9;OtherDiff)
- else
-  echo(Misreport/false report)
-else if(OtherDiff)
- echo(OtherDiff)
-else
- echo(Misreport/false report)
- 
-需要评审一下Diff9是否也是独立的，不会影响其他Diff，Diff157应当是独立的
+1、修改新的配置，修改parameter名
+2、和心雨探讨跑新泛化对比脚本的流程，以及更改脚本逻辑
+3、分析新泛化DDR存在的脚本问题，Diff157未走proc的问题
+4、分析今日新增Builtin的漏报误报，为推导rst的问题，已提issue：CDC-3787
+5、跑今日新泛化DDR的对比脚本并merge，Ac还剩46条未分析，其余皆分析完毕
 
-20：
-今日分析msg数：140
-今日发现issue数：2
-今日回传case数：2
-日报:
-1、分析新泛化case：DDR_SUB，124条均为差异
-2、分析今日新增Builtin的漏报误报，为推导rst的问题，已提issue：CDC-3783
-
-
-
-zwl
-今日分析msg数：
-今日发现issue数：1
+ZWL
+今日分析msg数：12
+今日发现issue数：
 今日回传case数：
 日报：
-1、使用预验收包跑小泛化的数据，与客户对齐参数
-2、协助艺豪分析cfg1_2中漏报误报数据，大多位reset cone的选择不一致导致；对此有个建议，对应多比特的reset cone，能不能报在低位上，比如ff[31:0],dest报在ff[0]上
-3、验证客户对GUI提出并已经develop的问题；11.11-其他-2和12.12-预验收-增量模式-1还有点问题，已和RD对齐
-4、测试group_comb_inst_mode
-group_comb_inst_min_count；已发issue CDC-gui-3772 CDC-3770
-
-20：
-今日分析msg数：163
-今日发现issue数：4
-今日回传case数：
-日报：
-1、测试group_comb_inst_mode
-group_comb_inst_min_count；已发CDC-gui-3779
-CDC-gui-3780
-2、分析门禁新setup_port01的漏报误报数据，为CDC-3785引起162条漏报误报，一条误报为CDC-3786 
-3、参加周会
+1、验证GUI 11.11-其他-2，12.12-预验收-增量模式-1两个问题，现已修复
+2、复现新泛化中误报multiflop的case，已复现；但发现是和射频中差不多的场景，是由于Dest处于另一条打拍链路中，因此SG不会报MultiFlop；先标Diff85，因为Ecdc是报source和打拍链存在crossing，并满足打拍数，就会报multiflop
+3、修改小泛化脚本的参数名，并跑验收包的数据
 
 JR
-今日分析msg数：126
-今日发现issue数：1
-今日回传case数：
-日报：
-1.分析新泛化setup中未分析的message，目前分析到的都是差异，都是由于SG报的虚拟时钟导致match不上；
-2.确认客户跑的csv中没反标上的message的原因，发现是因为我们脚本少抓了SG报的message导致的，对于少抓的这部分message，ECDC是报了的；
-3.GUI功能需求：在SG中，点击sgdc中的obj，能跳转到verilog中这个obj的对应位置，这个功能对分析复杂case有帮助，所以建议在ECDC中，点击sdc中verilog里存在的obj时，也能跳转到verilog中这个obj的对应位置，issue：CDC-gui-3774
-
-cxy
-今日分析msg数：
-今日发现issue数：1
-今日回传case数：
-日报：
-1.和艺豪debug ar脚本
-2.debug对比脚本，解决ac部分在新泛化上block的问题，回传修改代码回家
-3.跑builtin涉及到lint差异的rule和msg
-4.验证SETUP_QUALIFIER系列的case按照Diff500-tcl-built_in-060要求重新跑sg rpt之后是否会影响我们现在的标记结果，发现不会影响，替换这部分case的rpt
-5.验证家里新写的差异Diff18在setup部分，发现一个脚本问题，提issue回去
-
-20：
 今日分析msg数：
 今日发现issue数：2
-今日回传case数：
+今日回传case数：2
 日报：
-1.修复DDR_SUB模块跑脚本block的问题
-2.修复反标客户log时发现的Diff123 proc中enno行号不正确的问题
-3.proc Diff184会导致进入这个proc的case 的csv有msg漏写多写的问题，回传issue，将这个proc注释
+1.分析完成新泛化DDR_SUB中setup的message，都是差异；
+2.分析新泛化TOP_LGC，IntegrityClockConverge有问题，issue还在复现；
+3.在分析过程中发现，在setupport相关message中，右键点击连接blackbox的input port的open in incremental schematic，在incremental schematic中input port不能点出完整的电路，已复现并提issue：CDC-GEN-N-gui-289；
+4.在分析中发现，在sgdc中如果约束clock为clock -name TOP.U_TOP1.U_TOP2.U_TOP3.U_TOP4.U_TOP5.U_TOP6.U_TOP7.clk，那么clock和clock domain是同名的，但proc_sgdc脚本把clock转为TOP/U_TOP1/U_TOP2/U_TOP3/U_TOP4/U_TOP5/U_TOP6/U_TOP7/clk,却把domain转为TOP/U_TOP1.U_TOP2.U_TOP3.U_TOP4.U_TOP5.U_TOP6.U_TOP7.clk,实际上domain也应该转为TOP/U_TOP1/U_TOP2/U_TOP3/U_TOP4/U_TOP5/U_TOP6/U_TOP7/clk，已复现并提issue：CDC-GEN-N-290
 
-qjs
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：1.用12.19日的daily build跑大泛化三拍。AC、setup、Ar处于清零状态。conv存在随机性Issue CDC-GEN—B-267.回传数据。性能时间有下降，并且存在memory不稳定情况可能有不达标风险。
-2.用12.19日的daily build跑大泛化两拍。Ac反弹两个可能是随机性的message，Setup清零。conv存在issue和新增。回传数据。时间性能下降，  memory有变好。
-3.用12.19日的daily build跑门禁case。Ac清零，Builtin清零但今日有新标记Diff，Ar清零。Setup存在issue CDC-3654。回传数据。
-4.用12.19日的daily build跑小泛化。无新增.
-5.帮研发跑测试包，观察是否有新增。
-6.大泛化有脚本修改，多跑进行测试，没有新增。
-
-
-MCH
+CXY
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1、分析新增的SetupRstInferred，标记差异：
-Diff39-diff7-rst_inferred,7条
-Diff192-diff35-logic-optimization,2条
-Diff186-report29_rst_inferred,3条
-Diff5_bug1-mux_latch,10条
-2、协助家里Debug
+1.跑预交付的包，给csv给到熊路用于反标客户的log
+2.develop分支的包有的参数名改变了，对应修改现场脚本的cfg参数
+3.修改跑新泛化的脚本，适配可以指定多条rule，对应找到对应oldcsv的模式
+4.跑家里发到现场的Diff34，Diff183差异proc，debug差异proc中的问题，分析多标的情况是否合理
+5.处理熊路反标不上的case，分析原因
 
+CJR
+今日分析msg数：13
+今日发现issue数：
+今日回传case数：
+日报：1.分析cfg1_2\cfg1_1射频泛化setup误报漏报问题
+2.cfg1_2中，setupclknetundefined误报及clock_info05/clock_info05b漏报问题同CDC-GEN-B-cfg1_2-285
+3. 分析setupport漏报，属于差异Diff115
+4.复现CDC-GEN-B-cfg1_2-286，误报SetupPortFullyConstrained
 
+QJS
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：1.用12.23日的daily build跑大泛化三拍。AC、sAr处于清零状态。conv存在随机性Issue CDC-GEN—B-267.回传数据。由于今天参数改动需要更改配置，泛化的setup存在问题，在修复中。
+2.用12.23日的daily build跑大泛化两拍。Ac清零、conv存在issue和新增。由于今天参数改动需要更改配置，泛化的setup存在问题，在修复中
+3.用12.23日的daily build跑门禁case。Ac清零，Builtin有新增存在Issue：CDC-3783，Ar清零。Setup有新增，存在issue CDC-3654、CDC-3783、CDC-3785。回传数据。
+4.用12.23日的daily build跑小泛化。无新增.
+5.配置Lint在隔离区跑泛化的环境。目前测试已经可以跑通。
