@@ -2,68 +2,76 @@ XLL
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.适配导入平台单独运行统计脚本时如果没有找到sglog和ecdclog，对应数据处理为0
-2.适配导入平台脚本sg的rule选择功能
-3. 修改runsg运行成功失败的结果判断逻辑
-4. 现场测试Inhouse的diff proc——diff167
-5.梳理了下现场脚本工作，并排了优先级，根据优先级开展现场脚本工作
+日报：1.现场测试diff167，门禁case发现存在漏标和误标的情况，已回传issue，CDC-3792
+2.修复对接导入平台的脚本bug，主要是生成json文件相应数据的问题
+3.协助心雨修复泛化case中diff157未自动标上的问题
+4.重新run新泛化的6个case，转出TOP/的sdc文件，已完成6个，还有6个待完成
 
 HQ
-今日分析msg数：42
-今日发现issue数：1
-今日回传case数：1
-日报:
-1、修改新的配置，修改parameter名
-2、和心雨探讨跑新泛化对比脚本的流程，以及更改脚本逻辑
-3、分析新泛化DDR存在的脚本问题，Diff157未走proc的问题
-4、分析今日新增Builtin的漏报误报，为推导rst的问题，已提issue：CDC-3787
-5、跑今日新泛化DDR的对比脚本并merge，Ac还剩46条未分析，其余皆分析完毕
+
 
 ZWL
-今日分析msg数：12
-今日发现issue数：
+今日分析msg数：
+今日发现issue数：7
+今日回传case数：2
+日报：
+1、在射频上验证group_comb_inst_mode、group_comb_inst_min_count两个参数，发现CDC-gui-3788，CDC-gui-3790；
+2、使用22号的预验收包验证GUI常用操作，发现文档中 有一条描述不符合现状，在版本说明书和用户手册中都有“具备CDC和RDC验证功能”这句说明；但目前工具还不具备RDC验证功能；另外发现一个crash CDC-GEN-S-gui-294，使用Expand-》Outward，ctrl+z导致
+3、另外发现一个crash CDC-gui-3791；3个其他issue CDC-gui-3793、CDC-gui-3797、CDC-gui-3798
+
+LRF
+今日分析msg数：26
+今日发现issue数：6
 今日回传case数：
 日报：
-1、验证GUI 11.11-其他-2，12.12-预验收-增量模式-1两个问题，现已修复
-2、复现新泛化中误报multiflop的case，已复现；但发现是和射频中差不多的场景，是由于Dest处于另一条打拍链路中，因此SG不会报MultiFlop；先标Diff85，因为Ecdc是报source和打拍链存在crossing，并满足打拍数，就会报multiflop
-3、修改小泛化脚本的参数名，并跑验收包的数据
+1.分析Setup的新增误报漏报,共提6个issue
+a.CDC-3799 -- 不同时钟域的clock通过MUX汇聚连到时序器件的clock端，时序器件的clock为“常值”的情况下，不应该报SetupAsyncClkConvOnMux
+b.CDC-3800 -- 时序器件的clock为“常值”的情况下，不应该报SetupClkMuxNotRcvClk
+c.CDC-3801 -- 约束set_case_analysis 1 -objects [get_nets TOP/black_en[0]],约束中将常值约束在了net上.sg的行为是对于约在net上的
+常值，driven这条net的pin也为对应的常值，ecdc认为其driven这条net的pin不为常值,需确认ecdc的做法是否正确？可以跑下VC看下其结果.①是否常值不应该设在net上？②如果要设在net上，是否要适配sg？将其driven net的pin也设为常值？
+d.CDC-3802 -- 约束set_case_analysis 1 -objects [get_nets TOP/black_en[0]]，对于被set_case_analysis约束为常值的net，在电路图中点击此net，其attributes上无相关的常值信息（inferred_constant）
+e.CDC-gui-3794 -- 目前GUI界面没有一个保存工程文件的选项,只能通过File -> exit -> save的方法来保存工程文件，通过这种方法保存后，会退出当前工程.
+希望能在GUI界面有直接保存工程文件的选项，类似sg的File -> Save Project/Save Project As...
+f.CDC-GEN-N-292 -- 将泛化case跑出并打开GUI
+ -> 在流程图界面的read_design阶段点击reset
+ -> 在Terminal中source当前case的tcl(source xxx/xxx/xxx/xxx.tcl) -> 工具crash
 
 JR
 今日分析msg数：
 今日发现issue数：2
-今日回传case数：2
+今日回传case数：1
 日报：
-1.分析完成新泛化DDR_SUB中setup的message，都是差异；
-2.分析新泛化TOP_LGC，IntegrityClockConverge有问题，issue还在复现；
-3.在分析过程中发现，在setupport相关message中，右键点击连接blackbox的input port的open in incremental schematic，在incremental schematic中input port不能点出完整的电路，已复现并提issue：CDC-GEN-N-gui-289；
-4.在分析中发现，在sgdc中如果约束clock为clock -name TOP.U_TOP1.U_TOP2.U_TOP3.U_TOP4.U_TOP5.U_TOP6.U_TOP7.clk，那么clock和clock domain是同名的，但proc_sgdc脚本把clock转为TOP/U_TOP1/U_TOP2/U_TOP3/U_TOP4/U_TOP5/U_TOP6/U_TOP7/clk,却把domain转为TOP/U_TOP1.U_TOP2.U_TOP3.U_TOP4.U_TOP5.U_TOP6.U_TOP7.clk,实际上domain也应该转为TOP/U_TOP1/U_TOP2/U_TOP3/U_TOP4/U_TOP5/U_TOP6/U_TOP7/clk，已复现并提issue：CDC-GEN-N-290
-
+1.分析新泛化TOP_LGC，IntegrityClockConverge的误报不好复现，ECDC在泛化case里报的汇聚的instance是一个buffer，今天上午和对应开发视频讨论了这个问题，IntegrityClockConverge的漏报，是因为在SG中，如果两个clock相同的ff(out2和out3)汇聚在与门,且与门接在ff的clock pin,那么这两个ff(out2和out3)的output就会有clock属性，SG就会报Clock_converge01,但在ECDC中，这两个ff(out2和out3)的output没有clock属性，所以ECDC未报IntegrityClockConverge，已复现并提issue：CDC-GEN-N-293；
+2.解答了脚本同事对于Diff34这个差异的疑问
 CXY
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.跑预交付的包，给csv给到熊路用于反标客户的log
-2.develop分支的包有的参数名改变了，对应修改现场脚本的cfg参数
-3.修改跑新泛化的脚本，适配可以指定多条rule，对应找到对应oldcsv的模式
-4.跑家里发到现场的Diff34，Diff183差异proc，debug差异proc中的问题，分析多标的情况是否合理
-5.处理熊路反标不上的case，分析原因
+1.修复大泛化发现的脚本问题CDC-GEN-N-259
+2.修复大泛化中发现的脚本问题以及block问题，回传修复的代码
+3.发现今天随包的脚本中，有新的差异proc diff148,验证这块代码修改，发现关于这个差异，目前工具已经做的和三方工具一致了，目前不需要这个差异了
+4.和艺豪一起修复ar脚本问题
+5.统计交付包数据以及diff使用情况给川皓
+6.enhance diff157.enhance之后新泛化中还有一部分不能标上diff157，明天继续enhance
 
 CJR
-今日分析msg数：13
-今日发现issue数：
-今日回传case数：
-日报：1.分析cfg1_2\cfg1_1射频泛化setup误报漏报问题
-2.cfg1_2中，setupclknetundefined误报及clock_info05/clock_info05b漏报问题同CDC-GEN-B-cfg1_2-285
-3. 分析setupport漏报，属于差异Diff115
-4.复现CDC-GEN-B-cfg1_2-286，误报SetupPortFullyConstrained
+今日分析msg数：8
+今日发现issue数：1
+今日回传case数：1
+日报：
+1.分析cfg1_2\cfg1_1射频泛化setup误报漏报问题
+2.复现泛化cfg1_2误报SetupPortFullyConstrained(CDC-GEN-B-cfg1_2-287)，已回传。
+3.尝试复现SetupDataTiedToConst误报漏报问题，get_nets无法获取net信息导致脚本不匹配。
 
 QJS
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.用12.23日的daily build跑大泛化三拍。AC、sAr处于清零状态。conv存在随机性Issue CDC-GEN—B-267.回传数据。由于今天参数改动需要更改配置，泛化的setup存在问题，在修复中。
-2.用12.23日的daily build跑大泛化两拍。Ac清零、conv存在issue和新增。由于今天参数改动需要更改配置，泛化的setup存在问题，在修复中
-3.用12.23日的daily build跑门禁case。Ac清零，Builtin有新增存在Issue：CDC-3783，Ar清零。Setup有新增，存在issue CDC-3654、CDC-3783、CDC-3785。回传数据。
-4.用12.23日的daily build跑小泛化。无新增.
-5.配置Lint在隔离区跑泛化的环境。目前测试已经可以跑通。
+日报：1.用12.24日的daily build跑大泛化三拍。AC、Ar、conv、setup全部清零。回传性能数据。
+2.用12.24日的daily build跑大泛化两拍。Ac存在Issue有两条新增、conv存在issue和新增，setup清零。
+3.用12.24日的daily build跑门禁case。Ac清零，Builtin存在Issue：CDC-3783，Ar清零。Setup存在issue CDC-3654、CDC-3783、CDC-3785、CDC-3777、CDC-3778。回传数据。
+4.用12.24日的daily build跑小泛化。无新增.
+5.配置Lint在红区、隔离区跑泛化的环境。参加Lint会议，学习跑Lint现场测例的流程和注意事项。
+6.请客户帮忙传出16个CDC相关的文件。
+7.跑22日交付包大泛化两拍和三拍的性能数据，并回传。
