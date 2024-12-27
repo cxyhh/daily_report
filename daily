@@ -6,6 +6,13 @@ xll
 2.继续验证diff167，并在周会上讨论了diff167的实现，仅实现undriven的port作为ff的clock信号报出的相关message。
 3.分析现场case运行脚本后标记的diff167是否合理
 
+zwl
+今日分析msg数：63
+今日发现issue数：
+今日回传case数：
+日报：
+1、分析新泛化TSSC_WRAP中的ar、ac、setup部分，ar为差异diff73，ac为CDC-GEN-B-cfg1_2-280；setup中的setup_port01部分为file name不一致导致的，问题在与SG报在TOP层的design上，enno报在TOP.v里include的port.v中的design，导致file name不一致
+2、写小泛化的验收测试报告
 
 cjr
 今日分析msg数：
