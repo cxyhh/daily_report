@@ -1,3 +1,42 @@
-刘佳哥，我们现在的case集再和你确认一下：
-我们现在infer的会run 6757个case以及52个第三批case，uninfer的会run 2515个case；
-buildin的run了sg_result里面的6757个case和sg_result_only_run的2007个，其中有78个case重复；SGDC_qualiifer下面有218个；uninfer的有160个是只跑了unifner，但是抓了全量builtin的message；另外的2355个case只抓了时钟传播和复位传播的message
+xll
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：1.现场验证Inhouse传过来提升性能的脚本，发现默认的tcl版本没有Thread包，高一点的版本又Thread包，待继续验证
+2.继续验证diff167，并在周会上讨论了diff167的实现，仅实现undriven的port作为ff的clock信号报出的相关message。
+3.分析现场case运行脚本后标记的diff167是否合理
+
+
+cjr
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.统计泛化在cfg1_1,cfg1_2,cfg2配置下的setup、conv、Ac、Ar数据情况
+2.分析泛化cfg2的新增unmatch，属于Diff75差异
+3.分析两拍泛化conv
+4.file issue：CDC-gui-3803，建议优化工具搜索功能
+
+cxy
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.和家里讨论关于Diff18会在大泛化case上block的修改方法，在门禁以及大泛化上测试修改的代码
+2.用交付包跑射频cfg1_1,cfg1_2,cfg2的conv结果，测试用2拍的oldcsv跑，反标内容和用3拍的oldcsv比无明显优化
+3.和客户对齐门禁新参数情况，以及case集修改情况
+4.用交付包跑门禁新参数结果
+5.用新交付包跑门禁case，统计数据，标记新出现的diff
+
+qjs
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：1.用12.26日的daily build跑大泛化三拍。AC、Ar、setup全部清零。Conv存在随机性Issue：CDC-GEN-B-267，回传性能数据。
+2.用12.26日的daily build跑大泛化两拍。Ac存在Issue283、284、281,conv存在issue245、256、263、264、266和新增，setup有三条Unmatched。回传Issue和性能数据。
+3.用12.26日的daily build跑门禁case。setup存在Issue：3785、3801，三个漏报。Builtin存在Issue：3783、3787，八个新增。回传Issue和误报漏报率。
+4.用12.26日的daily build跑小泛化。无新增.
+5.配置Lint在红区、隔离区跑泛化的环境。跑lint在隔离区的case，回传Lint隔离区的对比数据。
+6.整理交付包泛化和门禁的数据并回传。
+7.跑何琴和子奇的测试包，出对比和误报漏报结果。
+8.整理21个CDC相关的CSV文件并客户帮忙传到黄区。
