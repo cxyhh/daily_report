@@ -2,48 +2,79 @@ xll
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.现场验证Inhouse传过来提升性能的脚本，发现默认的tcl版本没有Thread包，高一点的版本又Thread包，待继续验证
-2.继续验证diff167，并在周会上讨论了diff167的实现，仅实现undriven的port作为ff的clock信号报出的相关message。
-3.分析现场case运行脚本后标记的diff167是否合理
+日报：1.修复对接导入平台的bug，主要是对sg的rule支持，以及测试过程中的异常情况覆盖（如果中途出错，没有执行结束语句，同样是失败的），以准备判断sg的运行结果成功还是失败
+2.现场验证并分析diff167，目前已按周四周会讨论的情况做好了
+3.协助心雨修复新泛化发现的应该match而没有match的脚本bug
+4.现场调研Thread包的使用，目前已能手动在工具里使用Thread包，下一步做到脚本里
+5.Review导入平台自测试报告，并给出修改意见；修改了导入平台需求说明文档。
 
-zwl
-今日分析msg数：63
+HQ
+今日分析msg数：163
 今日发现issue数：
 今日回传case数：
 日报：
-1、分析新泛化TSSC_WRAP中的ar、ac、setup部分，ar为差异diff73，ac为CDC-GEN-B-cfg1_2-280；setup中的setup_port01部分为file name不一致导致的，问题在与SG报在TOP层的design上，enno报在TOP.v里include的port.v中的design，导致file name不一致
-2、写小泛化的验收测试报告
+1、分析门禁每日新增漏报误报
+2、分析新配置门禁漏报误报及残余issue，已全部解决，没有遗留issue
+3、改进执行脚本，尝试在使用以前软件包的时候可以自动获取到当时的参数名，因为现在参数名一变，跑以前的包就十分麻烦
+
+zwl
+今日分析msg数：251
+今日发现issue数：4
+今日回传case数：1
+日报：
+1、分析TSSC_WRAP中的setup_port01 unmatch的部分，为issue CDC-GEN-N-301；clock_info03b unmatch部分，为差异diff75；Ac_conv01的误报漏报，发现ECDC比SG多报两条路径的sync；并且converge 点位也不同，暂不清楚是不是差异
+2、分析cfg1跑出来误报漏报Setup_port01的message，验证回归CDC-cfg1-3758、CDC-cfg1-3759、CDC-cfg1-3760三个issue，均已修复；其中新增Diff115、、Diff34和DIff186的差异；setup_port01这个版本没有新增issue
+3、参数周会
+
+
+LRF
+今日分析msg数：56
+今日发现issue数：2
+今日回传case数：
+日报：
+1.和子奇一起分析射频泛化两拍的conv问题，等待何琴的新包进行验证
+2.分析3套cfg的误报漏报
+a.CDC-GEN-B-cfg1_2-303 -- cdc.conv_max_seq_depth参数未与三方工具参数对齐 -- sg的参数conv_sync_seq_depth的value为"0"的时候，其能穿过时序器件的数量无限制
+ecdc的参数cdc.conv_max_seq_depth的value为"0"的时候，其能穿过时序器件的数量为"0"
+b.CDC-GEN-B-cfg1_2-304 -- cdc.conv_max_seq_depth参数未生效 -- 将cdc.conv_max_seq_depth的value设为999(set_param cdc.conv_max_seq_depth 999),参数未生效
+
+JR
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.分析门禁cfg1中setup新增的message，已分析完成，都是差异；
+2.参加CA周会
 
 cjr
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.统计泛化在cfg1_1,cfg1_2,cfg2配置下的setup、conv、Ac、Ar数据情况
-2.分析泛化cfg2的新增unmatch，属于Diff75差异
-3.分析两拍泛化conv
-4.file issue：CDC-gui-3803，建议优化工具搜索功能
+1.统计两拍泛化的setup、conv、Ac、Ar数据情况
+2.分析两拍泛化conv，新增三条unmatch属于差异
+3.file issue：CDC-GEN-B-305，CDC-GEN-B-2-302
+4.分析回归泛化cfg1_1/cfg1_2
+5.CDC-GEN-B-cfg1_1-282,现场复现的case没有修复，泛化也没有修复，待确认问题（case问题or没有合入）
+6.CDC-GEN-B-cfg1_2-285需要reopen
 
 cxy
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.和家里讨论关于Diff18会在大泛化case上block的修改方法，在门禁以及大泛化上测试修改的代码
-2.用交付包跑射频cfg1_1,cfg1_2,cfg2的conv结果，测试用2拍的oldcsv跑，反标内容和用3拍的oldcsv比无明显优化
-3.和客户对齐门禁新参数情况，以及case集修改情况
-4.用交付包跑门禁新参数结果
-5.用新交付包跑门禁case，统计数据，标记新出现的diff
+1.现场验证家里的差异proc diff112,和子奇了解差异Diff112的具体含义以及判断逻辑，反馈给海洋
+2.验证家里的差异proc diff34，修改diff34在现场跑全量case时发现的block，补充diff34的逻辑
+3.修复新泛化上发现的脚本不match问题
+4.和家里对接交付包在门禁case上的数据情况，包括差异数，rule等情况
 
 qjs
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.用12.26日的daily build跑大泛化三拍。AC、Ar、setup全部清零。Conv存在随机性Issue：CDC-GEN-B-267，回传性能数据。
-2.用12.26日的daily build跑大泛化两拍。Ac存在Issue283、284、281,conv存在issue245、256、263、264、266和新增，setup有三条Unmatched。回传Issue和性能数据。
-3.用12.26日的daily build跑门禁case。setup存在Issue：3785、3801，三个漏报。Builtin存在Issue：3783、3787，八个新增。回传Issue和误报漏报率。
-4.用12.26日的daily build跑小泛化。无新增.
+日报：1.用12.27日的daily build跑大泛化三拍。AC、Ar、setup全部清零。性能不达标，回传性能数据。
+2.用12.27日的daily build跑大泛化两拍。Ac存在Issue283、284、281,conv存在issue245、256、263、264、266和新增，setup清零。回传Issue和性能数据。
+3.用12.27日的daily build跑门禁case。setup存在Issue：3785、3801，15个新增误报漏报。Builtin清零。回传Issue和误报漏报率。
+4.用12.27日的daily build跑小泛化。无新增.
 5.配置Lint在红区、隔离区跑泛化的环境。跑lint在隔离区的case，回传Lint隔离区的对比数据。
-6.整理交付包泛化和门禁的数据并回传。
-7.跑何琴和子奇的测试包，出对比和误报漏报结果。
-8.整理21个CDC相关的CSV文件并客户帮忙传到黄区。
+6.整理门禁数据，请客户帮忙传文件到黄区。
