@@ -1,48 +1,56 @@
+XLL
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：1.脚本适配比对时使用Thread包来写csv的场景，并请心雨run新泛化的性能；run出了一版数据，使用了Thread包的数据反而慢了半个多小时。为了避免是脚本差异导致的，在相同脚本的基础上仅修改使用Thread包的场景，再次run case，数据暂未出
+2.与李丹预约导入平台测试报告评审时间
+3.参加All-hands会议
 
+ZWL
+今日分析msg数：36
+今日发现issue数：
+今日回传case数：
+日报：
+1、回归CDC-3785 develop后还存在漏报误报的message，其中8条为sg log问题，剩下的为Diff34的综合差异
+2、分析泛化中cfg1_2跑出来漏报ArSync和Reset_sync02，主要原因是由于SG的enable_generated_clocks导致，其中漏报ArSync是由于打拍之后用到的flop的clock变成了generated_clock生成的clock，与打拍链的clock不一致导致脚本匹配不上；漏报Reset_sync02是由于generated_clocks生成的clock与reset信号产生了crossing
+3、编写小泛化的性能监控脚本
 
 LRF
-今日分析msg数：8
+今日分析msg数：56
+今日发现issue数：1
+今日回传case数：1
+日报：
+1.分析新泛化DDR_SUB的Ac的误报漏报，经已分析的message来看，都为差异Diff8/Diff157
+2.协助何琴跑debug包，并分析相关数据
+3.和家荣一起看一个Ac的误报，初步认为是issue，待与RD确认
+4.提了一个GUI的issue
+CDC-gui-3811 -- 电路图搜索功能异常
+
+JR
+今日分析msg数：
 今日发现issue数：1
 今日回传case数：
 日报：
-1.用12/28的develop包分析cfg2的Ac_conv的误报漏报（cdc.conv_max_seq_depth为3），相较于标准配置（cdc.conv_max_seq_depth为1）,cfg2配置下的ecdc报了833条Ac_conv02(标准配置下报835条Ac_conv02).因为cdc.conv_max_seq_depth的参数更改在正常情况下不会影响Ac_conv02，所以工具算法仍然存在bug，与子奇讨论后，先暂停Ac_conv的分析，等待何琴和子奇算法修改后再开展Ac_conv的分析
-2.跑何琴的new_depth的分支包，工具的memory的内存一直上涨，会超出集群的极限，导致集群崩溃 -- 相关问题已反馈给何琴
-3.协助何琴统计并收集new_depth包的相关数据
-4.发现一个GUI的issue:
-Violation Diff中Removed Messages中的PinList如果有多个元素的情况，其显示结果为元素与元素之间以空格分开，呈一行显示，正常显示应该是元素之间换行显示
+1.分析新泛化TOP_LGC，SetupAsyncClkConvOnMux都是差异，因为ECDC综合出的是有mux功能的与门加或门，输出连在了ff的clock pin，所以function mux的所有input pin所连的ff的输出都可以推为clock，但SG综合出的是物理mux，所以mux的选择端所连的ff不能推为clock，从而导致ECDC多报了SetupAsyncClkConvOnMux；还分析了SetupDataTiedToConst,目前分析到的都是差异；
+2.在分析过程中发现一个issue：打开原理图，按住鼠标滚轮，在SG中，可以将整张原理图上下左右移动到任意位置，甚至移出屏幕，将整张原理图左移或右移，可以将原理图最左边或最右边的instance/pin/port/net不放大也能移动到中间，将最左边或最右边的instance/pin/port/net移动到中间后，放大或缩小instance/pin/port/net仍然在中间不会左右移动，但ECDC不能，这样对于看比较长的电路图不方便，已提issue：CDC-gui-3810
 
-JR
-今日分析msg数：45
-今日发现issue数：
+CXy
+今日分析msg数：
+今日发现issue数：1
 今日回传case数：
 日报：
-1.检查门禁交付的ac、ar、setup和builtin的csv，处理了ac的三个冲突，补充了setup中没有分析描述和截图的message的分析描述和截图；
-2.分析门禁cfg2中未分析的message，已分析完成，只有一条message是之前提过的issue，其他都是差异，分析完成后回归了issue，发现一个issue家里的case有问题，参数也没有配置完整，已修改正确
+1.刷新部分case的rpt
+2.跑门禁新参数cfg1，cfg2，统计数据。目前cfg1，cfg2误报漏报数据均清零 
+3.验证diff167新的修改，diff167目前修复了上周会漏msg的情况，但是还存在误标的情况
+4.验证家里的diffproc，diff183，diff72、diff45和Diff132，目前diff183，diff72标记无问题，diff45未标上，diff132存在场景未覆盖完全的情况
+5.用大泛化TOP_LGC模块测试家里的脚本性能优化部分.性能无明显优化，反而跑对比脚本的时间还加长了
+6.在debug家里写的差异proc时，分析发现之前写的diff147差异存在bug，与差异PPT上实际表达的内容不符，提issue CDC-3812
 
-cjr
+CJR
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.分析统计回归射频RF cfg1_1：
-1.1 AC：已对接家里Reopen and comment CDC-GEN-B-cfg1_1-282。
-1.2 setup不匹配10条。CDC-GEN-B-cfg1_1-282(SetupPortNoConstraint:Setup_port01，8条)
-CDC-GEN-B-305(SetupDataTiedToConst：clock_info03b,2条)
-2.分析统计回归射频RF cfg1_2：
-2.1 Ac：回归CDC-GEN-B-cfg1_2-288：294条（Diff71-report6-black_box）
-2.2 Setup：对接研发反馈CDC-GEN-B-cfg1_2-285（共49条不匹配）的问题。
-3.分析统计回归射频RF cfg2：
-3.1 Setup：标注CDC-GEN-B-305(SetupDataTiedToConst：clock_info03b,2条)
-4.统计3拍泛化性能：跑了14次，平均Peak Mem 15048.18867 MB，平均CPU Time 733.1541667 秒。
-
-cxy
-今日分析msg数：
-今日发现issue数：2
-今日回传case数：
-日报：
-1.测试家里写的diff183，diff108，diff112差异proc。目前diff108测试通过，diff112完成在Ac_conv03上标记成功，diff183未成功标记差异
-2.解决28号随包脚本跑setup会block的问题
-3.和艺豪一起解决save-date功能在大泛化上跑ac失败的问题
-4.验证随包过来的差异proc diff167存在误标的情况，分析误标场景，提issue
-
-
+1.分析射频RF cfg1_2 Ac误报漏报问题。
+2.复现误报AcNoSyncScheme，CDC-GEN-B-cfg1_2-306已回传。在配置cfg1_2下，ECDC误报AcNoSyncScheme。SG报Ac_sync02（recirculation flop），同时，ECDC将这条不同步的路径识别为control path。
+3.分析setupclkglitch问题
