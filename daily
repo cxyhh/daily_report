@@ -1,56 +1,42 @@
-XLL
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：1.脚本适配比对时使用Thread包来写csv的场景，并请心雨run新泛化的性能；run出了一版数据，使用了Thread包的数据反而慢了半个多小时。为了避免是脚本差异导致的，在相同脚本的基础上仅修改使用Thread包的场景，再次run case，数据暂未出
-2.与李丹预约导入平台测试报告评审时间
-3.参加All-hands会议
-
-ZWL
-今日分析msg数：36
-今日发现issue数：
-今日回传case数：
+HQ
+今日分析msg数：51
+今日发现issue数：6
+今日回传case数：6
 日报：
-1、回归CDC-3785 develop后还存在漏报误报的message，其中8条为sg log问题，剩下的为Diff34的综合差异
-2、分析泛化中cfg1_2跑出来漏报ArSync和Reset_sync02，主要原因是由于SG的enable_generated_clocks导致，其中漏报ArSync是由于打拍之后用到的flop的clock变成了generated_clock生成的clock，与打拍链的clock不一致导致脚本匹配不上；漏报Reset_sync02是由于generated_clocks生成的clock与reset信号产生了crossing
-3、编写小泛化的性能监控脚本
+1、分析客户提出的质疑，一共有9条，分析6条，有5条是对于case，停与不停，Enno和SG不一致，所以这些message也认为没有匹配，客户不太清楚；还有一条是sdc文件转化的问题：clock后面不加-domain，我们就会认为domain是加TOP/的，但是如果加了-doamin，且指定为TOP.xxx，我们就不会把这个TOP.转化为TOP/，导致出现了问题
+2、分析今日门禁漏报误报：builtin提出issue：CDC-3826，setup为脚本问题，和心雨探讨修复；今日有167个case crash，提了两个issue：CDC-3829,CDC-3830
+3、帮助刘玲分析Diff71的proc逻辑，并提issue：CDC-3836
 
 LRF
-今日分析msg数：56
+今日分析msg数：28
 今日发现issue数：1
-今日回传case数：1
+今日回传case数：
 日报：
-1.分析新泛化DDR_SUB的Ac的误报漏报，经已分析的message来看，都为差异Diff8/Diff157
-2.协助何琴跑debug包，并分析相关数据
-3.和家荣一起看一个Ac的误报，初步认为是issue，待与RD确认
-4.提了一个GUI的issue
-CDC-gui-3811 -- 电路图搜索功能异常
+1.整理泛化射频case的中标Diff206的message,将ecdc误报的Ac_conv01/02的电路图用sg的电路图展示出来,已将3拍的的整理完成,整理过程中尝试寻找sg为啥不报的原因（持续调研中）,整理过程中发现当电路图很大时，ecdc很难操作，问题与CDC-gui-3810相关，希望能尽快实现
+2.提了一个gui的issue
 
 JR
 今日分析msg数：
 今日发现issue数：1
-今日回传case数：
+今日回传case数：1
 日报：
-1.分析新泛化TOP_LGC，SetupAsyncClkConvOnMux都是差异，因为ECDC综合出的是有mux功能的与门加或门，输出连在了ff的clock pin，所以function mux的所有input pin所连的ff的输出都可以推为clock，但SG综合出的是物理mux，所以mux的选择端所连的ff不能推为clock，从而导致ECDC多报了SetupAsyncClkConvOnMux；还分析了SetupDataTiedToConst,目前分析到的都是差异；
-2.在分析过程中发现一个issue：打开原理图，按住鼠标滚轮，在SG中，可以将整张原理图上下左右移动到任意位置，甚至移出屏幕，将整张原理图左移或右移，可以将原理图最左边或最右边的instance/pin/port/net不放大也能移动到中间，将最左边或最右边的instance/pin/port/net移动到中间后，放大或缩小instance/pin/port/net仍然在中间不会左右移动，但ECDC不能，这样对于看比较长的电路图不方便，已提issue：CDC-gui-3810
+1.处理客户提出的差异标记不合理的message；
+2.分析新泛化TOP_LGC中的SetupDataTiedToConst，目前分析到的都是差异；
+3.分析关闭cdc.reduce_mux_with_constant_input后新增的message，目前分析到的都是综合差异导致的误报漏报，有mux_and的综合差异，还有其他综合差异，其中有个case，ECDC综合为输入是常值的mux，SG综合为inverter，导致误报漏报，已提issue：CDC-3832
 
 CXy
-今日分析msg数：
-今日发现issue数：1
-今日回传case数：
-日报：
-1.刷新部分case的rpt
-2.跑门禁新参数cfg1，cfg2，统计数据。目前cfg1，cfg2误报漏报数据均清零 
-3.验证diff167新的修改，diff167目前修复了上周会漏msg的情况，但是还存在误标的情况
-4.验证家里的diffproc，diff183，diff72、diff45和Diff132，目前diff183，diff72标记无问题，diff45未标上，diff132存在场景未覆盖完全的情况
-5.用大泛化TOP_LGC模块测试家里的脚本性能优化部分.性能无明显优化，反而跑对比脚本的时间还加长了
-6.在debug家里写的差异proc时，分析发现之前写的diff147差异存在bug，与差异PPT上实际表达的内容不符，提issue CDC-3812
-
-CJR
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.分析射频RF cfg1_2 Ac误报漏报问题。
-2.复现误报AcNoSyncScheme，CDC-GEN-B-cfg1_2-306已回传。在配置cfg1_2下，ECDC误报AcNoSyncScheme。SG报Ac_sync02（recirculation flop），同时，ECDC将这条不同步的路径识别为control path。
-3.分析setupclkglitch问题
+1.测试参数cdc.reduce_mux_with_constant_input设为false后的结果，统计数据
+2.帮助蒋蕊处理部分客户认为标记diff不合理的case
+3.随包脚本中有一些diff修改和增加，验证这部分diff是否合理（diff167，diff124，diff108）。验证家里写的diff proc，diff72，diff132。
+4.修改统计脚本，适配在统计数据中展示去掉issue后的误报漏报率
+
+CJR
+今日分析msg数：
+今日发现issue数：
+今日回传case数：1
+日报：1.分析两拍泛化新增漏报误报，已标注为差异
+2.复现CDC-GEN-B-cfg1_2-307、CDC-GEN-B-cfg1_2-308
