@@ -6,11 +6,11 @@ XLL
 2.熟悉导入平台专用的统计脚本
 
 ZWL
-今日分析msg数：74
+"今日分析msg数：74
 今日发现issue数：2
 今日回传case数：
 日报：
-分析TSSC_WRAP中误报SetupDataTiedToConst的message，都是由于ecdc会推断reset生效后是否是常值导致差异Diff71和diff172
+分析TSSC_WRAP中误报SetupDataTiedToConst的message，都是由于ecdc会推断reset生效后是否是常值导致差异Diff71和diff172；另外请提高CDC-gui-3805的优先级，把常值传播的源头画进增量原理图，包括一些常值经过flop再传到下一个flop的情况，也需要把最初的源头画出来；因为TSSC_WRAP中有误报一千7百多条误报，分析量比较大，目前在把同行号同文件的message抽几条查看，如果都是常值传播，就把这部分同文件同行号部分标为同一差异"
 
 LRF
 今日分析msg数：58
