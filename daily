@@ -2,56 +2,56 @@ XLL
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.与熊路交接Python的统计脚本（包含导入平台专用的统计脚本）
-2.熟悉导入平台专用的统计脚本
+日报：1.与李丹会议讨论将sg的current_goal中已经开启的rule和message id的对应关系等以用户手册的形式告知客户。这个方案用来解决先前发现的问题：当前SG使用的current_goal中已经自动开启了很多rule，如果用户手动配置的rule在sg中已经开启，对sg来说已经开启的所有rule都会报，不仅仅是用户手动配置的这几个，但是对ecdc来说就只报用户配置的这几个message id，这就会导致我们有很多误报。
+2.熟悉python统计脚本，新加了对输入的rule的判断和对标记为CDC-XXX的内容认为是match的部分逻辑，并进行了测试
 
 ZWL
-"今日分析msg数：74
-今日发现issue数：2
+今日分析msg数：12
+今日发现issue数：
 今日回传case数：
 日报：
-分析TSSC_WRAP中误报SetupDataTiedToConst的message，都是由于ecdc会推断reset生效后是否是常值导致差异Diff71和diff172；另外请提高CDC-gui-3805的优先级，把常值传播的源头画进增量原理图，包括一些常值经过flop再传到下一个flop的情况，也需要把最初的源头画出来；因为TSSC_WRAP中有误报一千7百多条误报，分析量比较大，目前在把同行号同文件的message抽几条查看，如果都是常值传播，就把这部分同文件同行号部分标为同一差异"
+1、分析TSSC_WRAP中的误报SetupDataTiedToConst，还是差异导致
+2、配置python环境，交接python merge脚本，熟悉脚本内容
 
 LRF
-今日分析msg数：58
-今日发现issue数：2
+今日分析msg数：56
+今日发现issue数：
 今日回传case数：
 日报：
-1.协助子奇一起分析并整理ecdc多报的Ac_conv01/02的电路原理图
-2.分析将参数cdc.reduce_mux_with_constant_inputs设为false后的Ac和builtin的新增误报漏报，存在问题和差异为
-CDC-3832/CDC-3838/Diff24
-3.分析门禁新增的相关误报漏报 -- 进行中
-4.分析clock的创建和传播的相关问题，希望研发能讲解一下其基本逻辑，大概涉及以下几点：
-①clock的创建与传播
-②SetupClkInferred和infer clock之间的联系，以及哪些infer的clock能成功创建
-③clock和data clock之间的区别与联系
-④哪些message会涉及data clock
-......
+1.分析1/7的门禁的新增误报漏报，存在两个issue
+CDC-3826/CDC-3847
+2.与蒋蕊和苏黎讨论时钟传播的的相关问题
+3.协助子奇分析泛化两拍同步中Ac_conv03的误报问题
+4.分析新泛化TOP_LGC的Ac的误报漏报，已标记差异为DIff8
+5.帮助心雨分析Diff80的proc的问题
 
 JR
 今日分析msg数：
-今日发现issue数：1
-今日回传case数：
+今日发现issue数：2
+今日回传case数：1
 日报：
-1.分析完成关闭cdc.reduce_mux_with_constant_input后SETUP新增的误报漏报，新增的误报漏报主要是因为综合差异导致的，ECDC综合出的是输入为常值的mux，SG综合出的是and/or/buf/inverter，还有一些新增的误报漏报是Diff209这个差异；
-2.分析今日门禁新增的误报漏报，setup新增的误报漏报大部分是因为foreach导致在read_cdc报错，从而没有继续检查，出现漏报；
-3.在分析过程中发现一个问题，当net和port同名时，在SG中，set_case_analysis既会约束在net上，也会约束在port上，但在ECDC中脚本转换的set_case_analysis只会约束在port上，建议这种情况sdc也net和port都约束，已提issue：CDC-3838
+1.分析门禁新增的误报漏报，主要有三个问题，第一个是如果sdc中有foreach，则ECDC会在read_cdc报CmdFailedInvalidObjArg，导致新增很多误报漏报，已提issue：CDC-3847，第二个是AC新增的误报漏报很多是与门同步有问题，实际应该报与门同步，但ECDC报的是InvalidGate，已提issue：CDC-3846，第三个是之前提过的issue：CDC-3826；
+2.分析新泛化TOP_LGC中未分析的message，目前分析到的都是差异；
+3.和瑞风、苏黎讨论时钟传播相关问题
 
 CXy
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.修改统计脚本，完成ar部分的统计脚本，并且适配在统计数据中展示去掉issue后的误报漏报率
-2.验证家里发来的diff，diff45,diff142，diff198.目前diff45还需要加强这个diff不比较告警级别的部分，diff142出现很多对clock_info01的误标，还需要再修改。diff198无漏标误标可以上库
-3.补充完diff112关于rule clock_converge01的部分
+1.验证Clock_glitch05新的解析代码，已回传
+2.修复新泛化Ac 有部分rule match不上的问题，代码已回传
+3.验证家里新写的diff，diff72，diff142.目前diff72无漏标，误标的情况，可以上库，diff142在black_box和Clock_info01这两条rule的标记上无问题，可以上库
+4.debug 最新的对比脚本中出现的setup_port删除错误的原因，发现是由于diff183的加入导致的，已反馈给康凯
+5，验证家里修改的diff，diff80，diff157，diff183。验证过程中发现，diff80这个proc写的不合理，并且这个差异只适用于差异PPT上提到的那唯一一个case，所以对比脚本这边需要删除这个差异proc，之前走到diff80这个proc的case，目前用到差异proc，diff91去覆盖。修改后的diff157、diff183无问题，diff157条件改严格后会出现新的误报漏报，和瑞风分析发现属于另一条diff，不影响数据
 
 CJR
 今日分析msg数：
-今日发现issue数：3
-今日回传case数：3
+今日发现issue数：2
+今日回传case数：1
 日报：
-1.回归cfg1_1,cfg1_2,cfg2配置下泛化误报漏报，分析新增问题
-2.（cfg1_2）由于clock_prop_through_seq参数的影响导致了时钟信息会误穿FF，因此会影响泛化误报漏报，已经和研发讨论。目前已经复现且回传了CDC-GEN-B-cfg1_2-313，CDC-GEN-B-cfg1_2-314，这两个issue都是由于此参数的影响导致ECDC会穿FF，SG不会穿。
-3.和DB讨论演示CDC-GEN-B-305问题
-4.回传CDC-GEN-B-cfg1_2-308。
+1.和DB讨论及复现CDC-GEN-B-305的问题，由于结构体和某个信号名相同时，则get_nets无法拿到这个信号。
+2.分析泛化cfg1_2新增的误报漏报，对于ac、setup，抽样分析结果为由于时钟信息推断的不正确导致了较多的误报漏报，这些问题同ISSUE CDC-GEN-B-cfg1_2-313，CDC-GEN-B-cfg1_2-314相同，case已回传。待1月9号新包验证。
+3.GUI Message Summary搜索功能使用问题：
+3.1.CDC-gui-3844：当Message Summary框里面的msg数量较多时，通过CTRL + f唤出搜索框，则搜索框始终会遮挡住最下面的一条msg。
+3.2.CDC-gui-3845：当在Message Summary框里面通过CTRL + f唤出搜索框，然后将滚动条滚动至任意位置，再关掉搜索框，则滚动条会复位到最开始的第一条信息处。那么在较多的msg情况下，对于定位到的信息，关闭搜索框又丢失了，需要重新翻阅信息查找。
