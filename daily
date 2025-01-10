@@ -2,56 +2,54 @@ XLL
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.与李丹会议讨论将sg的current_goal中已经开启的rule和message id的对应关系等以用户手册的形式告知客户。这个方案用来解决先前发现的问题：当前SG使用的current_goal中已经自动开启了很多rule，如果用户手动配置的rule在sg中已经开启，对sg来说已经开启的所有rule都会报，不仅仅是用户手动配置的这几个，但是对ecdc来说就只报用户配置的这几个message id，这就会导致我们有很多误报。
-2.熟悉python统计脚本，新加了对输入的rule的判断和对标记为CDC-XXX的内容认为是match的部分逻辑，并进行了测试
+日报：1.与海洋现场调试diff71，处理遇到的漏标和误标问题，并已回传修改脚本
+2.新增了对接导入平台脚本的超时提示信息功能
 
 ZWL
-今日分析msg数：12
-今日发现issue数：
+今日分析msg数：4
+今日发现issue数：1
 今日回传case数：
 日报：
-1、分析TSSC_WRAP中的误报SetupDataTiedToConst，还是差异导致
-2、配置python环境，交接python merge脚本，熟悉脚本内容
+分析SetupRstInferred，不同点有SG的type没有infer primary/derived两种infer类型，而ecdc有；第二SG的type后的类型会根据infer类型改变为set/clear，而ecdc一直是关键字reset；
+问题点在于flop的输出同时infer为同步置位与同步复位信号，还出现多条路径，导致ecdc画的增量原理图很大很多obj，还穿过许多flop，很难确认自身行为是否正确，而SG则是画的infer reset到flop，中间未穿过flop；第二点脚本未抓到SG报的message
 
 LRF
-今日分析msg数：56
-今日发现issue数：
+今日分析msg数：687
+今日发现issue数：1
 今日回传case数：
 日报：
-1.分析1/7的门禁的新增误报漏报，存在两个issue
-CDC-3826/CDC-3847
-2.与蒋蕊和苏黎讨论时钟传播的的相关问题
-3.协助子奇分析泛化两拍同步中Ac_conv03的误报问题
-4.分析新泛化TOP_LGC的Ac的误报漏报，已标记差异为DIff8
-5.帮助心雨分析Diff80的proc的问题
+1.分析BCP_TSS的除SetupDataTiedToConst的剩余message,发现其剩余的message大部分都与常值相关
+2.分析TOP_LGC的AC的相关误报漏报，大部分差异为Diff155(版本差异)
+a.发现一个Ac的issue，正在定位相关问题
+3.了解CDC检查中Ar的相关检查
 
 JR
-今日分析msg数：
-今日发现issue数：2
-今日回传case数：1
+今日分析msg数：114
+今日发现issue数：1
+今日回传case数：
 日报：
-1.分析门禁新增的误报漏报，主要有三个问题，第一个是如果sdc中有foreach，则ECDC会在read_cdc报CmdFailedInvalidObjArg，导致新增很多误报漏报，已提issue：CDC-3847，第二个是AC新增的误报漏报很多是与门同步有问题，实际应该报与门同步，但ECDC报的是InvalidGate，已提issue：CDC-3846，第三个是之前提过的issue：CDC-3826；
-2.分析新泛化TOP_LGC中未分析的message，目前分析到的都是差异；
-3.和瑞风、苏黎讨论时钟传播相关问题
+1.和艺豪讨论常值推导脚本自动化方案；
+2.分析新泛化TOP_LGC中未分析的message，unmatch部分分析完成，目前分析到的都是差异；
+3.在SG中，双击一条message，打开这条message的incremental schematic,点击原理图下方message中的obj，incremental schematic中的obj的对应位置会变色，这样能帮助用户快速定位obj在原理图中的具体位置，所以建议ECDC增加这个功能，在ECDC中点击message，点击下方schematic打开原理图，点击Details的Message Objects中的obj时，原理图的对应位置也会变色，已提issue：CDC-gui-3848
 
 CXy
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.验证Clock_glitch05新的解析代码，已回传
-2.修复新泛化Ac 有部分rule match不上的问题，代码已回传
-3.验证家里新写的diff，diff72，diff142.目前diff72无漏标，误标的情况，可以上库，diff142在black_box和Clock_info01这两条rule的标记上无问题，可以上库
-4.debug 最新的对比脚本中出现的setup_port删除错误的原因，发现是由于diff183的加入导致的，已反馈给康凯
-5，验证家里修改的diff，diff80，diff157，diff183。验证过程中发现，diff80这个proc写的不合理，并且这个差异只适用于差异PPT上提到的那唯一一个case，所以对比脚本这边需要删除这个差异proc，之前走到diff80这个proc的case，目前用到差异proc，diff91去覆盖。修改后的diff157、diff183无问题，diff157条件改严格后会出现新的误报漏报，和瑞风分析发现属于另一条diff，不影响数据
+1.更新现场大泛化和门禁的对比脚本
+2.验证家里写的新的差异proc。diff7，diff143，均没有问题，可以上库
+3.参加脚本周会
+4.修复diff112重复写pass的问题
 
 CJR
-今日分析msg数：
-今日发现issue数：2
-今日回传case数：1
+今日分析msg数：150
+今日发现issue数：
+今日回传case数：
 日报：
-1.和DB讨论及复现CDC-GEN-B-305的问题，由于结构体和某个信号名相同时，则get_nets无法拿到这个信号。
-2.分析泛化cfg1_2新增的误报漏报，对于ac、setup，抽样分析结果为由于时钟信息推断的不正确导致了较多的误报漏报，这些问题同ISSUE CDC-GEN-B-cfg1_2-313，CDC-GEN-B-cfg1_2-314相同，case已回传。待1月9号新包验证。
-3.GUI Message Summary搜索功能使用问题：
-3.1.CDC-gui-3844：当Message Summary框里面的msg数量较多时，通过CTRL + f唤出搜索框，则搜索框始终会遮挡住最下面的一条msg。
-3.2.CDC-gui-3845：当在Message Summary框里面通过CTRL + f唤出搜索框，然后将滚动条滚动至任意位置，再关掉搜索框，则滚动条会复位到最开始的第一条信息处。那么在较多的msg情况下，对于定位到的信息，关闭搜索框又丢失了，需要重新翻阅信息查找。
+1.分析新包（20240109）下cfg1_2的误报漏报，目前clock_prop_through_seq的行为和sg能够基本保持一致了。
+1.1.Setup：漏报Clock_info05/05b，及误报SetupAsyncClkConvOnMux属于差异，多路mux的综合不同导致的差异，标注为Diff29-synth6-multi_mux；Diff137-report-clock_info05.同时还有一个mux_and的差异标注为Diff3.(cfg1_2泛化setup全部清零)
+1.2.Ac: CDC-GEN-B-cfg1_2-288属于差异Diff71，ECDC报在bbox的pin脚，已回归。
+1.3.Conv：SetupClockGlitch误报漏报属于版本差异，SG仅报第0比特，我们会报bus。
+2.分析三拍泛化setup误报漏报，这个问题同cfg1_2的情况，已标注差异Diff29-synth6-multi_mux；Diff137-report-clock_info05。
+3.分析新包（20240109）下cfg1_2的误报漏报，setup漏报误报同cfg1_2.已标注完成，且setup清理。
