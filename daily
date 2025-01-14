@@ -1,55 +1,59 @@
-XLL
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：1.与海洋现场调试diff71，处理遇到的漏标和误标问题，并已回传修改脚本
-2.新增了对接导入平台脚本的超时提示信息功能
-
 ZWL
-今日分析msg数：4
-今日发现issue数：1
+今日分析msg数：24
+今日发现issue数：2
 今日回传case数：
 日报：
-分析SetupRstInferred，不同点有SG的type没有infer primary/derived两种infer类型，而ecdc有；第二SG的type后的类型会根据infer类型改变为set/clear，而ecdc一直是关键字reset；
-问题点在于flop的输出同时infer为同步置位与同步复位信号，还出现多条路径，导致ecdc画的增量原理图很大很多obj，还穿过许多flop，很难确认自身行为是否正确，而SG则是画的infer reset到flop，中间未穿过flop；第二点脚本未抓到SG报的message
+1、分析TSSC_WRAP中漏报误报SetupPortFullyConstrained，为issue CDC-GEN-N-319，是output的输入是一个常值，又在这个port上使用set_case_analysis设置了常值导致constrained不一致，SG会set_case_analysis，ecdc为set_case_analysis set_case_analysis（propagated）；另外有因为常值推导导致constrained不一致，ecdc比SG多报set_case_analysis（propagated），标记的Diff170，但是diff170并没有说明这种报同一个msgid，可constrained不一致的情况；看是否是修改差异的描述还是说增强新的差异编号
+2、分析TSSC_WRAP中漏报误报Ac的message，之前标记的CDC-GEN-B-cfg1_2-280，但看这个issue已经develop，经过比较，貌似和allow_merged_qualifier这个参数没有关系，因此应该是新的issue
+3、分析射频case的cfg1_2中ar的msgid，之前CDC-GEN-B-cfg1_2-310已经修复，报了ArUnsyncCtrlPath，但是clock与SG推断的不一致，因此提了新的issue CDC-GEN-B-cfg1_2-320
 
 LRF
-今日分析msg数：687
-今日发现issue数：1
+今日分析msg数：58
+今日发现issue数：4
 今日回传case数：
 日报：
-1.分析BCP_TSS的除SetupDataTiedToConst的剩余message,发现其剩余的message大部分都与常值相关
-2.分析TOP_LGC的AC的相关误报漏报，大部分差异为Diff155(版本差异)
-a.发现一个Ac的issue，正在定位相关问题
-3.了解CDC检查中Ar的相关检查
+1.协助何琴跑分支包并跑比对
+a.3拍新增3条误报 -- 与子奇何琴分析并定位问题 
+CDC-GEN-B-323 - ecdc未将汇聚点在电路图中画出
+CDC-GEN-B-325 - ecdc误报在mux的input端汇聚的qualifier
+b.2拍有2条误报 
+CDC-GEN-B-2-321 - 
+当cdc.conv_max_seq_depth的value为"1"时，Incremental Schematic中会将depth超过1的路径画出来汇聚，
+正确的电路应该将depth为"1"的电路画出来汇聚
+CDC-GEN-B-2-322 - ecdc误报在mux的input端汇聚的qualifier
+2.协助家荣分析射频泛化cfg1_1的Ac_conv04的误报
+3.对于GUI命令存在疑惑(CDC-gui-3859)：
+Steps:
+1.点击messageA的Incremental Schematic后生成增量电路图A，然后在增量电路图A中右键勾选上Set As Default Incremental
+2.点击messageB的Incremental Schematic，messageB的增量原理图会在增量电路图A中生成，导致电路图混乱
 
 JR
-今日分析msg数：114
-今日发现issue数：1
-今日回传case数：
+今日分析msg数：56
+今日发现issue数：4
+今日回传case数：3
 日报：
-1.和艺豪讨论常值推导脚本自动化方案；
-2.分析新泛化TOP_LGC中未分析的message，unmatch部分分析完成，目前分析到的都是差异；
-3.在SG中，双击一条message，打开这条message的incremental schematic,点击原理图下方message中的obj，incremental schematic中的obj的对应位置会变色，这样能帮助用户快速定位obj在原理图中的具体位置，所以建议ECDC增加这个功能，在ECDC中点击message，点击下方schematic打开原理图，点击Details的Message Objects中的obj时，原理图的对应位置也会变色，已提issue：CDC-gui-3848
+1.分析门禁新增误报漏报，builtin中有两条误报是issue：CDC-3858，setup中新增的漏报是版本差异,所以ac和setup是清零的；
+2，统计新泛化TOP_LGC的数据；
+3.CDC-3858：因为path_end是常值，所以path_end不应该报SetupRstNotPropagated；
+4.在分析过程中发现，do_0和rst是2bit的bus，对于sgdc中的reset_synchronizer -name do_0 -reset rst -clock clk -value 0，sgdc转sdc脚本直接转为set_reset_synchronizer TOP/do_0 -reset TOP/rst -clock TOP/clk -value 0，这是不合理的,因为这样在ECDC中相当于有四条set_reset_synchronizer的约束，所以应该分别写成set_reset_synchronizer TOP/do_0[0] -reset TOP/rst[0] -clock TOP/clk -value 0和set_reset_synchronizer TOP/do_0[1] -reset TOP/rst[1] -clock TOP/clk -value 0才清晰合理
+5.回归openproject里developed的issue
 
 CXy
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.更新现场大泛化和门禁的对比脚本
-2.验证家里写的新的差异proc。diff7，diff143，均没有问题，可以上库
-3.参加脚本周会
-4.修复diff112重复写pass的问题
+1.写proc判断电路结构为2个mux加ff的结构
+2.验证家里写的diff diff156，diff96，diff138，diff61均无漏标误标，
+3.修复新泛化中发现的diff91的bug
+4.完成diff187的差异proc
 
 CJR
-今日分析msg数：150
+今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.分析新包（20240109）下cfg1_2的误报漏报，目前clock_prop_through_seq的行为和sg能够基本保持一致了。
-1.1.Setup：漏报Clock_info05/05b，及误报SetupAsyncClkConvOnMux属于差异，多路mux的综合不同导致的差异，标注为Diff29-synth6-multi_mux；Diff137-report-clock_info05.同时还有一个mux_and的差异标注为Diff3.(cfg1_2泛化setup全部清零)
-1.2.Ac: CDC-GEN-B-cfg1_2-288属于差异Diff71，ECDC报在bbox的pin脚，已回归。
-1.3.Conv：SetupClockGlitch误报漏报属于版本差异，SG仅报第0比特，我们会报bus。
-2.分析三拍泛化setup误报漏报，这个问题同cfg1_2的情况，已标注差异Diff29-synth6-multi_mux；Diff137-report-clock_info05。
-3.分析新包（20240109）下cfg1_2的误报漏报，setup漏报误报同cfg1_2.已标注完成，且setup清理。
+1.分析泛化cfg1_1的conv误报漏报问题：ECDC报了ChyCtrlBusNoConv，但是所报信号和其他信号存在汇聚，SG报了Ac_conv01.同时在此配置下ECDC没有报任何的ChySameSrcConvIncseq, 已标注为ISSUE CDC-GEN-B-cfg1_1-324。
+2.分析回归泛化cfg1_2 setup新增误报漏报，Diff115（2条），Diff29（7条），diff3（2条）。
+3.分析回归泛化cfg1_2 Ar误报漏报，issue CDC-GEN-B-cfg1_2-310。
+4.新泛化FE_TSS跑不通，正在debug
