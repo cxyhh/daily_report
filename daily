@@ -1,59 +1,66 @@
+XLL
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：1.讨论并测试set_qualifier中的to_clk与设置qualifier的instance的clock不一致时，qualifier设置不上
+2.跟进导入平台测试和遗留问题进度等
+3.讨论现场diff71门禁case现状
+4.继续学习Ac的reason，并结合case做分析
+
 ZWL
-今日分析msg数：24
+今日分析msg数：75
 今日发现issue数：2
 今日回传case数：
 日报：
-1、分析TSSC_WRAP中漏报误报SetupPortFullyConstrained，为issue CDC-GEN-N-319，是output的输入是一个常值，又在这个port上使用set_case_analysis设置了常值导致constrained不一致，SG会set_case_analysis，ecdc为set_case_analysis set_case_analysis（propagated）；另外有因为常值推导导致constrained不一致，ecdc比SG多报set_case_analysis（propagated），标记的Diff170，但是diff170并没有说明这种报同一个msgid，可constrained不一致的情况；看是否是修改差异的描述还是说增强新的差异编号
-2、分析TSSC_WRAP中漏报误报Ac的message，之前标记的CDC-GEN-B-cfg1_2-280，但看这个issue已经develop，经过比较，貌似和allow_merged_qualifier这个参数没有关系，因此应该是新的issue
-3、分析射频case的cfg1_2中ar的msgid，之前CDC-GEN-B-cfg1_2-310已经修复，报了ArUnsyncCtrlPath，但是clock与SG推断的不一致，因此提了新的issue CDC-GEN-B-cfg1_2-320
+1.分析门禁ar的新增误报，由于clock推断问题导致误报Arunsync CDC-3861
+2.分析新泛化TSSC_WRAP的AC部分，之前RD说是由于CDC-GEN-B-cfg1_2-280引起的，但是280 issue已经develop，并且allow_merged_qualifier为true还是和SG报的不一样，ecdc报unsync reason为NoDestMuxDataPin，SG报sync，reason为mux-select sync；issue为CDC-GEN-N-327，AC为百分百误报漏报
+
 
 LRF
-今日分析msg数：58
-今日发现issue数：4
+今日分析msg数：
+今日发现issue数：
 今日回传case数：
 日报：
-1.协助何琴跑分支包并跑比对
-a.3拍新增3条误报 -- 与子奇何琴分析并定位问题 
-CDC-GEN-B-323 - ecdc未将汇聚点在电路图中画出
-CDC-GEN-B-325 - ecdc误报在mux的input端汇聚的qualifier
-b.2拍有2条误报 
-CDC-GEN-B-2-321 - 
-当cdc.conv_max_seq_depth的value为"1"时，Incremental Schematic中会将depth超过1的路径画出来汇聚，
-正确的电路应该将depth为"1"的电路画出来汇聚
-CDC-GEN-B-2-322 - ecdc误报在mux的input端汇聚的qualifier
-2.协助家荣分析射频泛化cfg1_1的Ac_conv04的误报
-3.对于GUI命令存在疑惑(CDC-gui-3859)：
-Steps:
-1.点击messageA的Incremental Schematic后生成增量电路图A，然后在增量电路图A中右键勾选上Set As Default Incremental
-2.点击messageB的Incremental Schematic，messageB的增量原理图会在增量电路图A中生成，导致电路图混乱
+1.分析泛化两拍Ac的新增误报
+2.向艺豪学习tcl脚本的写法，目前想实现一个能缩减人工分析误报SetupDataTiedToConst量的脚本
 
 JR
-今日分析msg数：56
-今日发现issue数：4
-今日回传case数：3
+今日分析msg数：113
+今日发现issue数：1
+今日回传case数：
 日报：
-1.分析门禁新增误报漏报，builtin中有两条误报是issue：CDC-3858，setup中新增的漏报是版本差异,所以ac和setup是清零的；
-2，统计新泛化TOP_LGC的数据；
-3.CDC-3858：因为path_end是常值，所以path_end不应该报SetupRstNotPropagated；
-4.在分析过程中发现，do_0和rst是2bit的bus，对于sgdc中的reset_synchronizer -name do_0 -reset rst -clock clk -value 0，sgdc转sdc脚本直接转为set_reset_synchronizer TOP/do_0 -reset TOP/rst -clock TOP/clk -value 0，这是不合理的,因为这样在ECDC中相当于有四条set_reset_synchronizer的约束，所以应该分别写成set_reset_synchronizer TOP/do_0[0] -reset TOP/rst[0] -clock TOP/clk -value 0和set_reset_synchronizer TOP/do_0[1] -reset TOP/rst[1] -clock TOP/clk -value 0才清晰合理
-5.回归openproject里developed的issue
+1.分析门禁新增误报漏报，都是差异;
+2.分析关闭cdc.reduce_mux_with_constant_input后门禁新增的误报漏报，builtin分析完成，大部分都是差异，有一个漏报是之前提过的issue：CDC-3832，SETUP分析了大部分，一部分是差异，一部分是CDC-3832这个issue；
+3.在分析过程中发现，在SG中，如果一个pin连接了多个obj,比如ff reg1的output既连在了或门的input，又连在了ff reg2的input，双击或门的这个input，ff reg1和或门之间的net是虚线，而不是实线，SG把这条虚线称为partially visible net，当把这条虚线net上连的所有obj都点出来了，这条net就变成了实线，这样可以和其他net区分开，提醒用户这条net上还连了其他obj没有被点出来，所以建议ECDC也这样做
+
 
 CXy
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.写proc判断电路结构为2个mux加ff的结构
-2.验证家里写的diff diff156，diff96，diff138，diff61均无漏标误标，
-3.修复新泛化中发现的diff91的bug
-4.完成diff187的差异proc
+1.统计门禁cfg1，cfg2的最新数据
+2.设置射频随机参数测试cfg1-cfg4的sg_cfg和ecdc_cfg,并跑对应的sg rpt log
+3.回传昨天的修复的bug以及完成的diff187的代码
+4，验证家里写的diff diff147，diff166以及diff61的时钟推断部分。diff147无误标漏标，diff166分析发现这个diff现场没有使用，这个diff的出现是由于之前对sg的filter_name参数的默认值有误解导致的，现在应该删除该diff。diff61_setupClkInferred还有误标情况、帮助家里的脚本团队查看现场diff情况以及提供diff的场景测例
+5.在门禁和泛化上验证艺豪写的diff171差异proc，分析proc多标的情况，发现proc多标的均是合理的，是手动标记的diff有误
+6.调查sg约束reset_synchronizer约束的信号是多bit位时的sg规律
+7.给刘玲讲ac clkdomainmissmatch的内容
 
 CJR
+今日分析msg数：
+今日发现issue数：1
+今日回传case数：1
+日报：
+1.分析泛化新参数漏报IntegrityClockConverge的问题，属于mux和latch的综合差异9条，还有两条属于issue CDC-GEN-B-cfg1_2-326，已复现回传.
+2.统计新参数泛化的数据，目前Ac、setup均清零，Ar存在issueCDC-GEN-B-cfg1_2-310（ CDC-GEN-B-cfg1_2-311（diff85,已回归）
+3.分析新泛化的SGDC转换问题。
+
+SYH
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.分析泛化cfg1_1的conv误报漏报问题：ECDC报了ChyCtrlBusNoConv，但是所报信号和其他信号存在汇聚，SG报了Ac_conv01.同时在此配置下ECDC没有报任何的ChySameSrcConvIncseq, 已标注为ISSUE CDC-GEN-B-cfg1_1-324。
-2.分析回归泛化cfg1_2 setup新增误报漏报，Diff115（2条），Diff29（7条），diff3（2条）。
-3.分析回归泛化cfg1_2 Ar误报漏报，issue CDC-GEN-B-cfg1_2-310。
-4.新泛化FE_TSS跑不通，正在debug
+1.与伟豪交接了常值传播和LEC检查的内容，讨论了脚本的处理逻辑，汇总了get_hdl_info的问题，file给开发@赵洲，CDC-3863
+2.红区群组申请中，阻塞分析任务。将参数表格中的数据转移至CA_CDC_progress表格中，并在param总表出更新所有公式。
+3.学习有关LEC和常值传播的知识 
