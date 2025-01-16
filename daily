@@ -1,37 +1,12 @@
-XLL
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：1.讨论并测试set_qualifier中的to_clk与设置qualifier的instance的clock不一致时，qualifier设置不上
-2.跟进导入平台测试和遗留问题进度等
-3.讨论现场diff71门禁case现状
-4.继续学习Ac的reason，并结合case做分析
-
 ZWL
-今日分析msg数：75
-今日发现issue数：2
-今日回传case数：
-日报：
-1.分析门禁ar的新增误报，由于clock推断问题导致误报Arunsync CDC-3861
-2.分析新泛化TSSC_WRAP的AC部分，之前RD说是由于CDC-GEN-B-cfg1_2-280引起的，但是280 issue已经develop，并且allow_merged_qualifier为true还是和SG报的不一样，ecdc报unsync reason为NoDestMuxDataPin，SG报sync，reason为mux-select sync；issue为CDC-GEN-N-327，AC为百分百误报漏报
-
-
-LRF
 今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1.分析泛化两拍Ac的新增误报
-2.向艺豪学习tcl脚本的写法，目前想实现一个能缩减人工分析误报SetupDataTiedToConst量的脚本
-
-JR
-今日分析msg数：113
 今日发现issue数：1
 今日回传case数：
 日报：
-1.分析门禁新增误报漏报，都是差异;
-2.分析关闭cdc.reduce_mux_with_constant_input后门禁新增的误报漏报，builtin分析完成，大部分都是差异，有一个漏报是之前提过的issue：CDC-3832，SETUP分析了大部分，一部分是差异，一部分是CDC-3832这个issue；
-3.在分析过程中发现，在SG中，如果一个pin连接了多个obj,比如ff reg1的output既连在了或门的input，又连在了ff reg2的input，双击或门的这个input，ff reg1和或门之间的net是虚线，而不是实线，SG把这条虚线称为partially visible net，当把这条虚线net上连的所有obj都点出来了，这条net就变成了实线，这样可以和其他net区分开，提醒用户这条net上还连了其他obj没有被点出来，所以建议ECDC也这样做
+分析TSSC_WRAP漏报的Reset_info01，其中有2条是由于前面flop在Ecdc中被推为常值，SG并没有，标记了2 pass-const；
+其中有CDC-GEN-N-333，SG的增量原理图没有画出来作用的flop，因此分析难，只是从design汇总看，是有flop的值会被推断为1的，因此应该报sync reset/set
+另外有作用的flop在Ecdc中会报常值，但是复现的小case报了常值还是会报Reset_info01，因此需要进一步复现；
+
 
 
 CXy
@@ -39,28 +14,24 @@ CXy
 今日发现issue数：
 今日回传case数：
 日报：
-1.统计门禁cfg1，cfg2的最新数据
-2.设置射频随机参数测试cfg1-cfg4的sg_cfg和ecdc_cfg,并跑对应的sg rpt log
-3.回传昨天的修复的bug以及完成的diff187的代码
-4，验证家里写的diff diff147，diff166以及diff61的时钟推断部分。diff147无误标漏标，diff166分析发现这个diff现场没有使用，这个diff的出现是由于之前对sg的filter_name参数的默认值有误解导致的，现在应该删除该diff。diff61_setupClkInferred还有误标情况、帮助家里的脚本团队查看现场diff情况以及提供diff的场景测例
-5.在门禁和泛化上验证艺豪写的diff171差异proc，分析proc多标的情况，发现proc多标的均是合理的，是手动标记的diff有误
-6.调查sg约束reset_synchronizer约束的信号是多bit位时的sg规律
-7.给刘玲讲ac clkdomainmissmatch的内容
+1.和艺豪蒋蕊讨论常值差异proc，完成diff170.在泛化上验证diff87，diff171，diff170，TOP_LGC这个模块中，常值proc标记率达到68%
+2.参加脚本周会
+3.修复Hi1813泛化FE_TSS模块的脚本block，发现问题是由于工具报告的message SetupOutputMultiClkDriven工具报告的port是常值的port并没有多时钟驱动的情况，get_message的内容中缺少ClockList5，所以脚本获取不了这个值，导致脚本block。如果对这个ClockList5值做判空处理，脚本需要打补丁的地方较多，和何琦，川皓初步讨论，认为这个问题先提工具issue
 
 CJR
-今日分析msg数：
-今日发现issue数：1
-今日回传case数：1
-日报：
-1.分析泛化新参数漏报IntegrityClockConverge的问题，属于mux和latch的综合差异9条，还有两条属于issue CDC-GEN-B-cfg1_2-326，已复现回传.
-2.统计新参数泛化的数据，目前Ac、setup均清零，Ar存在issueCDC-GEN-B-cfg1_2-310（ CDC-GEN-B-cfg1_2-311（diff85,已回归）
-3.分析新泛化的SGDC转换问题。
-
-SYH
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.与伟豪交接了常值传播和LEC检查的内容，讨论了脚本的处理逻辑，汇总了get_hdl_info的问题，file给开发@赵洲，CDC-3863
-2.红区群组申请中，阻塞分析任务。将参数表格中的数据转移至CA_CDC_progress表格中，并在param总表出更新所有公式。
-3.学习有关LEC和常值传播的知识 
+1.分析FE_TSS:
+1.1 CDC-GEN-N-334：ECDC误报SetupResetInferred。对于没有起到置位效果的信号，ECDC报了同步置位（infer derived）。已复现回传。
+1.2 CDC-GEN-N-336：ECDC漏报SetupResetInferred。从综合出来的电路图看出，当由触发器驱动的cmd_start_1d为1时，起到了同步复位的效果，能让触发器dsm_gif_opdata复位为零。已复现回传。
+1.3 对于异步复位信号，SG可能也会报同步复位。待确认是否为SG bug。
+
+HQ
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：1. 跑最新17个泛化case的对比脚本
+2. 处理新泛化统计脚本，整合自动对rule名加密的功能和合并csv的功能到run里
+3. 写run脚本的使用说明文档
