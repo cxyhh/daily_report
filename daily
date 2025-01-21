@@ -17,3 +17,9 @@ MultiFanout 7
                                     Ac_sync02  42
                                     Ac_unsync01  52     CDC-3513 CDC-3225 
                                     Ac_unsync02  95     CDC-1231 CDC-1627
+
+
+1。优化统计脚本，新增一列显示总体的误报漏报
+2.在新泛化上测试常值proc情况。目前BCP_TSS模块误报标记率达到98%，TOP_LCG模块标记率达64%，TSSC_WARP模块标记率达93%
+3.帮家里总结diff5在现场涉及的msg，rule条数，提供测例
+4.跑随机参数cfg1-4结果，完成随机参数python脚本
