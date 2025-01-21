@@ -1,19 +1,19 @@
-enno                                sg                              total
-                                    Ac_conv04 2                        2
-                                    Clock_sync05/05a 4                 4
-IntegrityClockConverge 7条          Clock_converge01 4                 11
-SetupClockInferred 4                Clock_info01 31                    35
-SetupClkNetUndefined 5              Clock_info05c 2                    7
-SetupClockGlitch 2                                                     2
-SetupPortFullyConstrained 2          Setup_port01 128                  130
-SetupPortIgnored* 121                                                  249
-SetupPortNoConstraint 7                                                135
-SetupRstInferred 34                Reset_info01 52                      86
-SetupRstNetUndefined 9                                                  9
+enno                                sg                         total    case
+                                    Ac_conv04 2                   2     CDC-1824
+                                    Clock_sync05/05a 4            4     CDC-3225
+IntegrityClockConverge 7条          Clock_converge01 4           11     CDC-1450 CDC-3080 CDC-1377(uninfer),CDC-1638 CDC-1857
+SetupClockInferred 4                Clock_info01 31              35     CDC-3283 CDC-1455 CDC-1716
+SetupClkNetUndefined 5              Clock_info05c 2              7               
+SetupClockGlitch 2                                               2
+SetupPortFullyConstrained 2          Setup_port01 128            130    CDC-1591(unifner) CDC-3513(uninfer) CDC-3792(uninfer) CDC-2475 CDC-3792(uninfer) CDC-1377(uninfer) CDC-3603(uninfer
+SetupPortIgnored* 121                                            249
+SetupPortNoConstraint 7                                          135
+SetupRstInferred 34                Reset_info01 52               86      CDC-3405 CDC-1301 CDC-1963 CDC-3792(uninfer)
+SetupRstNetUndefined 9                                            9            
 
 MissingSynchronizer 13
 MultiFanout 7
                                     Ac_sync01  5
                                     Ac_sync02  42
-                                    Ac_unsync01  52
-                                    Ac_unsync02  95
+                                    Ac_unsync01  52     CDC-3513 CDC-3225 
+                                    Ac_unsync02  95     CDC-1231 CDC-1627
