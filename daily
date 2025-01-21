@@ -1,37 +1,19 @@
-ZWL
-今日分析msg数：
-今日发现issue数：1
-今日回传case数：
-日报：
-分析TSSC_WRAP漏报的Reset_info01，其中有2条是由于前面flop在Ecdc中被推为常值，SG并没有，标记了2 pass-const；
-其中有CDC-GEN-N-333，SG的增量原理图没有画出来作用的flop，因此分析难，只是从design汇总看，是有flop的值会被推断为1的，因此应该报sync reset/set
-另外有作用的flop在Ecdc中会报常值，但是复现的小case报了常值还是会报Reset_info01，因此需要进一步复现；
+enno                                sg                              total
+                                    Ac_conv04 2                        2
+                                    Clock_sync05/05a 4                 4
+IntegrityClockConverge 7条          Clock_converge01 4                 11
+SetupClockInferred 4                Clock_info01 31                    35
+SetupClkNetUndefined 5              Clock_info05c 2                    7
+SetupClockGlitch 2                                                     2
+SetupPortFullyConstrained 2          Setup_port01 128                  130
+SetupPortIgnored* 121                                                  249
+SetupPortNoConstraint 7                                                135
+SetupRstInferred 34                Reset_info01 52                      86
+SetupRstNetUndefined 9                                                  9
 
-
-
-CXy
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1.和艺豪蒋蕊讨论常值差异proc，完成diff170.在泛化上验证diff87，diff171，diff170，TOP_LGC这个模块中，常值proc标记率达到68%
-2.参加脚本周会
-3.修复Hi1813泛化FE_TSS模块的脚本block，发现问题是由于工具报告的message SetupOutputMultiClkDriven工具报告的port是常值的port并没有多时钟驱动的情况，get_message的内容中缺少ClockList5，所以脚本获取不了这个值，导致脚本block。如果对这个ClockList5值做判空处理，脚本需要打补丁的地方较多，和何琦，川皓初步讨论，认为这个问题先提工具issue
-
-CJR
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1.分析FE_TSS:
-1.1 CDC-GEN-N-334：ECDC误报SetupResetInferred。对于没有起到置位效果的信号，ECDC报了同步置位（infer derived）。已复现回传。
-1.2 CDC-GEN-N-336：ECDC漏报SetupResetInferred。从综合出来的电路图看出，当由触发器驱动的cmd_start_1d为1时，起到了同步复位的效果，能让触发器dsm_gif_opdata复位为零。已复现回传。
-1.3 对于异步复位信号，SG可能也会报同步复位。待确认是否为SG bug。
-
-HQ
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：1. 跑最新17个泛化case的对比脚本
-2. 处理新泛化统计脚本，整合自动对rule名加密的功能和合并csv的功能到run里
-3. 写run脚本的使用说明文档
+MissingSynchronizer 13
+MultiFanout 7
+                                    Ac_sync01  5
+                                    Ac_sync02  42
+                                    Ac_unsync01  52
+                                    Ac_unsync02  95
