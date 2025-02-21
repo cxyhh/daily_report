@@ -1,25 +1,43 @@
-enno                                sg                         total    case
-                                    Ac_conv04 2                   2     CDC-1824
-                                    Clock_sync05/05a 4            4     CDC-3225
-IntegrityClockConverge 7条          Clock_converge01 4           11     CDC-1450 CDC-3080 CDC-1377(uninfer),CDC-1638 CDC-1857
-SetupClockInferred 4                Clock_info01 31              35     CDC-3283 CDC-1455 CDC-1716
-SetupClkNetUndefined 5              Clock_info05c 2              7               
-SetupClockGlitch 2                                               2
-SetupPortFullyConstrained 2          Setup_port01 128            130    CDC-1591(unifner) CDC-3513(uninfer) CDC-3792(uninfer) CDC-2475 CDC-3792(uninfer) CDC-1377(uninfer) CDC-3603(uninfer
-SetupPortIgnored* 121                                            249
-SetupPortNoConstraint 7                                          135
-SetupRstInferred 34                Reset_info01 52               86      CDC-3405 CDC-1301 CDC-1963 CDC-3792(uninfer)
-SetupRstNetUndefined 9                                            9            
+XLL
+今日分析msg数：5
+今日发现issue数：1
+今日回传case数：
+日报：1.分析TOP_LGC AC的message，发现了一个ecdc工具误报CtrlPotentialSynRstUndefined的issue，CDC-GEN-N-383
 
-MissingSynchronizer 13
-MultiFanout 7
-                                    Ac_sync01  5
-                                    Ac_sync02  42
-                                    Ac_unsync01  52     CDC-3513 CDC-3225 
-                                    Ac_unsync02  95     CDC-1231 CDC-1627
+HQ
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1. 跑0219的交付包，检查是否泛化case都可以跑通，目前有22个新泛化case跑通，有7个case未跑通，超过24h：NFI_TOP,DME_WRAP,HIS_TOP,N_APP_CONE,N_HIS_TOP,N_TOP_LGC,PG_SUB
+2. 帮助焕东在脚本中实现跑lec常值传播 flow时使用处理过的设计文件
+3、通过脚本帮助心雨实现红区到隔离区的数据自动传输
 
+CXY
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.参加脚本周会
+2.验证新包过来的脚本
 
-1。优化统计脚本，新增一列显示总体的误报漏报
-2.在新泛化上测试常值proc情况。目前BCP_TSS模块误报标记率达到98%，TOP_LCG模块标记率达64%，TSSC_WARP模块标记率达93%
-3.帮家里总结diff5在现场涉及的msg，rule条数，提供测例
-4.跑随机参数cfg1-4结果，完成随机参数python脚本
+CJR
+今日分析msg数：60
+今日发现issue数：
+今日回传case数：
+日报：
+1.跑conv depth设为4、5、7的cfg1_2射频泛化情况。（CDC-GEN-B-cfg1_2-399）
+1.1 depth为4时：Elapse time为38min，Memory为48G
+1.2 depth为5时：Elapse time为1h，Memory为63G
+1.3 depth为7时：Elapse time为5h，Memory为84G
+2.经过比对分析depth为5或7时存在十条左右的误报漏报
+3.分析cfg1_1射频，cfg2误报漏报情况
+
+MCH
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1、测试导入平台接入ECDC的流程，发现design和lib选择filelist时不能选择多个文件，已经反馈给客户。
+2、在进行统计流程时，sg的数据不准确，这个还在定位。
+3、Elint的日常跑包
