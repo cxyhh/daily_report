@@ -1,43 +1,31 @@
-XLL
-今日分析msg数：5
-今日发现issue数：1
-今日回传case数：
-日报：1.分析TOP_LGC AC的message，发现了一个ecdc工具误报CtrlPotentialSynRstUndefined的issue，CDC-GEN-N-383
+JR
+今日分析msg数：549
+今日发现issue数：2
+今日回传case数：1
+日报：
+1.分析门禁新增误报漏报，普通门禁新增误报漏报分析完成
+ a.ac没有新增误报漏报,
+ b.ar有一条新增漏报是差异Diff179,
+ c.builtin有27条误报漏报：4条漏报是Diff179,4条误报漏报请焕东跑了rtl比netlist的lec，结果是成功的，所以标记为Diff192，8条误报漏报是差异Diff500-handle-built_in-024,还有11条实际是match的，但脚本未match上，已向心雨反馈，还未developed issue：CDC-3941、CDC-3943;
+ d.setup有111条新增误报漏报，4条Diff115,79条Diff150,11条Diff179，14条Diff192，3条Diff500-built_in-003,issue已清零，CDC-3928->Diff179,CDC-3929->Diff134;
+2.分析门禁cfg1新增误报漏报，门禁cfg1的builtin新增较多，但目前看到的误报漏报和普通门禁builtin里的是一样的；
+3.对于同一个bus的DFF do_0，在SG的modular schematic中会显示为一个sequential block，但在ECDC的modular schematic中是直接把do_0的所有DFF都显示出来，这样modular schematic里的obj很多，看起来不方便，所以建议ECDC也把同一个bus的DFF do_0显示为一个sequential block，如果用户有需要再点击这个sequential block把所有的DFF do_0都显示出来，已提issue：CDC-gui-3951；
+4.在分析中发现，点击ChySameSrcConvExcSeq第二条：TOP/din_ff4[30:0]/q -> TOP/do_0[30]的schematic，工具会crash，已提issue：CDC-3952；
+5.参加CDC PV讨论会
 
-HQ
+XLL
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：
-1. 跑0219的交付包，检查是否泛化case都可以跑通，目前有22个新泛化case跑通，有7个case未跑通，超过24h：NFI_TOP,DME_WRAP,HIS_TOP,N_APP_CONE,N_HIS_TOP,N_TOP_LGC,PG_SUB
-2. 帮助焕东在脚本中实现跑lec常值传播 flow时使用处理过的设计文件
-3、通过脚本帮助心雨实现红区到隔离区的数据自动传输
+日报：1.修复Performance表格里数据展示不完整或有错误项和遗漏项、命令行报syntax error、被除数为0等问题，总计10个bug。
+2.回归了3个已经Developed的issue，CDC-GEN-N-383/352、CDC-gui-3903，均回归通过并已关闭issue
 
 CXY
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.参加脚本周会
-2.验证新包过来的脚本
-
-CJR
-今日分析msg数：60
-今日发现issue数：
-今日回传case数：
-日报：
-1.跑conv depth设为4、5、7的cfg1_2射频泛化情况。（CDC-GEN-B-cfg1_2-399）
-1.1 depth为4时：Elapse time为38min，Memory为48G
-1.2 depth为5时：Elapse time为1h，Memory为63G
-1.3 depth为7时：Elapse time为5h，Memory为84G
-2.经过比对分析depth为5或7时存在十条左右的误报漏报
-3.分析cfg1_1射频，cfg2误报漏报情况
-
-MCH
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1、测试导入平台接入ECDC的流程，发现design和lib选择filelist时不能选择多个文件，已经反馈给客户。
-2、在进行统计流程时，sg的数据不准确，这个还在定位。
-3、Elint的日常跑包
+1.新泛化跑对比脚本比较慢的几个case都是涉及Clock_info03b比较多的，修改对比脚本，将Clock_info03b和其他setup msg分开跑。脚本修改完成，正在测试分开跑的效率
+2.将sg的cfg中加入infer_enabled_flop设置为false，重新刷新所有新泛化的log。目前还有Hi18XXE没有全部刷新，其余刷新完成
+3.修改builtin脚本的bug，修改完成
+4.参加cdc pv讨论会
