@@ -1,31 +1,9 @@
-JR
-今日分析msg数：549
-今日发现issue数：2
-今日回传case数：1
-日报：
-1.分析门禁新增误报漏报，普通门禁新增误报漏报分析完成
- a.ac没有新增误报漏报,
- b.ar有一条新增漏报是差异Diff179,
- c.builtin有27条误报漏报：4条漏报是Diff179,4条误报漏报请焕东跑了rtl比netlist的lec，结果是成功的，所以标记为Diff192，8条误报漏报是差异Diff500-handle-built_in-024,还有11条实际是match的，但脚本未match上，已向心雨反馈，还未developed issue：CDC-3941、CDC-3943;
- d.setup有111条新增误报漏报，4条Diff115,79条Diff150,11条Diff179，14条Diff192，3条Diff500-built_in-003,issue已清零，CDC-3928->Diff179,CDC-3929->Diff134;
-2.分析门禁cfg1新增误报漏报，门禁cfg1的builtin新增较多，但目前看到的误报漏报和普通门禁builtin里的是一样的；
-3.对于同一个bus的DFF do_0，在SG的modular schematic中会显示为一个sequential block，但在ECDC的modular schematic中是直接把do_0的所有DFF都显示出来，这样modular schematic里的obj很多，看起来不方便，所以建议ECDC也把同一个bus的DFF do_0显示为一个sequential block，如果用户有需要再点击这个sequential block把所有的DFF do_0都显示出来，已提issue：CDC-gui-3951；
-4.在分析中发现，点击ChySameSrcConvExcSeq第二条：TOP/din_ff4[30:0]/q -> TOP/do_0[30]的schematic，工具会crash，已提issue：CDC-3952；
-5.参加CDC PV讨论会
-
-XLL
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：1.修复Performance表格里数据展示不完整或有错误项和遗漏项、命令行报syntax error、被除数为0等问题，总计10个bug。
-2.回归了3个已经Developed的issue，CDC-GEN-N-383/352、CDC-gui-3903，均回归通过并已关闭issue
-
 CXY
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
+今日分析msg数：121
+今日发现issue数：2
+今日回传case数：2
 日报：
-1.新泛化跑对比脚本比较慢的几个case都是涉及Clock_info03b比较多的，修改对比脚本，将Clock_info03b和其他setup msg分开跑。脚本修改完成，正在测试分开跑的效率
-2.将sg的cfg中加入infer_enabled_flop设置为false，重新刷新所有新泛化的log。目前还有Hi18XXE没有全部刷新，其余刷新完成
-3.修改builtin脚本的bug，修改完成
-4.参加cdc pv讨论会
+1.分析Hi813/NFI_PHYG_TOP模块ac部分，提了一个差异需求：对于dest是多bit信号，但是对source赋值时，design中只使用了dest某一个bit。sg会在dest中将dest信号报成bus。enno会精确报出dest信号的bit位。发现一个漏报场景，已提issue
+2.参加脚本周会
+3.跑新泛化目前还没有csv的case数据
+4.测试苏黎的分支包，到现场如果不修改现有的sdc的情况下，在门禁上的情况。测试结果：如果不修改sdc，门禁ac，setup，ar，builitn全量case总的新增有2000条，涉及case数有214条
