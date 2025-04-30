@@ -1,9 +1,64 @@
-CXY
-今日分析msg数：121
-今日发现issue数：2
-今日回传case数：2
+ZWL
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
 日报：
-1.分析Hi813/NFI_PHYG_TOP模块ac部分，提了一个差异需求：对于dest是多bit信号，但是对source赋值时，design中只使用了dest某一个bit。sg会在dest中将dest信号报成bus。enno会精确报出dest信号的bit位。发现一个漏报场景，已提issue
-2.参加脚本周会
-3.跑新泛化目前还没有csv的case数据
-4.测试苏黎的分支包，到现场如果不修改现有的sdc的情况下，在门禁上的情况。测试结果：如果不修改sdc，门禁ac，setup，ar，builitn全量case总的新增有2000条，涉及case数有214条
+1、关闭问题单DTS2504020032209，为未复现issue，经过客户这次验收，也未复现，因此可以关闭
+2、分析1813的ar漏报部分，应该是能match的，但是脚本会提前走diff导致变成漏报
+3、分析setup_blackbox，sg报fully constraint，ecdc报noconstraint，从各自的属性来看，应该是ecdc的误报constraint，因为查看sg的input/output pin是有clock属性的，ecdc的input pin是有data_clock的，output pin并没有data_clock；尝试复现，并没有复现出来，需要debug包过来debug原因
+
+LRF
+今日分析msg数：56
+今日发现issue数：1
+今日回传case数：
+日报：
+1.回归DTS的issue单
+2.发现一个tool的crash，已提DTS单
+3.查看增量原理图的修改
+4.分析Hi1813的BCP_TSS
+
+JR
+今日分析msg数：123
+今日发现issue数：2
+今日回传case数：
+日报：
+1.4.25daily build门禁有两个issue反弹，已reopen：CDC-3331、CDC-3419;
+2.分析Hi1813 DME_WRAP中setup的误报漏报，还剩32条未分析，在分析过程中发现，如果SetupRstNetUndefined报的net是design中没有定义的net，那么SG中SetupRstNetUndefined的行号是报在离所报net最近的module所在Verilog文件的第一行，而ECDC中SetupRstNetUndefined的行号是报在顶层module所在Verilog文件的第一行，这导致ECDC和SG的file和行号都对应不上，提了一个issue：DTS2025042924074；
+3.分析门禁新增误报漏报，setup的cfg1和cfg2新增的误报漏报是脚本还没适配cfg1和cfg2的setup_port，builtin的新增是约束有问题
+
+
+CXY
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.完成diff proc diff190对于black_box的误报的标记
+2.修改对比脚本ac部分因为sg的obj格式为TOP.a \.b [3:0]（bit位和信号最后一个字符中间有空格）脚本解析时处理有误导致csv中缺少sg的msg信息
+3.跑Hi18XXE/TOP_LGC的对比脚本
+4.因为最近的daily包合入了Diff214的修改，但是脚本改动还没有合入，手动将之前测试的脚本合到现场的脚本中。此次修改脚本改变了Setup_port01的建key方式，维护新泛化的之前保存的脚本解析后sg的list，统一删除旧的s_setup_list
+
+
+CJR
+今日分析msg数：123
+今日发现issue数：
+今日回传case数：
+日报：1.关单DTS2025041616416，验证通过，没有误报conv02了。
+2.反馈测试报告脚本问题
+3.跑Hi1813的FE泛化比对
+4.分析Hi1813的FE泛化。（分析完成）
+4.1 clock_info03b（18条）:属于Diff171（16），Diff212（2）
+4.2 reset_info09(3条)：2条属于差异Diff160，还有一条属于issue：CDC-GEN-N-493（较早之前的issue）
+4.3 setup_bbox01: Diff175(16+14+22+16)
+4.4 reset_sync02（24）:属于差异Diff85
+
+SYH
+今日分析msg数：217
+今日发现issue数：3
+今日回传case数：
+日报：
+1.分析1813 DDR_SUB中setupmsg187条，新提了三个issue
+1.a：DTS2025040716695：代码中存在两处对同一BBox的实例化，A工具和Enno都仅报告了其中一个bbox instance的SetupBBoxPinFullyConstraint，但是并不是同一个
+1.b：DTS2025042930080：hanging的inout port，Enno分成input和output分别报，但是报的都是fully constrained，A工具报constraint not required(hanging)
+1.c：DTS2025042940047：由工具生成的net obj信号，由于obj name无法确定，SetupRstNetUndefined match不上，经脚本团队评估该问题无法通过脚本解决，请PE给出差异阐述
+1.d：分析过程中发现了一个Diff158 proc问题，不同的obj被脚本标记pass，已反馈给心雨
+2.分析18XXE DDR_SUB的ac部分30条新增msg，16条Diff63，3条Diff157，11条Diff18
