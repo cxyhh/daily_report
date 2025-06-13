@@ -2,175 +2,74 @@ XLL
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.跟应康一起看QualMergesWithOtherSrc的问题
-2.与何琦一起定位统计脚本中命名误报漏报msg数为0了，但是分析率且不是100%的问题，定位发现不是统计脚本问题，而是csv中的数据本身有点问题，从e_msg中的某个obj的某个字符处换行了，因为比对脚本对e_message做了双引号处理，所以csv中看到的message只有一个单元格，但是vim查看的时候，一条message被拆成了好几行，后面几行都是obj占一行，导致统计出错，具体的问题何琦还在定位
-3.使用何琴的测试包运行工具，确认QualMergesWithOtherSrc已经正确报成Sync了
-4.测试merge bits的参数确实对qor case当前比特位合并的问题生效，设置参数config_message -show_bus_name false后，报出的message与已有的golden一致
+日报：1.回归issue：DTS2025060416802和DTS2025052920772，均验证通过，第一个issue已关，第二个issue需要等新的比对结果run出来之后，在新的csv中标记，旧的csv中的message报的不正确
+2.与何琦一起讨论测试报告中需要呈现两次节点之间的diff变化，数据要怎么呈现给我，我才好在python中处理
+3.Merge HIS_TOP AC的csv并解决冲突
+
 
 HQ
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1. 跑sg的session进行整理留存（客户需要）
-2. 回传新泛化数据
-3. 参加周会
-4. 跑交付case的最新对比结果
-5. 与刘玲一起分析统计脚本中误报漏报msg数为0，但分析率不为100%的问题，可能不是脚本问题，是工具跑的message内容中存在换行，还在定位，后续提issue
+1. 统计常值影响数目，分配标记导致其他CDC问题的sg常值漏报数目
+2. 修改脚本逻辑，解决并行log打印，并保留之前的对比log
+3. 和刘玲讨论生成测试报告时的差异变化数据生成
+4. 跑交付case的对比结果（除NFI_TOP、HIS_TOP、APP_CORE之外的部分）
+5. 和家荣讨论生成差异变化数据的python逻辑
 
 ZWL
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1、参加周会
-2、帮冯敏看分支包是否报常值，未报常值，需要再次分析
-3、编写diff502，关于ar的multiflop的差异
+1、用formal去验证DTS2025060623980的case，结果是success
+2、分析FE_TSS新增ac漏报误报部分，对比了6月6号的csv，obj都完全能匹配，因此怀疑是跑对比脚本是没有加上old csv
+3、关闭DTS2025051530141
 
 LRF
-今日分析msg数：42
-今日发现issue数：
-今日回传case数：
+今日分析msg数：78
+今日发现issue数：2
+今日回传case数：1
 日报：
-1.参加周会
-2.和客户解释conv的差异标记的合理性
-3.分析子奇的enhance包对USBC的conv的影响 -- 目前看对conv的影响不大
-4.和子奇、何琴开视频会议看一个symbol的问题，确认时issue -- 待何琴修改
+1.回归issue
+DTS2025060626768
+DTS2025060629315
+2.确认issue-DTS2025052733351是否解决 -- 已解决
+3.分析射频3拍的setup_conv的新增误报
+a.DTS2025061218957(7) -- ecdc-06_12的版本误报的ChyDataBusDiffSyncScheme和ecdc-06_10报的ChyDataBusDiffEnable是同一种场景，其报告的message改变的原因是因为Ac的message报告有变化，经分析，现在ecdc报告的Ac的message更为正确 -- 已回传case
+b.DTS2025061231608(7) --ChyDataBusDiffEnable的原理图错误 
 
 JR
-今日分析msg数：73
-今日发现issue数：3
-今日回传case数：1
+今日分析msg数：78
+今日发现issue数：1
+今日回传case数：
 日报：
-1.提了一个脚本问题，对于UDP的综合差异，Diff190不能用于ECDC把UDP综合成黑盒的情况，因此Diff190的proc需要修改:CDC-4040;
-2.分析Hi18XXE HIS_TOP的setup部分，在分析过程中发现2个问题：
- 2.1 一个DFF在ECDC中不应该报SetupDataTiedToConst，在复现的小case里ECDC也没有报SetupDataTiedToConst，但是在大泛化中ECDC报了SetupDataTiedToConst，已提issue：DTS2025051627801；
- 2.2 对于静态信号连在了DFF的reset pin，SG会把静态信号推为reset，而SG不会，导致ECDC报了SetupRstNetUndefined，但SG未报，已复现并提issue：DTS2025051635608；
-3.参加周会；
+1.回归Hi18XXE TOP_LGC的issue，DTS2025053016348--178-report27-clocktietoconst ;
+2.分析今日门禁新增误报漏报，builtin新增误报为CDC-4072,SETUP新增误报漏报已提issue CDC-4073：ECDC和SG综合不一样，ECDC综合出来的原理图是两个qualifier汇聚后被常值阻塞，之前这种情况ECDC还是报的ac_conv02，昨天把这种场景修改为报ac_conv04，SG综合出来的原理图是两个qualifier汇聚后没有被常值阻塞，所以SG报的是ac_conv02；
+3.给新泛化中因受常值影响而标记了常值相关差异的其他message补充标记pass-enno_const或者pass-sg_const，方便后面统计数据
 
 CXY
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.和苏黎开会看debug包跑DTS2025032022578的结果 
-2.参加周会
-3.参加差异评审会议
-4.处理门禁setup csv结果中的冲突问题
-5.根据430遗留问题评审会的结果，总结脚本需要修改逻辑的proc，需要enhance的内容，以及需要修改的脚本runningFlag标记，反馈给脚本团队
-
-TZQ
-今日分析msg数：113
-今日发现issue数：
-今日回传case数：
-日报：1.分析NFI_TOP丢失的setup和Ar的msg，目前Setup的除了conv和data tie to const之外全分析完成                                  2.参加PPV周会
-
-TZB
-今日分析msg数：33
-今日发现issue数：
-今日回传case数：
-日报：
-1.参加PPV周会
-2.分析HIS_TOP中Ar部分,主要为pass-const、diff191
-
-SYH
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1.NFI_TOP的误报漏报ac部分分析完成，发现了一个issue
-1.aDTS2025051902480：AcSyncDataPath中source的clock，GUI中Message中不一致，初步判断msg中应该是错的。导致match不上
-2.尝试复现4.30遗留问题评审会结果中generate-for报告信息在同一条msg中的问题
-
-
-
-5:19
-XLL
-今日分析msg数：24
-今日发现issue数：
-今日回传case数：
-日报：1.处理TOP_LGC CDC-GEN开头的数据，经确认后已是差异，已修改为对应差异
-2.Run HIS_TOP DataTieToConst的比对
-3.分析HIS_TOP AC的message 24条，主要是跟sg的综合不同，需要run lec确认下我们综合是否正确
-
-HQ
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1. 和心雨商量，set_param cdc.only_report_first_inst_of_bbx false后进行和sg的结果对比，看setupblackbox相关message是否没有漏报，确保sg推的bbox inst在我们推的子集里，流程和路径已建好，资源目前不足，等待后续跑
-2. 跑Hi18XXE和USBC的TiedToConst的对比结果
-3. 检查周末跑的交付case的对比结果，BDP、DME、FE、NAU、TOP_LGC均有新增，已分配给对应测试人员进行分析，截至下班前已分析完成，目前还没有在传出来的performance表里进行体现
-4. 解决统计漏报误报脚本的bug，没有把手动标记带有pass相关字段的内容进行过滤（类似"pass_"这样）
-
-LRF
-今日分析msg数：56
-今日发现issue数：4
-今日回传case数：
-日报：
-1.分析子奇的enhance_clk包在USBC上的影响
-Ac:
-a.sync(MuxSelect) -> unsync(QualMergesOtherSrc)
-b.unsync reason改变
-2.研究讨论Diff122差异proc的做法
-3.发现2个gui的bug,和一个可优化策略
-a.display_incremetal_schematic [list [get_pins  xxx] [get_pins xxx]]生成的电路图不正确，会生成
-多余的instance显示在电路图中，与三方工具简洁的电路图有较大的区别
-b.电路图中Set Operation功能中将set0->set1的path用Color In Schemtic进着色时，未能将path中所有对象着色成功
-c.建议在进行Color In Schemtic操作时，添加一个调色版，能让用户自己选择着色的颜色
-4.分析射频新增的问题
-a.DTS2025051930840
-b.差异标记未反标成功
-c.sg的rpt好像有问题
-
-CXY
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1.跑苏黎的debug包和4.29号的develop_own2的分支包测试DTS2025032022578的问题点，发现是loop环路导致的路径未顺利遍历完，所以影响到了后面的时钟传播。苏黎正在修改中
-2.写脚本proc，实现对于enno多报的ac_conv相关msg，去定位链路打拍之后扇出到不同domain，导致enno多报ac_conv相关msg的场景。帮助瑞风分析Diff122的场景
-3.和艺豪讨论脚本优化的可行性
-4.处理430遗留问题中的，针对diff174的补充。思路：通过将参数cdc.only_report_first_inst_of_bbx设置成false跑bbox的内容，如果没有missing或者missing都是已知差异，来保证sg的msg是否在ecdc msg的子集中；使用现场的golden脚本来确认ecdc行为中是否有随机性
-5.跑NAU_CAU_WRAP、NFI_PHYG_TOP、TOP_LGC、TSSC_WRAP和USBC的常值部分，发现NFI_PHYG_TOP出现工具crash，问题已经反馈给正前哥
+1.参加脚本周会
+2.优化ac对比脚本性能问题
 
 CJR
-今日分析msg数：1155
+今日分析msg数：350
 今日发现issue数：
 今日回传case数：
-日报：1.分析FE_TSS误报问题。由于enno msg合并导致没有反标上。
-2.分析APP_CORE:
-2.1 setup_port行号问题（664条）：ECDC报的更加精确，属于差异Diff114.
-2.2 reset_info01（420条）：脚本没有走pass，手动标注
-2.3 setup_port(19条):sg和ECDC都是报fully constraint，ECDC由于推导出常值因此约束不同，标注pass-const
-2.4 setup_bbox误报漏报(40条)：SG报fully constraint，ECDC报no constraint，在端口属性中是带有data  clock的，但是ECDC没有报fully constraint，和DTS2025050721973相同。
-2.5 setup_bbox误报（8条）：对于UDP，ECDC无法识别其为时序逻辑，因此综合为了黑盒，SG能够正确解析为时序逻辑，同DTS2025051530141。
-2.6 setup_bbox constrant不同（2条）：属于Diff224.
-2.7 setup_bbox constrant不匹配（2条），正在复现。
-2.8 目前clock_info03b漏报存在1000+，其余300+待分析。
-3. 关单DTS2025041613079
-4.分析射频新增问题。对于cfg1_2的ac新增，对比09号的ac表格，部分是因为dest后面少了一个空格导致。cfg1_1builtin问题可能是脚本问题，重新跑一版再确认是否正确。
+日报：1.分析FE_TSS的setup新增及常值影响问题。
+1.1 setup_port行号问题属于Diff114，setup_bbox01属于Diff178。
+1.2 setup_port01常值影响的属于Diff170、Diff171、Diff172、Diff192
+2.帮助何琦写python脚本
+3.射频cfg1_1,cfg1_2,cfg2误报ChyDataBusDiffSyncScheme，与3拍DTS2025061218957相同。
 
 TZQ
-今日分析msg数：76
+今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.分析NFI_TOP丢失的数据，Setup_port报在不同的.v的问题，属于Diff114                  2.重新跑NFI_TOP的const和conv的对比脚本            3.分析普通门禁的新增，其中有两条是属于builtin_036和builtin_011，其余新增在分析过程中发现我们工具并没有报出那些msg已经向春豪反馈                                        4.协助泽波分析一些HIS_TOP上的问题
-
-TZB
-今日分析msg数：45
-今日发现issue数：
-今日回传case数：
-日报：1.分析HIS_TOP的Ar部分，主要差异有Diff191,Diff502
-2.Diff502说明：分析中遇到的场景为对于第一次打拍连接到第二次满足打拍数的结构且打拍后的信号未被当做复位/置位信号使用，sg不会报ar_sync，enno会报第一次的multiflop，因为enno报在发生crossing的位置，原先Diff85不满足此场景，所以先标记了DIFF502
-3.对于ar的multiflop同步结构，若3拍后的输出接入一个datatiedtoconst的ff/reset端，enno会报arsync，sg不会。
-
-SYH
-今日分析msg数：99
-今日发现issue数：
-今日回传case数：1
-日报：
-1.分析NFI_TOP的ac新增吗，主要差异为Diff91，Diff147以及此二差异和Diff63的组合差异，少部分msg受常值影响；一条新增为DTS2025051902480
-2.复现4.30客户差异对齐会议上generate-for结构在单一msg报告的的格式问题CDC-4041，已回传并assign给袁洁
-3.和冯敏一起看debug包跑出的DTS2025050717671结果，冯敏的代码依旧存在问题，待增强后验证
-3.周会
+日报：1.分析DME_WARP的Ac的新增，都是属于Diff59
+2.跑NFI_TOP的Ac和Conv的对比
