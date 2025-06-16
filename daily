@@ -1,75 +1,70 @@
-XLL
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：1.回归issue：DTS2025060416802和DTS2025052920772，均验证通过，第一个issue已关，第二个issue需要等新的比对结果run出来之后，在新的csv中标记，旧的csv中的message报的不正确
-2.与何琦一起讨论测试报告中需要呈现两次节点之间的diff变化，数据要怎么呈现给我，我才好在python中处理
-3.Merge HIS_TOP AC的csv并解决冲突
-
-
-HQ
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1. 统计常值影响数目，分配标记导致其他CDC问题的sg常值漏报数目
-2. 修改脚本逻辑，解决并行log打印，并保留之前的对比log
-3. 和刘玲讨论生成测试报告时的差异变化数据生成
-4. 跑交付case的对比结果（除NFI_TOP、HIS_TOP、APP_CORE之外的部分）
-5. 和家荣讨论生成差异变化数据的python逻辑
-
-ZWL
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1、用formal去验证DTS2025060623980的case，结果是success
-2、分析FE_TSS新增ac漏报误报部分，对比了6月6号的csv，obj都完全能匹配，因此怀疑是跑对比脚本是没有加上old csv
-3、关闭DTS2025051530141
-
 LRF
-今日分析msg数：78
-今日发现issue数：2
+今日分析msg数：110
+今日发现issue数：
 今日回传case数：1
 日报：
-1.回归issue
-DTS2025060626768
-DTS2025060629315
-2.确认issue-DTS2025052733351是否解决 -- 已解决
-3.分析射频3拍的setup_conv的新增误报
-a.DTS2025061218957(7) -- ecdc-06_12的版本误报的ChyDataBusDiffSyncScheme和ecdc-06_10报的ChyDataBusDiffEnable是同一种场景，其报告的message改变的原因是因为Ac的message报告有变化，经分析，现在ecdc报告的Ac的message更为正确 -- 已回传case
-b.DTS2025061231608(7) --ChyDataBusDiffEnable的原理图错误 
+1.参加PV例行周会
+2.尝试提取DTS2025060505428这个issue的小case -- 未能提取成功 -- 已反馈给邱远让来现场评审差异或者实行其它策略
+3.分析射频2拍的Ac的误报漏报 - 已完成
+Diff:
+Diff59(86)/Diff205(4)/Diff71(4)
+Issue:CDC-GEN-B-501(14)
+4分析HI18XXE_BDP的ac的新增
+Diff:DIff59(6)
 
 JR
-今日分析msg数：78
-今日发现issue数：1
+今日分析msg数：
+今日发现issue数：
 今日回传case数：
 日报：
-1.回归Hi18XXE TOP_LGC的issue，DTS2025053016348--178-report27-clocktietoconst ;
-2.分析今日门禁新增误报漏报，builtin新增误报为CDC-4072,SETUP新增误报漏报已提issue CDC-4073：ECDC和SG综合不一样，ECDC综合出来的原理图是两个qualifier汇聚后被常值阻塞，之前这种情况ECDC还是报的ac_conv02，昨天把这种场景修改为报ac_conv04，SG综合出来的原理图是两个qualifier汇聚后没有被常值阻塞，所以SG报的是ac_conv02；
-3.给新泛化中因受常值影响而标记了常值相关差异的其他message补充标记pass-enno_const或者pass-sg_const，方便后面统计数据
+1.和伟豪讨论因工具行为改变，lint相关差异不能用的问题；
+2.CDC-4073：因为ECDC和SG综合不一样，导致报的不一致，为了验证ECDC综合的正确性，用LEC跑CDC-4073的case，把这个case的netlist和rtl作比较，结果lec跑出来是fail的，已把情况反馈给子奇；
+3.给新泛化中因受常值影响而标记了常值相关差异的其他message补充标记pass-enno_const或者pass-sg_const，方便后面统计数据；
+4.发现一个门禁case的sdc没有加TOP/，导致ECDC没有继续检查，已请心雨修改；
+5.发现Diff127的proc有问题，ECDC报的ImproperOperator和SG报的SYNTH_149是match的，但是在csv里走了Diff127的proc，已向心雨反馈；
+6.参加周会
 
 CXY
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.参加脚本周会
-2.优化ac对比脚本性能问题
+1.参加PV周会
+2.和艺豪debugAPP_CORE跑的慢的问题
 
 CJR
-今日分析msg数：350
+今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.分析FE_TSS的setup新增及常值影响问题。
-1.1 setup_port行号问题属于Diff114，setup_bbox01属于Diff178。
-1.2 setup_port01常值影响的属于Diff170、Diff171、Diff172、Diff192
-2.帮助何琦写python脚本
-3.射频cfg1_1,cfg1_2,cfg2误报ChyDataBusDiffSyncScheme，与3拍DTS2025061218957相同。
+日报：1.分析FE_TSS的setup新增及常值影响问题。复现及跑LEC通过属于差异Diff192，分析完成。
+2.分析射频新增，由于修复了conv net在常值上的bug，误报的CONV01属于Diff232.
+3.对射频setup差异进行了review修改了一些拼写错误及差异名称改变的问题。
+4.帮助何琦写python脚本。实现差异改变表格数据过滤处理。
 
 TZQ
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.分析DME_WARP的Ac的新增，都是属于Diff59
-2.跑NFI_TOP的Ac和Conv的对比
+日报：1.分析NAU_CAU_WRAP的Ac的新增部分，发现由于综合不同SG综合的或门，我们综合的mux，src连接到mux的sel pin，导致我们报SrcMuxSelPin的Unsync，SG报的ValidGate,这个之前做过特殊处理，会把我们综合出来的mux当作或门处理，今天分析到可能是由于特殊处理失效了导致的，目前已经反馈给应康
+2.跑NFI_TOP的对比
+3.参加PV周会
+
+TZB
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.HIS_TOP：将cdc.only_report_first_inst_of_bbox设置为false后跑出的结果与原csv中标记Diff174的messagesg进行比较，经比较分析后原csv中sg报的messsgae在参数设置false后所报出message的子集里，即标记Diff174合理
+2.回归issue DTS2025051238456
+3.参加CDC周会
+
+SYH
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.分析HIS_TOP的新增msg，主要涉及的差异为Diff8，新提了一个issue
+1.1 DTS2025061611658：A工具漏报bus中其中一位bit的AcSyncDataPath，从增连原理图中看应该报，疑似是A工具的bug
+2.帮刘玲看确认DTS2025052920772，Enno与A工具选择的qualifier仍然不同，需要reopen
+3.根据艺豪的需求，实现get_hdl_info相关的proc，已完成
+4.参加pV周会
