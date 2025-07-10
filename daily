@@ -1,70 +1,15 @@
-LRF
-今日分析msg数：110
-今日发现issue数：
-今日回传case数：1
-日报：
-1.参加PV例行周会
-2.尝试提取DTS2025060505428这个issue的小case -- 未能提取成功 -- 已反馈给邱远让来现场评审差异或者实行其它策略
-3.分析射频2拍的Ac的误报漏报 - 已完成
-Diff:
-Diff59(86)/Diff205(4)/Diff71(4)
-Issue:CDC-GEN-B-501(14)
-4分析HI18XXE_BDP的ac的新增
-Diff:DIff59(6)
-
-JR
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1.和伟豪讨论因工具行为改变，lint相关差异不能用的问题；
-2.CDC-4073：因为ECDC和SG综合不一样，导致报的不一致，为了验证ECDC综合的正确性，用LEC跑CDC-4073的case，把这个case的netlist和rtl作比较，结果lec跑出来是fail的，已把情况反馈给子奇；
-3.给新泛化中因受常值影响而标记了常值相关差异的其他message补充标记pass-enno_const或者pass-sg_const，方便后面统计数据；
-4.发现一个门禁case的sdc没有加TOP/，导致ECDC没有继续检查，已请心雨修改；
-5.发现Diff127的proc有问题，ECDC报的ImproperOperator和SG报的SYNTH_149是match的，但是在csv里走了Diff127的proc，已向心雨反馈；
-6.参加周会
-
 CXY
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.参加PV周会
-2.和艺豪debugAPP_CORE跑的慢的问题
-
-CJR
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：1.分析FE_TSS的setup新增及常值影响问题。复现及跑LEC通过属于差异Diff192，分析完成。
-2.分析射频新增，由于修复了conv net在常值上的bug，误报的CONV01属于Diff232.
-3.对射频setup差异进行了review修改了一些拼写错误及差异名称改变的问题。
-4.帮助何琦写python脚本。实现差异改变表格数据过滤处理。
-
-TZQ
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：1.分析NAU_CAU_WRAP的Ac的新增部分，发现由于综合不同SG综合的或门，我们综合的mux，src连接到mux的sel pin，导致我们报SrcMuxSelPin的Unsync，SG报的ValidGate,这个之前做过特殊处理，会把我们综合出来的mux当作或门处理，今天分析到可能是由于特殊处理失效了导致的，目前已经反馈给应康
-2.跑NFI_TOP的对比
-3.参加PV周会
-
-TZB
+1.debug现场分析同事反映，TOP_LGC的builtin新增误报CmdFailedInvalidObjOption之前工具也报了但是没有被脚本抓成误报的问题。debug发现，非脚本问题。6月26号的包，工具未报这条msg，工具报的是CmdFailedClockObjNotFound，这条msg不在builtin需要对比的msg中，所以脚本一直未抓。大概从7月3号的包开始，工具没有报CmdFailedClockObjNotFound，而是报的CmdFailedInvalidObjOption，CmdFailedInvalidObjOption属于builtin需要对比的msg，所以有新增的误报。非脚本bug
+2.帮助db测试参数db.test_get_obj_support_union。在门禁上该参数打开会影响ac 1个case，2条新增，影响setup3个case，24条新增，builtin新增93条，初步分析新增并不合理，已经给对应开发范国炜反馈，并且提供case场景
+3.给对比脚本增加给oldcsv加引号的功能
+CXY
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.HIS_TOP：将cdc.only_report_first_inst_of_bbox设置为false后跑出的结果与原csv中标记Diff174的messagesg进行比较，经比较分析后原csv中sg报的messsgae在参数设置false后所报出message的子集里，即标记Diff174合理
-2.回归issue DTS2025051238456
-3.参加CDC周会
-
-SYH
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1.分析HIS_TOP的新增msg，主要涉及的差异为Diff8，新提了一个issue
-1.1 DTS2025061611658：A工具漏报bus中其中一位bit的AcSyncDataPath，从增连原理图中看应该报，疑似是A工具的bug
-2.帮刘玲看确认DTS2025052920772，Enno与A工具选择的qualifier仍然不同，需要reopen
-3.根据艺豪的需求，实现get_hdl_info相关的proc，已完成
-4.参加pV周会
+1.根据现场需求，写脚本实现批量跑x86 arm包的结果
+2.处理现场的脚本问题
