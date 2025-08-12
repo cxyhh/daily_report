@@ -1,15 +1,68 @@
-CXY
+8月11日	"XLL
+今日分析msg数：34
+今日发现issue数：1
+今日回传case数：1
+日报：1.处理存Session目录下部分文件夹权限不为775的目录
+2.修复Session的sg cfg找不到的问题，设置为从指定目录拷贝
+3.参加多qualifier的会议
+4.分析Hi1813 TOP_LGC的message 34条，有1个脚本问题，已提现场脚本问题表；1个issue已提DTS单DTS2025081126296，提取了一个小case，case已回传到issue里。其余为差异Diff37和Diff138"	"ZWL
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："	"LRF
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："	"JR
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："	"CXY
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报：
-1.debug现场分析同事反映，TOP_LGC的builtin新增误报CmdFailedInvalidObjOption之前工具也报了但是没有被脚本抓成误报的问题。debug发现，非脚本问题。6月26号的包，工具未报这条msg，工具报的是CmdFailedClockObjNotFound，这条msg不在builtin需要对比的msg中，所以脚本一直未抓。大概从7月3号的包开始，工具没有报CmdFailedClockObjNotFound，而是报的CmdFailedInvalidObjOption，CmdFailedInvalidObjOption属于builtin需要对比的msg，所以有新增的误报。非脚本bug
-2.帮助db测试参数db.test_get_obj_support_union。在门禁上该参数打开会影响ac 1个case，2条新增，影响setup3个case，24条新增，builtin新增93条，初步分析新增并不合理，已经给对应开发范国炜反馈，并且提供case场景
-3.给对比脚本增加给oldcsv加引号的功能
-CXY
+1.更新现场对比脚本
+2.处理今天新包脚本block的问题，原因是工具的get_atrributes [get_messages ]返回值中多了一个attribute属性：is_violation，脚本获取工具报告的obj的方法又是将get_atrributes [get_messages ] -tcl_dict返回的dict中不需要的value unset掉，所以导致脚本obj创建出错。问题已经解决
+3.处理前几周累积的脚本问题，问题解决中
+4.参加袁洁关于多qualifier的会议"	"CJR
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
+日报："	"TZQ
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："	"TZB
+今日分析msg数：56
+今日发现issue数：2
+今日回传case数：
 日报：
-1.根据现场需求，写脚本实现批量跑x86 arm包的结果
-2.处理现场的脚本问题
+1.分析门禁lint误报漏报，大多数是报的合理的，但是存在WireMultiAssign报不全的问题例如：generate
+for(i=0;i<2 ;i=i+1 )begin:block1
+  for(j=0;j<2 ;j=j+1 )begin:block
+    for(k=0;k<2;k=k+1)begin:block
+        TOP1 U_TOP1(
+        .clk(clk),
+        .rst(rst),
+        .rsta(rsta),
+        .ina(ina),
+        .dout(dout[i]),
+        .dout1(doutl[i])
+        );ecdc只报dout1，但是sg都会报，已经提issue CDC-4158 CDC-4159
+2.参加袁洁关于多qualifier的会议"	"SYH
+今日分析msg数：130
+今日发现issue数：
+今日回传case数：
+日报：
+1.分析PG_SUB中conv的误报漏报，涉及差异Diff115，Diff156，Diff171，Diff229，新提了一个DTS
+1.1DTS2025081212693：Enno与SG的SetupClockGlitch报告的converge net是相连的两个不同net，是否需要新评差异阐述
+1.2 DTS2025080723986 结合Diff134-diff21-abstract_vclk，A工具的sdc命令set_abstract_port -clock中定义了不存在的clock，A工具将其视为一个virtual clock，但是根据A工具的文档，reset与qualifier信号的abstract_port未被声明时，会报partilly constrainted。但Enno报fully constrained
+2.帮高强确认DTS2025073008410的问题情形"	"今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："	"MCH
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："																															
