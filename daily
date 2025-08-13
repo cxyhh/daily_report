@@ -1,11 +1,11 @@
-8月11日	"XLL
-今日分析msg数：34
+8月12日	"XLL
+今日分析msg数：54
 今日发现issue数：1
-今日回传case数：1
-日报：1.处理存Session目录下部分文件夹权限不为775的目录
-2.修复Session的sg cfg找不到的问题，设置为从指定目录拷贝
-3.参加多qualifier的会议
-4.分析Hi1813 TOP_LGC的message 34条，有1个脚本问题，已提现场脚本问题表；1个issue已提DTS单DTS2025081126296，提取了一个小case，case已回传到issue里。其余为差异Diff37和Diff138"	"ZWL
+今日回传case数：
+日报：1.分析了Hi1813 TOP_LGC+HIPHY_SUB的message共54条，其中有2个issue，其余均为差异。其中一个为已有issue DTS2025072627478，一个为新提issue DTS2025081229128：由于Reset推断不同，ecdc比A工具少报了一些infer的reset，导致SetupRstPropagated、SetupPortFullyConstrained的message在两个工具之间也有差异，需要看下怎么处理这些message，是否给出差异
+2.处理Arm包和X86包的数据比对
+3.与心雨一起Debug并解决比对脚本优化Setup性能的脚本bug
+4.与心雨交接现场最近对runtool的修改"	"ZWL
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
@@ -22,10 +22,13 @@
 今日发现issue数：
 今日回传case数：
 日报：
-1.更新现场对比脚本
-2.处理今天新包脚本block的问题，原因是工具的get_atrributes [get_messages ]返回值中多了一个attribute属性：is_violation，脚本获取工具报告的obj的方法又是将get_atrributes [get_messages ] -tcl_dict返回的dict中不需要的value unset掉，所以导致脚本obj创建出错。问题已经解决
-3.处理前几周累积的脚本问题，问题解决中
-4.参加袁洁关于多qualifier的会议"	"CJR
+1.发现优化后的setup对比脚本在Hi1813/HIS_TOP上性能还是不太好，setup超过12个小时任然没有结果。重新review代码，
+i.发现setup的proc中用了get_fanout操作，这个命令在大泛化上十分慢，在proc的get_fanout操作之前加入判断，提前return 0减少不必要的代码过程
+ii.发现setup对比脚本中find_diff部分的循环不合理，时间复杂度还是n平方。修改代码逻辑，匹配后减少循环量，减少内层循环次数
+iii.对于这个case，Reset_info09a需要走diff的msg量为3000+，根据这个rule diff的特性，重写diff部分的建key方法，使得每次进入n平方循环时的n尽量小
+重构后的代码Hi1813/HIS_TOP的setup部分对比运行时间只需1min。Hi1813/HIS_TOP的setup+conv+dataTiedToConst对比跑完只需要30min。目前这部分比较耗时的地方在于：conv部分的diff需要用到get_fanout操作，dataTiedToConst部分处理常值漏报的proc比较慢
+2.将对比脚本CDC_lint部分的对比加到新泛化中，适配现场脚本环境，修改runtool脚本，genCompare脚本
+3.帮助春豪debug脚本问题"	"CJR
 今日分析msg数：
 今日发现issue数：
 今日回传case数：
@@ -34,31 +37,24 @@
 今日发现issue数：
 今日回传case数：
 日报："	"TZB
-今日分析msg数：56
-今日发现issue数：2
+今日分析msg数：62
+今日发现issue数：1
 今日回传case数：
 日报：
-1.分析门禁lint误报漏报，大多数是报的合理的，但是存在WireMultiAssign报不全的问题例如：generate
-for(i=0;i<2 ;i=i+1 )begin:block1
-  for(j=0;j<2 ;j=j+1 )begin:block
-    for(k=0;k<2;k=k+1)begin:block
-        TOP1 U_TOP1(
-        .clk(clk),
-        .rst(rst),
-        .rsta(rsta),
-        .ina(ina),
-        .dout(dout[i]),
-        .dout1(doutl[i])
-        );ecdc只报dout1，但是sg都会报，已经提issue CDC-4158 CDC-4159
-2.参加袁洁关于多qualifier的会议"	"SYH
-今日分析msg数：130
+1.分析门禁lint误报漏报，已分析完，提了一个issue,CDC-4160:对于
+always @(posedge clk or negedge rst_q) begin
+if ( rst_q)begin
+ rst_q <= 0;
+end
+else
+ rst_q <= in1;
+ecdc报的message VarInSenModified对象是 rst_q[0],不是 rst_q
+2.和高强一起分析DTS2507160013374,对于SetupClkMuxNotRcvClk报的随机性问题，尝试提取case中
+3.帮验证DTS2507160015392(已修复)、DTS2025080610366、DTS2025072623481、DTS2025072943210后三个均未修复"	"SYH
+今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：
-1.分析PG_SUB中conv的误报漏报，涉及差异Diff115，Diff156，Diff171，Diff229，新提了一个DTS
-1.1DTS2025081212693：Enno与SG的SetupClockGlitch报告的converge net是相连的两个不同net，是否需要新评差异阐述
-1.2 DTS2025080723986 结合Diff134-diff21-abstract_vclk，A工具的sdc命令set_abstract_port -clock中定义了不存在的clock，A工具将其视为一个virtual clock，但是根据A工具的文档，reset与qualifier信号的abstract_port未被声明时，会报partilly constrainted。但Enno报fully constrained
-2.帮高强确认DTS2025073008410的问题情形"	"今日分析msg数：
+日报："	"今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报："	"MCH
