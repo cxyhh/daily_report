@@ -1,64 +1,7 @@
-8月12日	"XLL
-今日分析msg数：54
-今日发现issue数：1
-今日回传case数：
-日报：1.分析了Hi1813 TOP_LGC+HIPHY_SUB的message共54条，其中有2个issue，其余均为差异。其中一个为已有issue DTS2025072627478，一个为新提issue DTS2025081229128：由于Reset推断不同，ecdc比A工具少报了一些infer的reset，导致SetupRstPropagated、SetupPortFullyConstrained的message在两个工具之间也有差异，需要看下怎么处理这些message，是否给出差异
-2.处理Arm包和X86包的数据比对
-3.与心雨一起Debug并解决比对脚本优化Setup性能的脚本bug
-4.与心雨交接现场最近对runtool的修改"	"ZWL
-今日分析msg数：
+今日分析msg数：57
 今日发现issue数：
 今日回传case数：
-日报："	"LRF
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报："	"JR
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报："	"CXY
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报：
-1.发现优化后的setup对比脚本在Hi1813/HIS_TOP上性能还是不太好，setup超过12个小时任然没有结果。重新review代码，
-i.发现setup的proc中用了get_fanout操作，这个命令在大泛化上十分慢，在proc的get_fanout操作之前加入判断，提前return 0减少不必要的代码过程
-ii.发现setup对比脚本中find_diff部分的循环不合理，时间复杂度还是n平方。修改代码逻辑，匹配后减少循环量，减少内层循环次数
-iii.对于这个case，Reset_info09a需要走diff的msg量为3000+，根据这个rule diff的特性，重写diff部分的建key方法，使得每次进入n平方循环时的n尽量小
-重构后的代码Hi1813/HIS_TOP的setup部分对比运行时间只需1min。Hi1813/HIS_TOP的setup+conv+dataTiedToConst对比跑完只需要30min。目前这部分比较耗时的地方在于：conv部分的diff需要用到get_fanout操作，dataTiedToConst部分处理常值漏报的proc比较慢
-2.将对比脚本CDC_lint部分的对比加到新泛化中，适配现场脚本环境，修改runtool脚本，genCompare脚本
-3.帮助春豪debug脚本问题"	"CJR
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报："	"TZQ
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报："	"TZB
-今日分析msg数：62
-今日发现issue数：1
-今日回传case数：
-日报：
-1.分析门禁lint误报漏报，已分析完，提了一个issue,CDC-4160:对于
-always @(posedge clk or negedge rst_q) begin
-if ( rst_q)begin
- rst_q <= 0;
-end
-else
- rst_q <= in1;
-ecdc报的message VarInSenModified对象是 rst_q[0],不是 rst_q
-2.和高强一起分析DTS2507160013374,对于SetupClkMuxNotRcvClk报的随机性问题，尝试提取case中
-3.帮验证DTS2507160015392(已修复)、DTS2025080610366、DTS2025072623481、DTS2025072943210后三个均未修复"	"SYH
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报："	"今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报："	"MCH
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报："																															
+日报：1.帮泽波验证DTS2025072623481，当前从电路图中依然无法判断同步方式围为vaildGate，且仍为Enno误报，issue未解决。
+2.帮高强确认DTS2025072627478，依次对三个sync_cell注释，SG仅对其中一个sync_cell敏感，注释另外两个时，不影响SG的报告结果
+3.分析射频三拍新增，发现是删除参数db.verilog-const_x_opt的影响，已反馈
+4.分析PG_SUB的conv误报，均为差异Diff229，PG_SUB已分析完毕，重跑8.12号包对比数据
