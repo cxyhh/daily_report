@@ -1,7 +1,57 @@
-今日分析msg数：57
+8月13日	"XLL
+今日分析msg数：24
+今日发现issue数：2
+今日回传case数：
+日报：1.昨天统计的最新数据中，Hi8XXE的DME_WRAP和FE_TSS的数据看起来有明显问题，check了一下，统计脚本是没有问题的，分析进度明显不正常，经排查是因为常值修改导致（已知问题），Ecdc报的常值message都标上了2，Sg报的常值message都成了新增
+2.与心雨交接runtool批量并行run新泛化的脚本
+3.写了一个新的小脚本，用来快速找出新泛化的各模块待分析的数量，精确定位哪个case的哪个类型还有几条待分析。
+4.分析Hi1813 TOP_LGC的conv 24条msg，分析中发现了两个issue
+1）CDC-4161:[GUI]原理图中同时打开了“find path”和“Color Palette”后，原理图上单击操作不生效
+2）CDC-4162：[Crash]原理图中同时打开了“find path”和“Color Palette”单击双击原理图中的多个net和instance后，选中一段链路给选中的电路着色，工具crash。堆栈信息已回传。"	"ZWL
+今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.帮泽波验证DTS2025072623481，当前从电路图中依然无法判断同步方式围为vaildGate，且仍为Enno误报，issue未解决。
-2.帮高强确认DTS2025072627478，依次对三个sync_cell注释，SG仅对其中一个sync_cell敏感，注释另外两个时，不影响SG的报告结果
-3.分析射频三拍新增，发现是删除参数db.verilog-const_x_opt的影响，已反馈
-4.分析PG_SUB的conv误报，均为差异Diff229，PG_SUB已分析完毕，重跑8.12号包对比数据
+日报："	"LRF
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："	"JR
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："	"CXY
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.准备tcl对比脚本性能优化心得分享会的PPT
+2.修复现场遗留脚本问题中"	"CJR
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："	"TZQ
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："	"TZB
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.帮俊鸿进一步确认验证DTS2507160015392DTS2025080610366、DTS2025072623481、DTS2025072943210报的conv04是否合理
+2.和智强对接pwr gui测试工作"	"SYH
+今日分析msg数：203
+今日发现issue数：
+今日回传case数：
+日报：
+1.分析1813 NAU_CAU_WRAP的setup误报漏报，涉及差异Diff170，Diff174，Diff213，已知问题DTS2025080718089，setup部分分析完毕
+2.尝试复现DTS2025080718089中flatnet问题，发现get_hdl_info -constant无法使用，手动提取case，虽然复现出电路结构，但是未能复现出问题。
+3.PG_SUB的新包对比数据出错，重跑conv, setup，const对比
+4.和康哥一起分析DTS2025072427522，确认是pin上常值的误判断。"	"今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："	"MCH
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："																															
