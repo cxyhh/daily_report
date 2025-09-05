@@ -1,7 +1,37 @@
-XLL
-今日分析msg数：16
+"CXY
+今日分析msg数：
 今日发现issue数：
 今日回传case数：
-日报：1.修改Hi18XXE X86所用run脚本中的配置，并重新run X86的结果，涉及case为：HIS_TOP、NFI_PHY_TOP、NFI_TOP、TOP_LGC、TSS_WRAP
-2.参加心雨的分享会
-3.分析Hi1813 TOP_LGC的conv message 16条，为差异和已知问题，又遇到了几次问题，现象与issue CDC-4162一样，督促RD解决，当前得到的回复是已解决，后面的新包应该就修复了
+日报：
+1.完成Diff59+diff63的宽泛对比
+2。完成Diff150，Diff229的宽泛对比
+3.验证最新的set_related_clock转换脚本
+4.和景烁debug射频上的脚本问题"
+"CXY
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.写Diff247的脚本proc
+2.帮景烁确认USBC的数据问题
+3.和高强，万林，一航讨论Diff240的脚本思路，写Diff240脚本可行性分析，结果已经发给袁洁沟通"
+"CXY
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.完成Diff247的精确对比脚本
+2.和袁洁继续讨论Diff240，确认现在脚本先不做该proc
+3.处理脚本在对于误报的常值标记2，const上的bug
+"
+"CXY
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+脚本任务：
+1.修复Hi18XXE/TOP_LGCsetup_port01因为虚拟时钟没有match上的bug
+2.修复Hi18XXE/NAU_CAU_WRAP ac有重复写的问题
+3.修复SetupConstraintConflict没有match上的问题
+4.修复跑cdc-lint的对比结果时，csv表中误写builtin的msg的问题
+5.参加脚本分享会"
