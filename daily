@@ -1,37 +1,98 @@
-"CXY
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
+9月5日	"XLL
 日报：
-1.完成Diff59+diff63的宽泛对比
-2。完成Diff150，Diff229的宽泛对比
-3.验证最新的set_related_clock转换脚本
-4.和景烁debug射频上的脚本问题"
-"CXY
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
+1.脚本任务：
+1）实现了核心rule统计脚本的需求，当前满足计算核心rule和整体rule的总数、误报漏报数、误报漏报率
+2）基于9月1日的新泛化数据，统计了一份核心rule与整体rule的数据
+3）继续实现剩余需求，剩余需求的当前进度10%"	"ZWL
+
 日报：
-1.写Diff247的脚本proc
-2.帮景烁确认USBC的数据问题
-3.和高强，万林，一航讨论Diff240的脚本思路，写Diff240脚本可行性分析，结果已经发给袁洁沟通"
-"CXY
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
+1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
+2.新增分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+4.脚本issue
+CDC-xxx xxx
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+6.脚本任务：
+完成了统计脚本中新增列数的验证;
+完成自动生成所有case的统计数据，并整合到一个标上，完成进度50%:
+7.xxx"	"LRF
+
 日报：
-1.完成Diff247的精确对比脚本
-2.和袁洁继续讨论Diff240，确认现在脚本先不做该proc
-3.处理脚本在对于误报的常值标记2，const上的bug
-"
-"CXY
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
+1.Hi1813-HIS_TOP 共2640条，剩余待分析xxx条
+Diff234(30)/Diff63(4)/DTS2025090519078(4) 
+issue:
+2.新增分析issue
+DTS2025090519078 4 Hi1813-HIS_TOP message的bus合并不合
+理
+DTS2025090521332 5 Hi1813-HIS_TOP RecirculationMux的增量原理图中的qualifier存在问题
+新增/回归 issue号 影响了几条message case名 问题概述
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+4.脚本issue
+CDC-xxx xxx
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+6.脚本任务：
+优化了Diff122:将""get_ac_pairs""命令集成到""Diff122""的proc中
+7.其他
+1.查看get_ac_pairs命令报错的问题是否解决 -- 已解决
+3.参加""get_conv""需求讨论会"	"JR
+今日分析msg数：1336
+今日发现issue数：1
+今日回传case数：1
 日报：
-脚本任务：
-1.修复Hi18XXE/TOP_LGCsetup_port01因为虚拟时钟没有match上的bug
-2.修复Hi18XXE/NAU_CAU_WRAP ac有重复写的问题
-3.修复SetupConstraintConflict没有match上的问题
-4.修复跑cdc-lint的对比结果时，csv表中误写builtin的msg的问题
-5.参加脚本分享会"
+1.分析部分：
+a.Hi18XXE-TSSC_WRAP新增1215条，剩余待分析0条，反弹原因：ar和conv的新增是因为脚本反标失败导致的，已重新手动标记，setup的新增是因为setup的csv有错位导致反标失败；
+b..Hi18XXE-TOP_LGC新增53条，剩余待分析0条，反弹原因：lint的csv中有builtin的message，导致未match和反标上；
+c.LIGHTV300-HIPHY_SUB ac新增68条，ac剩余待分析0条，反弹原因：AcSyncDataPath:RecirculationMux中多比特未合并；
+2.新增分析issue：
+a.DTS2025090519997影响了68条message，case名为LIGHTV300-HIPHY_SUB，问题概述：TOP/U_BBOX/out-->TOP/dout[5:0]在ECDC和A工具中都报了AcSyncDataPath:RecirculationMux，但是ECDC是分开一条一条报的(TOP/U_BBOX/out-->TOP/dout[0]、TOP/U_BBOX/out-->TOP/dout[1]...)，而SG是合在一起报的，期望ECDC也把destination合并报成一条，在瑞风的帮助下复现出了case；
+3.脚本issue：
+a.反标失败；
+b.在lint的csv中，有SetupClkPropagated的漏报，但是这些漏报在builtin的csv中是match或者有差异的;
+c.lint的message有重复的；
+4.其他：
+a.参加周会"	"CXY
+
+日报：
+1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 无
+2.新增分析issue
+无
+3.回归分析issue
+无
+4.脚本issue
+新泛化脚本问题40、44,44是工具合并问题。同一个bus信号路径，报告的reason一致但是ecdc工具未合并，已经拜托蒋蕊帮忙提issue
+5.GUI issue或优化建议：
+无
+6.脚本任务：
+ i完成procDiff251
+ ii帮助家里验证新的Diff174的宽泛对比，和现场分析同事讨论Diff174的宽泛对比只需要做到比较两边报告的module是否一致，不需要再进行constrain的对比等
+ iii优化了脚本Diff147，Diff157的逻辑，减少部分proc的重复调用
+7.其他
+参加PV周会"	"TZB
+
+日报：
+1.1）门禁 新增820条，剩余待分析741条，反弹原因：主要是sdc的问题，就导致builtin很多对不上，还有些是因为能对上但是没match上，情况已经和心雨，景烁反应过了
+  2）Hi18XXE的NFI_PHYG_TOP：分析56条，剩余0条，反弹原因：二维bus合并导致
+3.回归分析issue DTS2025082105752 影响4条message case：导入平台 ipe ，问题概述：黑盒的输入存在domain但是黑盒输出却丢失了domian信息，sg输入输出都存在domain信息，这就导致我们工具漏报AcNoSyncScheme
+"	"SYH
+
+日报：
+1.分析部分：
+a.Hi1813-APP_CORE分析102条
+b.Hi1813-NFI_TOP分析15条
+2.新增分析issue
+a.新增DTS2025090522827，影响24条AcUnsyncDataPath，Enno的unsync误报QualMergeOtherSrc，qualifier在和src汇聚之前已经失去了同步能力，不符合MergeOtherSrc的前提条件
+b.新增DTS2025090513353，影响15条SetupDataTiedToConst，Enno的电路图中报常值，但是在SetupDataTiedToConst中搜索不到这个DFF，A工具正常报常值msg
+3.组会"	"MCH
+
+日报：
+1.导入部分
+1-1.把shuixing进行拆分：
+  case1：TOP下吧P512_xx设层blackbox,约束中关于P512_xxx这个模块的约束去掉。
+  case2:把P512_xxx作为TOP，约束中只保留模块P512_xxx下的。
+目前正在同时run这两个case。
+1-2.协助苏黎debug（DTS2025082928473）,已经初步定位到问题可能的原因，下周一再发个包进行测试。"																															
