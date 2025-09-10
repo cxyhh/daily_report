@@ -1,152 +1,113 @@
-本周DTS迭代数据	现存	新增	关闭	状态&进展	DTS信息	备注
-门禁	0	0	0	漏报误报：0%，0%	无	　
-射频	2	2	1	"漏报误报：
-ac 0.96% 0.51%
-conv 0.55% 0%
+9月9日	"XLL
 
-性能波动：
-depth=5 enno_runtime:1987 sg_runtime:877.32 e/s: 2.26倍 "	"待修复问题：
-DTS2025031332374：射频depth0性能
-DTS2025090303461 cfg1_1 漏报ChyDataBusDiffEnable
-DTS2025090933417 新增84条 工具推导CGIC的行为发生变化，导致AC数据反弹
+日报：
+1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
+2.新增分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+4.脚本issue
+CDC-xxx xxx
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+6.脚本任务：
+完成了xxx;
+优化了xxx:
+7.xxx"	"ZWL
 
-新增：
-DTS2025090303461 cfg1_1 漏报ChyDataBusDiffEnable
-DTS2025090933417 新增84条 工具推导CGIC的行为发生变化，导致AC数据反弹
-关闭：
-DTS2025031332374：射频depth0性能"	　
-18XXE	9	2	1	"只算核心rule（ac ar ac_conv）:
-达标：10/12
-核心rule的漏报误报 0.095% 0.034%
+日报：
 
-全体rule：
-达标：2/12
-全体rule的漏报误报  0.852% 0.075%
+6.脚本任务：
+完成了对encodeRule.py的优化，使其支持对新统计数据中的gen name和case name的进行脱敏转换
+使用新统计脚本统计数据，并验证其准确性
+7.其他
+统计DTS数据"	"LRF
 
-性能状态：各case性能均达标；整体memory比：1.22倍，整体runtime比：1.16倍"	"待修复问题：
-DTS2025090215860（新增）：490 SetupDataTiedToConst的bus合并误将常值
-""0"" 和常值""1""的一起合并了
-DTS2025090223282（新增）：16 APP_CORE 误报SetupBBoxPinFullyConstrained constraint
-DTS2025072943210：36 APP_CORE 误报ChyDataBusDiffSyncScheme
-DTS2025060507072：2 APP_CORE 误报ChyDataBusDiffSyncScheme及ChyDataBusDiffEnable
-[DTS2025072623481] [Hi18XXE-NFI_TOP] ECDC误报ChyDataBusDiffSyncScheme
+日报：
+1.Hi1813 - HIS_TOP,ac共2109条,剩余待分析2002条
+Diff59 - 80/Diff233 - 5/Diff24 - 3
+Diff63 - 24/Diff172 - 20
+2.门禁builtin新增409条，待分析235条，反弹原因：issue CDC-4194;
+3.新增分析issue
+DTS2025090935267 28 Hi1813-HIS_TOP 漏报ValidGate 
+CDC-4194 门禁 message:The domain 'clka' specified by option -from_clk' is the same with that specified by option '-to_clk' in command 'set_sync_cell'报错中的""set_sync_cell""应该更改成""set_cdc_sync_cell""
+4.更改Builtin的约束
+5.确认Hi18XXE BCP_TSS、BDP和APP_CORE数据的正确性
+6.讨论get_conv用法"	"JR
+今日分析msg数：814
+今日发现issue数：3
+今日回传case数：1
+日报：
+1.分析部分：
+a.Hi1813-TOP_LGC ac新增541条，ac剩余待分析471条，反弹原因：24条是常值导致的误报漏报，2条是算法差异导致的误报漏报，8条是pmos综合差异导致的漏报，34条是多比特合并导致的误报漏报，2条是issue DTS2025090926882；
+b.LIGHTV300-HIPHY_SUB新增744条，剩余待分析0条，反弹原因：ArUnsyncCtrlPath和ar_converge01在工具里没报，csv里却有；
+c.门禁builtin新增409条，待分析235条，反弹原因：issue CDC-4195和CDC-4199;
+2.新增分析issue：
+a.DTS2025090926882影响了2条message，case名：Hi1813-TOP_LGC，问题概述：对于src_ff-->dout，ECDC报的QualMergesOtherSrc，但这不符合QualMergesOtherSrc的电路结构，报QualMergesOtherSrc不合理，如果把电路中的mux去掉，让与门连接到dout/d，ECDC报的是MssingSynchronizer，期望报出一个更符合的message，或者给一个新差异，已复现case；
+b.CDC-4195影响了2条message，门禁，问题概述：SG报了QualifierSetup：'qualifier'constraint 'TOP.path3[7:0]' is not used to synchronize any crossing in the current design 'TOP',但ECDC未报对应message；
+c.CDC-4199影响了2条message，门禁，问题概述：SG报了SGDC_qualifier02a：Constraint 'qualifier':Clock name 'TOP.in3'specified in field ‘-from_clk’ is not a valid clock，和SGDC_qualifier03a：Constraint 'qualifier':Clock name 'TOP.in4'specified in field ‘-to_clk’ is not a valid clock，但ECDC未报对应message;
+3.回归分析issue：
+a.DTS2025073115280,case名：LIGHTV300-AO_SUB，问题概述：误报SetupRstNetUndefined；
+b.DTS2025073102969,case名：LIGHTV300-AO_SUB，问题概述：建议SetupPortFullyConstrained多比特合并报；
+c.DTS2025072828663,case名：LIGHTV300-AO_SUB，问题概述：漏报IntegrityRstConvOnComb；
+d.DTS2025072215784,case名：LIGHTV300-AO_SUB，问题概述：原理图中有net的attributes不完整；
+4.脚本issue
+a.脚本漏抓：LIGHTV300 AO_SUB 0905的csv里没有SG报的ac_conv01、ac_conv03和ar_converge01；
+b.ArUnsyncCtrlPath和ar_converge01在工具里没报，csv里却有;
+5.其他：
+a.确认Hi18XXE DDR_SUB、DME_WRAP和FE_TSS数据的正确性"	"CXY
 
-回归：
-DTS2025080610366：Hi18XXE-HIS_TOP,symbol判定有误"	
-18XX	11	9	0	"只算核心rule（ac ar ac_conv）:
-达标：1/12
-核心rule的漏报误报 5.27% 5.61%
+日报：
+1.门禁/射频/新泛化
+a.Hi1813/DDR_SUB ac新增9条，ac误报漏报共515条。ac剩余待分析139条
+2.新增分析issue
+1）CDC-4193:在使用工具命令get_ac_pair时发现该命令有时会在执行之后进行一次help -cus，并且是随机执行的
+2）CDC-4196：在使用工具get_ac_pair -all_src时发现返回值不正确，会遗漏部分src
+3）CDC-4197：工具的get_ac_pair -dest操作，有时返回的src和dest都没有链接关系，返回值不正确
+3.回归分析issue
+无
+4.脚本issue
+关闭现场新泛化case上的issue，目前脚本issue只剩UDP相关Diff的proc还需要改进，但是UDP相关Diff差异PPT描述得不太清楚，脚本不清楚做法。有issue（CDC-4134）正在跟踪差异PPT修改
+5.脚本任务
+1）现场的脚本修改已经上库
+2）验证瑞风写的Diff122的宽泛对比，发现proc中用到的工具命令get_ac_pair有功能问题，暂时不能使用该proc。已提issueCDC-4193，CDC-4196，CDC-4197
+5.其他
+1）参加差异评审会
+2）帮景烁确认csv的状态，以及确认部分case的log结果是否正确"	"TZB
 
-全体rule：
-达标：0/12
-全体rule的漏报误报  3.34% 1.00%
+日报：
+1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
+2.新增分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+4.脚本issue
+CDC-xxx xxx
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+6.脚本任务：
+完成了xxx;
+优化了xxx:
+7.xxx"	"SYH
+今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报：
+1.导入：
+a.和森林春豪讨论约束拆分策略，按能否通过sub name找出来的sgdc命令，能找出来的（sgdc指定的）通过定位与sub module相关的domain，clock。进而找出来其他的约束，不能找出来的（电路连接关系infer的）通过找pin-port连接关系找到其他sgdc
+b.完成了上述导入case拆分策略，能够按sub module name 找出sgdc的脚本，现已生成所有sub module的sgdc文件。用现有sgdc跑sub module"	"MCH
 
-性能状态：各case性能均达标；整体memory比：1.22倍，整体runtime比：1.16倍"	"待修复问题：
-DTS2025082121762：165 NFI_TOP 误报漏报Ac
-DTS2025090215860：15 NFI_TOP 
-DTS2025090226177：2 NFI_TOP 误报ChyDataBusDiffSyncScheme
-DTS2025073111852:28 TOP_LGC 误报SetupPort
-DTS2025081229128:19 TOP_LGC 误报SetupPort
-DTS2025090141958 8 HI1813-HIS_TOP 工具漏报ValidGate
-DTS2025090519078 8 Hi1813-HIS_TOP message的bus合并不合
-理
-DTS2025090521332 5 Hi1813-HIS_TOP RecirculationMux的增量原理图中的qualifier存在问题
-DTS2025090522827，影响24条 AcUnsyncDataPath，Enno的unsync误报QualMergeOtherSrc，qualifier在和src汇聚之前已经失去了同步能力，不符合MergeOtherSrc的前提条件
-DTS2025090513353，影响15条 SetupDataTiedToConst，Enno的电路图中报常值，但是在SetupDataTiedToConst中搜索不到这个DFF，A工具正常报常值msg
-DTS2025090829074 - Hi1813-HIS_TOP 漏报CGIC
-
-新增：
-DTS2025090829074 - Hi1813-HIS_TOP 漏报CGIC
-DTS2025090519078 4 Hi1813-HIS_TOP message的bus合并不合理
-DTS2025090521332 5 Hi1813-HIS_TOP RecirculationMux的增量原理图中的qualifier存在问题
-DTS2025090522827，影响24条 AcUnsyncDataPath，Enno的unsync误报QualMergeOtherSrc，qualifier在和src汇聚之前已经失去了同步能力，不符合MergeOtherSrc的前提条件
-DTS2025090513353，影响15条 SetupDataTiedToConst，Enno的电路图中报常值，但是在SetupDataTiedToConst中搜索不到这个DFF，A工具正常报常值msg
-DTS2025090141958 8 HI1813-HIS_TOP 工具漏报ValidGate 
-DTS2025090226177：2 NFI_TOP 误报ChyDataBusDiffSyncScheme
-DTS2025090813829：HIS_TOP，漏报RecirculationMux
-DTS2025090926882：TOP_LGC，误报QualMergesOtherSrc
-DTS2025090935267：HIS_TOP，漏报ValidGate"	PV优先分析核心rule
-LXXX	22	6	9	"只算核心rule（ac ar ac_conv）:
-达标：2/4
-核心rule的漏报误报 0.57% 0.21%
-
-全体rule：
-达标：0/4
-全体rule的漏报误报  0.85% 0.15%
-
-性能状态：AO_SUB OverMem 3.68->3.55倍。整体memory比：1.22倍，整体runtime比：1.16倍"	"待修复问题：
-[DTS2025073016204] [LIGHTV300-AO_SUB] 建议SetupOutputMultiClkDriven多比特合并报
-[DTS2025082121762] PG_SUB Enno选择了不能同步的qualifier，导致误报AcUnsyncDataPath
-[DTS2025073111852] [LIGHTV300-AO_SUB] 误报SetupPortNoConstraint
-[DTS2025072627478] [LIGHTV300-PG_SUB] Enno误报SyncCellFaild
-[DTS2025071665688] [LIGHTV300-NFI_PHYG] 漏报SetupClkMuxNotRcvClk
-[DTS2507160013374] [LIGHTV300-NFI_PHYG] SetupClkMuxNotRcvClk的报告条数存在随机性
-[DTS2025071729484] [LIGHTV300-AO_SUB] 误报SetupBBoxPinFullyConstrained
-DTS2025090319804：52 AO_SUB 漏报ValidGate
-DTS2025090321573：1 PG_SUB 漏报SetupOutputMultiClkDriven
-DTS2025090317207：1 PG_SUB 误报SetupInputMultiClkSampled
-[DTS2025073113301] [LIGHTV300-PG_SUB] 漏报SetupBBoxPinIgnored
-[DTS2025080723986] [LIGHTV300-PG_SUB] Enno误报SetupPortFullyConstrainted
-[DTS2025073006375] [LIGHTV300-AO_SUB] 误报SetupBBoxPinFullyConstrained的constraints
-[DTS2025072814668] [LIGHTV300-PG_SUB] 现象简述:A工具报ChyArSyncMultiTimes，但不报ArSyncCtrlPath
-DTS2025090227988 AO_SUB 误报MissingSynchronizer（AC）
-DTS2025090519997 68 LIGHTV300-HIPHY_SUB 多bit合并问题
-
-待回归问题：
-DTS2507160015392:2 误报漏报conv（验证人员未到现场）
-
-新增：
-DTS2025090519997 影响了68条message，case名为LIGHTV300-HIPHY_SUB，问题概述：TOP/U_BBOX/out-->TOP/dout[5:0]在ECDC和A工具中都报了AcSyncDataPath:RecirculationMux，但是ECDC是分开一条一条报的(TOP/U_BBOX/out-->TOP/dout[0]、TOP/U_BBOX/out-->TOP/dout[1]...)，而SG是合在一起报的，期望ECDC也把destination合并报成一条，已复现出了case；
-DTS2025090227988 AO_SUB 误报MissingSynchronizer（AC）
-DTS2025090317207：1 PG_SUB 误报SetupInputMultiClkSampled
-DTS2025090319804：52 AO_SUB 漏报ValidGate
-DTS2025090321573：1 PG_SUB 漏报SetupOutputMultiClkDriven
-DTS2025090808061：误报MissingSynchronizer(ar)
-回归：
-DTS2025073008410 1 [LIGHTV300-AO_SUB] 误报MissingSynchronizer
-DTS2025072626042：LIGHTV300-PG_SUB，CGIC结构识别
-DTS2025081212693：LIGHTV300-PG_SUB，误报SetupClockGlitch，flatnet问题
-DTS2025072226694：LIGHTV300-HIPHY_SUB，SetupPortFullyConstrained误报约束sync_reset
-DTS2025072215784：LIGHTV300-AO_SUB，原理图中有net的attributes不完整
-DTS2025072828663：LIGHTV300-AO_SUB，漏报IntegrityRstConvOnComb
-DTS2025073102969：LIGHTV300-AO_SUB，建议SetupPortFullyConstrained多比特合并报
-DTS2025073115280：误报SetupRstNetUndefined
-DTS2025080711559：误报MissingSynchronizer(ar)"	PV优先分析核心rule
-UXXC（达标）	1	0	0	漏报误报 0% 0%（runtime4.62倍，<5倍）	"待修复问题：
-[DTS2025070923946] [USBC][性能-run_time]run time超时"	10分钟以内的放松到5倍
-5XX8	4	0	1	"ipe 12条误报；epe 4条误报；
-性能没变化，12min左右；"	"待修复问题：
-[DTS2025082928473] [ECDC][CDC][漏报][导入][AcNoSyncScheme]
-[DTS2025082825307] [导入]-exx crash（现场未develop）
-
-待回归问题：
-DTS2025082024271：【需求】增加可以获取到所有blackbox的手段
-DTS2025082034441：误报AcNoSyncScheme
-
-回归：
-DTS2025082105752 影响4条message case：导入平台 ipe ，问题概述：黑盒的输入存在domain但是黑盒输出却丢失了domian信息，sg输入输出都存在domain信息，这就导致我们工具漏报AcNoSyncScheme"	
-GUI/DB	7	0	0	　	"待修复问题：
-[DTS2025080723560] [LIGHTV300-PG_SUB] 现象简述:ui和gui能使用同一个session文件
-[DTS2025082518982] [NA] 现象简述:read_design、read_cdc失败后，导入的文件被删除
-[DTS2025080617857] [Hi18XXE-APP_CORE] 搜索界面优化，搜索信号时，能够搜索所有规则的message
-[DTS2025072120622] [Hi18XXE-APP_CORE] 现象简述:load_session打开工程和退出工具耗时太久
-
-待回归：
-DTS2025072165378：现象简述:电路图中显示全obj name后的重叠严重 
-DTS2025072120755：【优化建议】log保存日志"	　
-导入	2	0	0	"现状：
-shuixing：初步拆分成两个模块后，还有一个模块是跑不通，还需要继续拆分。
-1815E：进行拆分中"	"待修复问题：
-[DTS2025082023791] [导入] 2个新项目ecdc的runtime约为A工具的4倍，需要优化
-[DTS2025071706218] [导入] sdc命令报错信息优化"	"AE正在尝试拆分：
-1815E：25个
-shuixing：8个 ,尝试了拆分了95NL 1个子模块，能跑通,但约束可能不全"
-总计	58	19	12		　	
-泛化case performance总结	"标准：runtime 2倍，mem 3倍
-单个case：3个case不达标（1个runtime 10分钟内，放宽标准后仍然略微超标，1个非常规配置runtime超标可以暂时不关注，1个memory为3.56倍需要持续优化）
-新泛化汇总数据：memory为三方1.2倍，runtime为三方0.6倍
-arm包数据：memory基本略高于x86（1.04倍），runtime 优于x86（0.76倍）"					
-CA例会纪要	"1. 性能指标应以最终接近或优于3方工具为目标，ENNO制定性能优化相关计划
-2. 新导入的项目，未跑通的case确定下一步策略，需尽快跑通流程
-3. 存量泛化case验收交付策略的讨论，需ENNO先整理具体rule的优先级与客户讨论（已邮件提供）
-4. 降低conv depth0的优先级，内部状态监控；运行时间短的case（10分钟以内），放宽比对标准"					
+日报：
+1.导入：
+1-1.ipe和epe：
+分析0908的daily包跑出来的数据，ipe新增8条误报(DTS2025090519997)，epe没有新增，当前误报漏报率如下：
+ipe:
+误报率：0.16%
+漏报率：0.04%
+epe:
+误报率：0.0%
+漏报率：0.04%
+1-2.shuixing-100NL:
+当前跑通的模块有CCTS_R、CCTS_L、P512_CLST.P512用时较久，跑完需要25h。
+1-3.shuixing95-95NL:
+前哥负责拆分，当前跑通的模块有CCTS_R、DDRS、P512_CLST"																															
