@@ -1,4 +1,4 @@
-9月9日	"XLL
+9月11日	"XLL
 
 日报：
 1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
@@ -16,64 +16,78 @@ CDC-GUI-xxx xxx
 7.xxx"	"ZWL
 
 日报：
-
-6.脚本任务：
-完成了对encodeRule.py的优化，使其支持对新统计数据中的gen name和case name的进行脱敏转换
-使用新统计脚本统计数据，并验证其准确性
-7.其他
-统计DTS数据"	"LRF
+1.1813 FE_TSS，setup未分析共56条，剩余待分析0
+2.新增分析issue
+新增：DTS2025091201787（综合不一致导致误报SetupRstNetUndefined）
+DTS2025091130149（ecdc报在了虚拟点位上）
+"	"LRF
 
 日报：
-1.Hi1813 - HIS_TOP,ac共2109条,剩余待分析2002条
-Diff59 - 80/Diff233 - 5/Diff24 - 3
-Diff63 - 24/Diff172 - 20
-2.门禁builtin新增409条，待分析235条，反弹原因：issue CDC-4194;
-3.新增分析issue
-DTS2025090935267 28 Hi1813-HIS_TOP 漏报ValidGate 
-CDC-4194 门禁 message:The domain 'clka' specified by option -from_clk' is the same with that specified by option '-to_clk' in command 'set_sync_cell'报错中的""set_sync_cell""应该更改成""set_cdc_sync_cell""
-4.更改Builtin的约束
-5.确认Hi18XXE BCP_TSS、BDP和APP_CORE数据的正确性
-6.讨论get_conv用法"	"JR
-今日分析msg数：814
-今日发现issue数：3
+1.Hi1813-HIES_TOP,ac共1906条，剩余待分析1604条
+DIff:
+Diff32 - 86/Diff172 - 68/Diff171-6/Diff63 - 16/Diff59 - 28
+2.新增分析issue
+DTS2025090935267 影响了76条message Hi1813-HIES_TOP 漏报ValidGate 
+DTS2025091120831 影响了10条message Hi1813-HIES_TOP 误报NoDestMuxDataPin
+DTS2025091132923 影响了18条message Hi1813-HIES_TOP 误报MultiFanout
+DTS2025091128685 影响了4条message Hi1813-HIES_TOP 漏报QualMergesOtherSrc
+"	"JR
+今日分析msg数：385
+今日发现issue数：1
 今日回传case数：1
 日报：
 1.分析部分：
-a.Hi1813-TOP_LGC ac新增541条，ac剩余待分析471条，反弹原因：24条是常值导致的误报漏报，2条是算法差异导致的误报漏报，8条是pmos综合差异导致的漏报，34条是多比特合并导致的误报漏报，2条是issue DTS2025090926882；
-b.LIGHTV300-HIPHY_SUB新增744条，剩余待分析0条，反弹原因：ArUnsyncCtrlPath和ar_converge01在工具里没报，csv里却有；
-c.门禁builtin新增409条，待分析235条，反弹原因：issue CDC-4195和CDC-4199;
-2.新增分析issue：
-a.DTS2025090926882影响了2条message，case名：Hi1813-TOP_LGC，问题概述：对于src_ff-->dout，ECDC报的QualMergesOtherSrc，但这不符合QualMergesOtherSrc的电路结构，报QualMergesOtherSrc不合理，如果把电路中的mux去掉，让与门连接到dout/d，ECDC报的是MssingSynchronizer，期望报出一个更符合的message，或者给一个新差异，已复现case；
-b.CDC-4195影响了2条message，门禁，问题概述：SG报了QualifierSetup：'qualifier'constraint 'TOP.path3[7:0]' is not used to synchronize any crossing in the current design 'TOP',但ECDC未报对应message；
-c.CDC-4199影响了2条message，门禁，问题概述：SG报了SGDC_qualifier02a：Constraint 'qualifier':Clock name 'TOP.in3'specified in field ‘-from_clk’ is not a valid clock，和SGDC_qualifier03a：Constraint 'qualifier':Clock name 'TOP.in4'specified in field ‘-to_clk’ is not a valid clock，但ECDC未报对应message;
-3.回归分析issue：
-a.DTS2025073115280,case名：LIGHTV300-AO_SUB，问题概述：误报SetupRstNetUndefined；
-b.DTS2025073102969,case名：LIGHTV300-AO_SUB，问题概述：建议SetupPortFullyConstrained多比特合并报；
-c.DTS2025072828663,case名：LIGHTV300-AO_SUB，问题概述：漏报IntegrityRstConvOnComb；
-d.DTS2025072215784,case名：LIGHTV300-AO_SUB，问题概述：原理图中有net的attributes不完整；
-4.脚本issue
-a.脚本漏抓：LIGHTV300 AO_SUB 0905的csv里没有SG报的ac_conv01、ac_conv03和ar_converge01；
-b.ArUnsyncCtrlPath和ar_converge01在工具里没报，csv里却有;
-5.其他：
-a.确认Hi18XXE DDR_SUB、DME_WRAP和FE_TSS数据的正确性"	"CXY
+a.Hi1813-TOP_LGC ac新增463条，ac剩余待分析78条，反弹原因：原因1是误报QualMergesOtherSrc，初步分析是symbol有误导致的，原因2是常值导致source和destination断连从而导致漏报，原因3是多比特合并导致的误报漏报；
 
+2.新增分析issue：
+a.DTS2025091115268 影响了128条message case名:Hi1813-TOP_LGC 问题概述：对于src_ff1-->dout，ECDC报的是QualMergesOtherSrc，而A工具报的是Mux-select sync，已复现出case"	"CXY
+今日分析msg数：135
+今日发现issue数：2
+今日回传case数：
 日报：
-1.门禁/射频/新泛化
-a.Hi1813/DDR_SUB ac新增9条，ac误报漏报共515条。ac剩余待分析139条
+1.Hi1813/DDR_SUB ac分析完成，conv部分分析完成，ar部分分析完成
 2.新增分析issue
-1）CDC-4193:在使用工具命令get_ac_pair时发现该命令有时会在执行之后进行一次help -cus，并且是随机执行的
-2）CDC-4196：在使用工具get_ac_pair -all_src时发现返回值不正确，会遗漏部分src
-3）CDC-4197：工具的get_ac_pair -dest操作，有时返回的src和dest都没有链接关系，返回值不正确
+a.DTS2025091120010 影响18条message，case名：Hi1813-DDR_SUB;问题描述对于DDR_MD0-->q1_out_int，A工具报告的是qualifier not found，ECDC漏报
+DDR_MD0是一个inout口。小case上，ECDC报告和A工具一致
+b.DTS2025091124116 影响9条message，case名：Hi1813-DDR_SUB：问题描述：ECDC报IntegrityClockConverge，A工具未报，疑似A工具bug。已复现出case
 3.回归分析issue
 无
 4.脚本issue
-关闭现场新泛化case上的issue，目前脚本issue只剩UDP相关Diff的proc还需要改进，但是UDP相关Diff差异PPT描述得不太清楚，脚本不清楚做法。有issue（CDC-4134）正在跟踪差异PPT修改
-5.脚本任务
-1）现场的脚本修改已经上库
-2）验证瑞风写的Diff122的宽泛对比，发现proc中用到的工具命令get_ac_pair有功能问题，暂时不能使用该proc。已提issueCDC-4193，CDC-4196，CDC-4197
-5.其他
-1）参加差异评审会
-2）帮景烁确认csv的状态，以及确认部分case的log结果是否正确"	"TZB
+1）修复新泛化上发现的ac对比时没有抓到sg的告警级别导致unmatch的问题，今日新泛化脚本问题已清零
+5.GUI issue或优化建议：
+无
+6.脚本任务：
+无
+7.xxx"	"CJR
+今日分析msg数：291
+今日发现issue数：1
+今日回传case数：1
+日报：
+1.分析部分：
+1.1 Hi1813-NFI_PHYG_TOP 
+ar新增34条，全都属于DTS2025091116945；
+ac新增204条，68条属于Diff59及Diff63；85条属于Diff59；34条属于Diff222，；17条属于Diff80；
+conv新增34条，全都属于差异Diff150。
+除setup、builtin全部分析完成
+1.2 Hi1813-TOP_LGC
+conv：其中2条属于Diff150，16条属于Diff112，1条属于Diff156；剩余63条待分析；
+
+2.新增分析issue
+2.1 DTS2025091116945 影响了ArUnsyncCtrlPath 34条 case名：Hi1813-NFI_PHYG_TOP  问题概述：dest为latch则会漏报ArUnsyncCtrlPath，可能violation没有包含此场景，已复现回传。
+
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+
+4.脚本issue
+CDC-xxx xxx
+
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+
+6.脚本任务：
+完成了xxx;
+优化了xxx:
+7.xxx"	"TZQ
 
 日报：
 1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
@@ -88,26 +102,33 @@ CDC-GUI-xxx xxx
 6.脚本任务：
 完成了xxx;
 优化了xxx:
-7.xxx"	"SYH
-今日分析msg数：
-今日发现issue数：
-今日回传case数：
+7.xxx"	"TZB
+
 日报：
-1.导入：
-a.和森林春豪讨论约束拆分策略，按能否通过sub name找出来的sgdc命令，能找出来的（sgdc指定的）通过定位与sub module相关的domain，clock。进而找出来其他的约束，不能找出来的（电路连接关系infer的）通过找pin-port连接关系找到其他sgdc
-b.完成了上述导入case拆分策略，能够按sub module name 找出sgdc的脚本，现已生成所有sub module的sgdc文件。用现有sgdc跑sub module"	"MCH
+1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
+2.新增分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+4.脚本issue
+CDC-xxx xxx
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+6.脚本任务：
+完成了xxx;
+优化了xxx:
+7.BCP_TSS AR 20 Diff85-01/02
+DME ac 60"	"SYH
+
+日报：
+1.导入部分：
+a.编写脚本处理了原sgdc中的reset，abstract_port,set_case_analysis，sync_cell等命令。结合森林的脚本，将所有sub module的全面sgdc生成，并用his_top进行测试，read_cdc处报出均为obj找不到的error，未出现其他错误，可以设置相关参数，继续执行。
+2.分析部分
+a.9.10Ac的分析部分被脚本误删，已补回"	"MCH
 
 日报：
 1.导入：
-1-1.ipe和epe：
-分析0908的daily包跑出来的数据，ipe新增8条误报(DTS2025090519997)，epe没有新增，当前误报漏报率如下：
-ipe:
-误报率：0.16%
-漏报率：0.04%
-epe:
-误报率：0.0%
-漏报率：0.04%
-1-2.shuixing-100NL:
-当前跑通的模块有CCTS_R、CCTS_L、P512_CLST.P512用时较久，跑完需要25h。
-1-3.shuixing95-95NL:
-前哥负责拆分，当前跑通的模块有CCTS_R、DDRS、P512_CLST"																															
+1-1.shuixing100NL:
+拆分出来的7个模块已经全部跑通sg和ecdc的，尝试跑了DDRS这个case的比对，Setup部分已经跑完，用时较短，Ar的比对用时11.5h，Ac的还在run，目前已经超过20h.各个模块的runtime和mem还在收集
+1-2.shuixing95NL：
+模块和对应的约束已经拆分好，用和shuixing100NL同一个包跑了DDRS，也尝试跑了比对，结果同shuixing100NL的DDRS差不多，Setup用时较快，Ar用时11.7h，Ac目前还在run，用时超过17h。"																															
