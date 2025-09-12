@@ -1,19 +1,4 @@
-9月11日	"XLL
-
-日报：
-1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
-2.新增分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-3.回归分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-4.脚本issue
-CDC-xxx xxx
-5.GUI issue或优化建议：
-CDC-GUI-xxx xxx
-6.脚本任务：
-完成了xxx;
-优化了xxx:
-7.xxx"	"ZWL
+"ZWL
 
 日报：
 1.1813 FE_TSS，setup未分析共56条，剩余待分析0
@@ -131,4 +116,4 @@ a.9.10Ac的分析部分被脚本误删，已补回"	"MCH
 1-1.shuixing100NL:
 拆分出来的7个模块已经全部跑通sg和ecdc的，尝试跑了DDRS这个case的比对，Setup部分已经跑完，用时较短，Ar的比对用时11.5h，Ac的还在run，目前已经超过20h.各个模块的runtime和mem还在收集
 1-2.shuixing95NL：
-模块和对应的约束已经拆分好，用和shuixing100NL同一个包跑了DDRS，也尝试跑了比对，结果同shuixing100NL的DDRS差不多，Setup用时较快，Ar用时11.7h，Ac目前还在run，用时超过17h。"																															
+模块和对应的约束已经拆分好，用和shuixing100NL同一个包跑了DDRS，也尝试跑了比对，结果同shuixing100NL的DDRS差不多，Setup用时较快，Ar用时11.7h，Ac目前还在run，用时超过17h。"
