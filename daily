@@ -1,4 +1,4 @@
-9月12日	"XLL
+9月16日	"XLL
 
 日报：
 1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
@@ -16,66 +16,58 @@ CDC-GUI-xxx xxx
 7.xxx"	"ZWL
 
 日报：
-1.分析部分
-1813 TSSC_WRAP conv待分析3条，未分析0条，分析结果Diff229；ar待分析8条，未分析0条，分析结果为Diff85；ac待分析44条，未分析0条，分析结果为Diff59和Diff63；核心rule分析完成，未发现issue
-1813 TSSC_WRAP setup部分待分析44条,未分析0条，分析结果为Diff174，Diff171，漏报常值45条为Diff217
+1.复现BDP反弹msg的case，反弹原因：常值取值不一样
 2.新增分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-3.回归分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-4.脚本issue
-CDC-xxx xxx
-5.GUI issue或优化建议：
-CDC-GUI-xxx xxx
-6.脚本任务：
-完成了xxx;
-优化了xxx:
-7.xxx"	"LRF
+新增：DTS2025091631386（USBC read_design性能劣化5分10s）
+7.其他
+统计数据,对不合理的数据进行分析处理"	"LRF
 
 日报：
-1.Hi1813-HIES_TOP,ac共1604条，剩余待分析1490条
-DIff:
-Diff59 - 38/Diff233 - 8/Diff172 - 58/Diff243 - 8
-Diff-enno_const - 2/Diff32 - 4
-issue:
-DTS2025090926882,影响了8条message - 误报QualMergesOtherSrc
-DTS2025090935267,影响了36条message - 漏报ValidGate 
-2.其它
-DTS2025090519078 - 确认是否修复 - 已修复
-3.参加PV周会"	"JR
-今日分析msg数：78
-今日发现issue数：1
-今日回传case数：1
-日报：
-1.分析部分：
-a..Hi1813-TOP_LGC ac新增78条，ac剩余待分析0条，反弹原因：2条是ECDC综合成pmos,而SG综合成blackbox导致的误报，是差异Diff37，6条是综合差异Diff230，8条是enable-dff的综合差异导致的误报漏报，是差异Diff1，4条是issue DTS2025091213326，22条是脚本把pin转成net后的net和SG报的net不一样，导致unmatch，36条是多比特合并导致的误报漏报，是差异Diff59；
-2.新增分析issue：
-a.DTS2025091213326 影响了4条message Hi1813-TOP_LGC 问题概述：对于src_ff-->dout和src_ff1-->dout，ECDC报的是ValidGate，对于src_ff2-->dout，ECDC报的是MuxSelect，而在A工具中都报的是QualMergesOtherSrc，已复现case和issue一起回传；
-3.脚本issue：
-a.脚本把pin转成net后的net和SG报的net不一样，导致unmatch；
-4.其他：
-a.参加周会"	"CXY
-今日分析msg数：54
+1.门禁 回归 CDC-4135 CDC-4137
+CDC-4135 - Diff229(12) -- Diff229的宽泛比对proc未能覆盖
+全部场景,Diff229的描述太宽泛无法用脚本全部cover,脚本目前只做了其中的一种场景
+CDC-4135更正为Diff229
+CDC-4137更正为CDC-4206
+2.HI1813-HISTOP
+Diff244 - ecdc的回路在离DFF最远的MUX回环，sg的回路在离DFF最近的MUX回环,此电路场景会导致ecdc和sg对sync的检查规则不一致
+"	"JR
+今日分析msg数：291
 今日发现issue数：
 今日回传case数：
 日报：
-1.Hi1813/NFI_TOP ac新增54条，分析完成。反弹原因：
-a）bus信号中某些bit是常值，之前工具版本没有报该信号其他bit的ac问题，最新工具将除常值bit的其他bit的ac问题报告出来了
-2.其他：
-a.参加周会"	"CJR
-今日分析msg数：256
-今日发现issue数：1
-今日回传case数：1
-日报：
 1.分析部分：
+a）LIGHTV300-AO_SUB 新增103条，剩余待分析0条，反弹原因：这103条都是差异Diff224和Diff249，在分析过程中发现这103条新增是因为DTS2025071729484被修复导致的，所以有153条标记为DTS2025071729484的漏报message也重新分析了，也都是差异Diff224和Diff249；
+b）Hi18XXE APP_CORE 新增19条，剩余待分析0条，反弹原因：脚本问题修复导致的新增，这19条都是差异Diff170、Diff171和Diff213；
+c）Hi1813-HIS_TOP 新增589条，剩余待分析563条，反弹原因：26条是差异Diff171；"	"CXY
+
+日报：
+1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
+2.新增分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+4.脚本issue
+CDC-xxx xxx
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+6.脚本任务：
+完成了xxx;
+优化了xxx:
+7.xxx"	"CJR
+今日分析msg数：175
+今日发现issue数：
+今日回传case数：
+日报：
+1.Hi1813
 1.1 Hi1813-TOP_LGC
-conv：其中9条属于DTS2025091204705，3条属于Diff37,2条属于差异DIff190；16条属于Diff1178;33条属于Diff124.分析完成.
-ar:194条属于Diff85
+ar:73条属于综合问题（添加bbox重新比对）；由于存在多个打拍器选取的对象不同，因此10条属于Diff191；
+1.2 Hi1813-APP_CORE
+conv：22条属于差异Diff229；0912表格中存在32条误报与HI18XXE-APP_CORE相同，属于DTS2025072943210，在新包0916没有此误报了；14条ChyDataBusDiffSyncScheme误报在新包没有再现；24条Ac_conv03漏报属于Diff156；
 2.新增分析issue
-2.1 DTS2025091204705 影响了SetupClockGlitch 9条 case名：Hi1813-TOP_LGC  问题概述：异步信号src[1:0]和其他时钟域的时钟汇聚,A工具报了CLock_glitch05,其对象为src[0]；而ENNO报的对象是src[1:0]。分析ENNO报的没有问题。，已复现回传。
+新增/回归 issue号 影响了几条message case名 问题概述
 
 3.回归分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
+
 
 4.脚本issue
 CDC-xxx xxx
@@ -86,52 +78,51 @@ CDC-GUI-xxx xxx
 6.脚本任务：
 完成了xxx;
 优化了xxx:
-7.xxx"	"TZQ
+"	"TZQ
+今日分析msg数：495
+今日发现issue数：
+今日回传case数：
+日报：
+1.Hi1813-HIS_TOP
+ar:484条，其中都属于我们报 的跟SG的src不同，属于Diff85-01；ar部分已分析完毕
+ac:11条，其中都属于一个bus中某几个bit我们报了常值，导致比SG少报了几条AcSyncDataPath,属于Diff172;Diff147;Diff63
+"	"TZB
+
+日报：
+1.Hi1813-HIS_TOP的conv未分析172条，剩余待分析65条，反弹原因：1).常值原因：存在ecdc工具报某些ff为常值，就导致报的ff比sg少；还存在sg和ecdc都报了某个ff datatiedtoconst，但是sg并没有将ff/d的常值传在ff/q端导致我们也会比sg少报ff；3).sg将在mux/data汇聚也报出来，标记Diff156；4)存在我们比sg多报ff，且Sg报的ff在我们报的子集里，分析确认标记为diff229；"	"SYH
 
 日报：
 1.分析部分：
-a.Hi1813 HIS_TOP ar 72条其中属于差异Diff85-report10-ar-01-src_dest
-2.回归issue
-a.DTS2025080412484：SetupClkNetUndefined ECDC报的net与A工具不一致
-b.DTS2507160015392：IntegrityClockConverge ECDC报的conv点跟A工具不一致
-3.其他
-a.参加PV周会"	"TZB
-
-日报：
-1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
+a）Hi1813-APP_CORE，分析27条ac，无剩余待分析。涉及diff254和两个新issue
 2.新增分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-3.回归分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-4.脚本issue
-CDC-xxx xxx
-5.GUI issue或优化建议：
-CDC-GUI-xxx xxx
-6.脚本任务：
-完成了xxx;
-优化了xxx:
-7.xxx"	"SYH
+a）DTS2025091639340：AcSyncDataPath；case语句综合不同，Enno综合出一个与或门的集合，报sync—vaildgated。A工具综合出一个多输入的mux，src与qualifier都是是data input，报unsync—mux data inputs；影响2条msg
+b）DTS2025091630781：AcSyncDataPath，Enno误把无驱动关系的bbox input pin与DFF的output pin分别当作一个crossing path的src和des，误报AcSyncDataPath；影响6条msg
+3.导入
+a）根据李博建议实现analysis_design+elaborate_design的tcl流程，待赵洲注册相关明后尝试"	"今日分析msg数：
+今日发现issue数：
+今日回传case数：
+日报："	"MCH
 
 日报：
-1.导入部分：
-因为导入整个case过大，read_design就要6-7h，思考拆分执行方式：
-a.read_design -top -elaborate_top,仅对单一sub module执行elaborate。缺点是每一个sub_module都要执行一次read_design,而每次read_design执行大概要6-7h
-b.read_design读入所有design_file后，通过set_top控制elaborate执行。使用check/remove_cdc控制每个sub_module的拆分。和赵洲沟通后，当前ecdc不支持将read_design拆分成analysis+elaborate的流程，此方式放弃
-c.使用xargs -P方式实现a方法的拆分脚本。
-2.其他
-a.参加周会"	"MCH
-
+1.导入
+1-1.shuixing：
+7个子模块的约束已经转换完毕，所有的模块都已经跑通ecdc和sg的flow，其中DDRS、MAINS、P512_CLST这三个模块的runtime比sg的要大很多，已经超出2倍。
+1-2.1815E：
+刚从CA拿到各个子模块的约束文件，预计明天可完成转换，之后可以把所有的sub-module跑通。"	"CHY
 日报：
-1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
-2.新增分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-3.回归分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-4.脚本issue
-CDC-xxx xxx
-5.GUI issue或优化建议：
-CDC-GUI-xxx xxx
-6.脚本任务：
-完成了xxx;
-优化了xxx:
-7.xxx"																															
+1.脚本任务：
+完成了：
+在自对比脚本中，由于builtin msg部分无法使用get_message_template方法获取template，也没发使用get_messages 的方法拿取obj，更改了msg提取逻辑
+debug自对比脚本：将自对比脚本用同一个版本跑以保证不存在误报漏报
+golden已存入12号发来的包跑出来的数据，今日已完成全量case的16号与12号版本对比
+编写简单的包含不匹配case数量统计的并行sh脚本
+优化了：
+"	"WH
+今日分析msg数：150
+今日发现issue数：
+今日回传case数：
+日报：
+
+1.分析门禁builtin msg的数量150条，其中50多条数约束转换问题，最新的转换脚本已解决;80几条是CDC-4199的问题;1条有问题约束里面带引号的-form_clk*转换脚本中识别成了参数;1条为约束总#和字符串挨着三方认为是一体的，手动更改
+2.脚本issue
+处理CDC-4201转换脚本问题"																													
