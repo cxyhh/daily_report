@@ -1,4 +1,23 @@
-9月16日	"XLL
+9月18日	"XLL
+
+日报：
+1.脚本任务：
+完成了增量比对脚本的现场调试工作，流程已经在shuixing SDSS_L上跑通
+2.其他：
+回传现场的脚本修改"	"ZWL
+
+日报：
+3.回归分析issue
+回归：DTS2025072165378（GUI 原理图name名重叠）
+DTS2025072329541（table键和家里环境一致，不做修改）
+DTS2025080718153（bus合并问题）
+DTS2025090303461（射频漏报ChyDataBusDiffEnable）
+DTS2025082034441（导入：blackbox方向判断问题，已修复）
+reopen：DTS2025072221643（现场待回归；家里reopen；PE未确定需求，已停留了一个月）
+reopen：DTS2025080617197（现象还是有层级不报SetupOutputMultiClkDriven，和output是否是常值无关）
+6.脚本任务：
+优化了统计脚本中的一个bug，找到多个csv文件时，会报错乱传csv导致后续统计错误，已修复
+debug小泛化的跑不通的原因，发现是testbench中-top TOP，但小泛化的TOP名应该是TOP.txt里的名字"	"LRF
 
 日报：
 1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
@@ -13,61 +32,69 @@ CDC-GUI-xxx xxx
 6.脚本任务：
 完成了xxx;
 优化了xxx:
-7.xxx"	"ZWL
+7.xxx
 
-日报：
-1.复现BDP反弹msg的case，反弹原因：常值取值不一样
-2.新增分析issue
-新增：DTS2025091631386（USBC read_design性能劣化5分10s）
-7.其他
-统计数据,对不合理的数据进行分析处理"	"LRF
-
-日报：
-1.门禁 回归 CDC-4135 CDC-4137
-CDC-4135 - Diff229(12) -- Diff229的宽泛比对proc未能覆盖
-全部场景,Diff229的描述太宽泛无法用脚本全部cover,脚本目前只做了其中的一种场景
-CDC-4135更正为Diff229
-CDC-4137更正为CDC-4206
-2.HI1813-HISTOP
-Diff244 - ecdc的回路在离DFF最远的MUX回环，sg的回路在离DFF最近的MUX回环,此电路场景会导致ecdc和sg对sync的检查规则不一致
-"	"JR
-今日分析msg数：291
+1.新增issue
+新增 CDC-4206 1 误报ChyDataBusDiffEnabe 门禁 电路场景不符合""ChyDataBusDiffEnabe"",sg未报对应的Ac_conv04
+2.回归issue
+DTS2025091132923 Hi1813-HIS_TOP 误报MultiFanout
+DTS2025091120831 Hi1813-HIS_TOP 误报NoDestMuxDataPin
+DTS2025090519078 Hi1813-HIS_TOP message的bus合并不合理
+DTS2025090227988 LIGHTV300-AO_SUB 误报MissingSynchronizer
+DTS2025090808061 LIGHTV300-AO_SUB 误报MissingSynchronizer(ar)
+DTS2025090141958 Hi18XXE-HIS_TOP  漏报ValidGate
+3.参加差异性DTS单的根因分析会"	"JR
+今日分析msg数：228
 今日发现issue数：
 今日回传case数：
 日报：
 1.分析部分：
-a）LIGHTV300-AO_SUB 新增103条，剩余待分析0条，反弹原因：这103条都是差异Diff224和Diff249，在分析过程中发现这103条新增是因为DTS2025071729484被修复导致的，所以有153条标记为DTS2025071729484的漏报message也重新分析了，也都是差异Diff224和Diff249；
-b）Hi18XXE APP_CORE 新增19条，剩余待分析0条，反弹原因：脚本问题修复导致的新增，这19条都是差异Diff170、Diff171和Diff213；
-c）Hi1813-HIS_TOP 新增589条，剩余待分析563条，反弹原因：26条是差异Diff171；"	"CXY
-
-日报：
-1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
-2.新增分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-3.回归分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-4.脚本issue
-CDC-xxx xxx
-5.GUI issue或优化建议：
-CDC-GUI-xxx xxx
-6.脚本任务：
-完成了xxx;
-优化了xxx:
-7.xxx"	"CJR
-今日分析msg数：175
+a.Hi1813-HIS_TOP 新增228条，剩余待分析0条，反弹原因：50条是差异Diff59和Diff157，4条是Diff59和Diff71，174条是差异Diff59；
+2.回归分析issue：
+a）DTS2025091213326 Hi1813-TOP_LGC 问题概述：漏报QualMergesOtherSrc；
+b）DTS2025091115268 Hi1813-TOP_LGC 问题概述：误报QualMergesOtherSrc；
+c）DTS2025090926882 Hi1813-TOP_LGC 问题概述：误报QualMergesOtherSrc；
+d）DTS2025090215860 Hi18XX-APP_CORE 问题描述：SetupDataTiedToConst的二维合并有问题；
+e）DTS2025090142402 Hi18XX-APP_CORE 问题描述：AcSyncDataPath:valid gate的原理图中的qualifier画错了；
+f）DTS2025073016204 LIGHTV300-AO_SUB 问题描述：建议SetupOutputMultiClkDriven多比特合并报；
+g）DTS2025071729484 LIGHTV300-AO_SUB 问题描述：误报SetupBBoxPinFullyConstrained；
+3.脚本issue
+a）有4条漏报应该标记Diff59，脚本却标记为Diff9；
+4.其他：
+a）merge Hi1813-HIS_TOP的csv；
+b）参加DTS单差异根因分析会"	"CXY
+今日分析msg数：208
 今日发现issue数：
 今日回传case数：
 日报：
-1.Hi1813
+1.新泛化Hi1813/DDR_SUB的setup部分分析208条，剩余997条未分析
+分析部分142条是Diff235，15条是DTS2025091201787，51条是常值往后传播导致的差异
+2.新增分析issue
+无
+3.回归分析issue
+无
+4.脚本issue
+ar部分的对比脚本修改，在门禁上不太适用，正在修复中
+7.其他
+a）和开发看了DTS2025091120010的问题，开发正在修复中
+b)测试常值验证脚本在lighting上的结果"	"CJR
+今日分析msg数：8
+今日发现issue数：
+今日回传case数：
+日报：
+1.Hi1813/HI18xxE
 1.1 Hi1813-TOP_LGC
-ar:73条属于综合问题（添加bbox重新比对）；由于存在多个打拍器选取的对象不同，因此10条属于Diff191；
-1.2 Hi1813-APP_CORE
-conv：22条属于差异Diff229；0912表格中存在32条误报与HI18XXE-APP_CORE相同，属于DTS2025072943210，在新包0916没有此误报了；14条ChyDataBusDiffSyncScheme误报在新包没有再现；24条Ac_conv03漏报属于Diff156；
+setup：
+2条常值漏报属于Diff213；
+4条setupport误报漏报属于差异Diff185
+2条setupport误报漏报，data clock domain不同，正在复现中
+
 2.新增分析issue
 新增/回归 issue号 影响了几条message case名 问题概述
 
 3.回归分析issue
-
+3.1 DTS2025091204705 属于差异Diff115
+3.2 DTS2025073113301 属于差异Diff252
 
 4.脚本issue
 CDC-xxx xxx
@@ -79,50 +106,61 @@ CDC-GUI-xxx xxx
 完成了xxx;
 优化了xxx:
 "	"TZQ
-今日分析msg数：495
+今日分析msg数：115
 今日发现issue数：
 今日回传case数：
 日报：
-1.Hi1813-HIS_TOP
-ar:484条，其中都属于我们报 的跟SG的src不同，属于Diff85-01；ar部分已分析完毕
-ac:11条，其中都属于一个bus中某几个bit我们报了常值，导致比SG少报了几条AcSyncDataPath,属于Diff172;Diff147;Diff63
-"	"TZB
+1.Hi1813
+a.HIS_TOP ac部分115条，都是属于常值影响，导致ECDC漏报了Ac相关的msg，属于Diff171或Diff172
+2.其他
+a.参加差异性DTS单会议"	"TZB
 
 日报：
-1.Hi1813-HIS_TOP的conv未分析172条，剩余待分析65条，反弹原因：1).常值原因：存在ecdc工具报某些ff为常值，就导致报的ff比sg少；还存在sg和ecdc都报了某个ff datatiedtoconst，但是sg并没有将ff/d的常值传在ff/q端导致我们也会比sg少报ff；3).sg将在mux/data汇聚也报出来，标记Diff156；4)存在我们比sg多报ff，且Sg报的ff在我们报的子集里，分析确认标记为diff229；"	"SYH
-
-日报：
-1.分析部分：
-a）Hi1813-APP_CORE，分析27条ac，无剩余待分析。涉及diff254和两个新issue
+1.分配Hi1813-HIS_TOP的ac未分析86条，大多数是属于diff32,以及Diff240
 2.新增分析issue
-a）DTS2025091639340：AcSyncDataPath；case语句综合不同，Enno综合出一个与或门的集合，报sync—vaildgated。A工具综合出一个多输入的mux，src与qualifier都是是data input，报unsync—mux data inputs；影响2条msg
-b）DTS2025091630781：AcSyncDataPath，Enno误把无驱动关系的bbox input pin与DFF的output pin分别当作一个crossing path的src和des，误报AcSyncDataPath；影响6条msg
-3.导入
-a）根据李博建议实现analysis_design+elaborate_design的tcl流程，待赵洲注册相关明后尝试"	"今日分析msg数：
+DTS2025091840800:对于一个multifanout结构，我们工具报AcSyncCtrlPath，A工具报mutlifanout,且同一个结构我们也报了mutilfanout， 影响6条message
+3.参加差异性DTS单会议"	"SYH
+
+日报：
+1.关单DTS2025090522827
+DTS2025082121762
+2.参加差异性DTS单会议"	"今日分析msg数：
 今日发现issue数：
 今日回传case数：
 日报："	"MCH
 
 日报：
-1.导入
-1-1.shuixing：
-7个子模块的约束已经转换完毕，所有的模块都已经跑通ecdc和sg的flow，其中DDRS、MAINS、P512_CLST这三个模块的runtime比sg的要大很多，已经超出2倍。
-1-2.1815E：
-刚从CA拿到各个子模块的约束文件，预计明天可完成转换，之后可以把所有的sub-module跑通。"	"CHY
+1.导入case
+shuxing：
+1-1.增量比对脚本已经跑通，尝试跑了SDSS_L这个子模块的初始数据，结果如下：
+仅在95NL上有的（即在100NL上是减少了的）
+false_msg_num(误报的msg数量): 728.
+missing_msg_num(漏报的msg数量): 1175.
+false_rate: 38.89%
+missing_rate: 50.67%
+
+仅在100NL上有的（即在100NL上是减少的）
+false_msg_num: 0
+missing_msg_num: 337
+false_rate: 0.0%
+missing_rate: 100%
+
+以上数据是AC的变化数据，Ar和conv的msg数据ecdc和sg在95NL和100NL上都没有变化。
+在100NL上增加的部分，sg增加了337条，ecdc没有增加。"	"CHY
 日报：
 1.脚本任务：
-完成了：
-在自对比脚本中，由于builtin msg部分无法使用get_message_template方法获取template，也没发使用get_messages 的方法拿取obj，更改了msg提取逻辑
-debug自对比脚本：将自对比脚本用同一个版本跑以保证不存在误报漏报
-golden已存入12号发来的包跑出来的数据，今日已完成全量case的16号与12号版本对比
-编写简单的包含不匹配case数量统计的并行sh脚本
-优化了：
+优化有case crash时无结果文件生成, 导致对比失效的问题
+优化runcase流程适配大泛化
+添加case文件的MD5信息, 防止误改case导致的版本之间存在差异
+添加关键字: 工具commitID, case失败阶段, 以及创建时间信息
 "	"WH
-今日分析msg数：150
-今日发现issue数：
+今日分析msg数：50
+今日发现issue数：2
 今日回传case数：
 日报：
 
-1.分析门禁builtin msg的数量150条，其中50多条数约束转换问题，最新的转换脚本已解决;80几条是CDC-4199的问题;1条有问题约束里面带引号的-form_clk*转换脚本中识别成了参数;1条为约束总#和字符串挨着三方认为是一体的，手动更改
-2.脚本issue
-处理CDC-4201转换脚本问题"																													
+1.分析门禁builtin msg的数量50条qualifier
+
+2.脚本任务
+修改转换中参数用引号包起来，且有空格的场景转换错误的问题
+"																													
