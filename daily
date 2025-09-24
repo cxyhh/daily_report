@@ -1,93 +1,84 @@
-9月19日	"XLL
+9月23日	"XLL
 
 日报：
-1.脚本任务：
-增量比对脚本在现场发现了读不到文件内容的情况，经定位发现是一些该加文件锁的地方，忘了加了，已修复
-2.修改core rule统计脚本以适配不同优先级的rule的统计，进度50%"	"ZWL
+1.ipe/epe 新增33条，剩余待分析0条，反弹原因：版本变化，blackbox在报AcNoSyncScheme时message obj选择的intance不同，导致之前合并成一条报的message报了多条。整体符合差异Diff71和Diff157。
+2.脚本任务：
+修复了run analysis统计未分析数据的脚本，其中一个原因是Ar的csv中result那一列加了引号，而脚本中没有适配这种情况，导致AR数据没有统计成功;
+"	"ZWL
 
 日报：
-1.分析arm包比对不上的case：
-Hi1813-NFI_PHYG_TOP，x86环境修改了sdc文件导致未匹配，同步后比对成功
-1813-HIS_TOP/USBC/APP_CORE/NFI_TOP ac_conv01/02的conv net存在随机性
-1813-TOP_LGC比对不上的内容较多，又因为arm环境下无法使用gui（CDC-4213）影响了debug速度，暂未分析到原因
-7.其他
-跑arm包的结果
-参加周会"	"LRF
+1.LIGHTV300 HIPHY_SUB  ar反弹8条，conv反弹48条，未分析0条，反弹原因：udp综合问题，sg不展示udp内部结果，ecdc会展示内部结构，标记Diff190
+2.其他
+整理数据、统计数据"	"LRF
 
 日报：
-1.Hi1813-HISTOP setup剩余共716条，待分析 条。
-Diff174 - 145
-2.处理Hi1813-HISTOP的ac csv的差异冲突
-3.USBC - conv新增：conv net的变化(不是随机性问题)
-CDC-4212 - :ChySameSrcConvIncSeq报告的的converge net未遵循Diff150的准则
-4.回传CDC-4154的case
-5.参加PV周会"	"JR
-今日分析msg数：56
-今日发现issue数：
-今日回传case数：
-日报：
-1.分析部分：
-a.Hi1813-TOP_LGC 新增56条，剩余待分析0条，反弹原因：当src[0]和destin[0]、src[1]和destin[1]、src[2]和destin[2]和src[3]和destin[3]是同步时，ECDC在报的时候会报成src[3:0]--destin[3:0]是同步，而当src[0]和destin[0]、src[1]和destin[2]、src[2]和destin[1]和src[3]和destin[1]是不同步时，ECDC在报的时候会报成src[3:0]--destin[2:0]是不同步，这样只看message的话，看起来就像src[3:0]--destin[2:0]既报了同步又报了异步，之前提过类似issue DTS2025070910735，已向研发反馈并请研发reopen DTS2025070910735；
-2.其他：
-a）参加周会；
-b）处理Hi18XXE-HIS_TOP的差异冲突；
-c）参加差异评审会"	"CXY
-
-日报：
-1.Hi1813/DDR_SUB的setup部分分析完成，常值部分将脚本的常值验证proc以及常值proc打开之后，全部标记完成
-2.脚本issue
-a)修复现场新泛化脚本问题编号51,52.目前现场新泛化脚本问题，除一条onhold，在线表格记录的问题已经全部解决
-3.脚本任务
-a）因为LIGHTV300/HIPHYG_SUB的design有更新，刷新LIGHTV300/HIPHYG_SUB的sg log。正在刷新中
-3.其他
-a)参加PV周会
-b）参加差异评审会"	"CJR
-今日分析msg数：68
+1.Hi1813-HIS_TOP ac 新增6条 剩余待分析0条 反弹原因：RD正确修改PULL UP为常值""1"",ecdc的常值得以传播，SG的常值未传播，导致ecdc漏报ac sync,与RD一起查看后，是差异Diff234
+2.Hi1813-HIS_TOP setup 共35条 剩余待分析0条 分析结论： 
+DIFF234-17/Clk-const-4/pass-false_bit-14
+3.其它：
+3.1和PE和RD一起看DTS2025091128685的问题，得出结论，需要更改ECDC的行为
+3.2反馈get_conv在现场无法使用的问题
+"	"JR
+今日分析msg数：163
 今日发现issue数：1
 今日回传case数：
 日报：
-1.Hi1813
-1.1 Hi1813-TOP_LGC
-Ar:24条reset_sync04漏报由于不存在crossing，所以属于差异Diff74；18条reset_sync04误报漏报属于Diff191；24条Ar；Ar分析完成
-Ac：两条误报漏报属于DTS2025091927617
+1.分析部分：
+a）Hi1813-TOP_LGC 新增32条，剩余待分析0条，反弹原因：
+原因1是builtin的一些message本来是按行号的宽泛比对匹配上的，rule实际上匹配不上，所以不应该再比file，但是脚本还是比了file导致unmatch；
+原因2是sgdc转sdc有问题，SG约束的clock没有加顶层module名且没有-domain，但转成sdc后加了assign_clock_domain且domain名字和sgdc中clock名字相同，而和sdc中的clock不同名，这是错误的；
+原因3是6条是差异Diff124；
+原因4是issue DTS2025092323956；
+b）LIGHTV300-HIPHY_SUB 新增131条，剩余待分析0条，反弹原因：5条是差异Diff190，2条是差异Diff56，124条是差异Diff213；
+2.新增分析issue：
+a）DTS2025092323956 影响了1条message Hi1813-TOP_LGC 问题概述：在SG中报了SetupClockGlitch，但ECDC未报，从attributes可以看出是因为MUX的输出没有data_clock导致的；
+3.脚本issue
+a）builtin的一些message本来是按行号的宽泛比对匹配上的，rule实际上匹配不上，所以再比file没有意义；
+b）sgdc转sdc有问题，SG约束的clock没有加顶层module名且没有-domain，但转成sdc后加了assign_clock_domain且domain名字和sgdc中clock名字相同，而和sdc中的clock不同名，这是错误的；"	"CXY
+
+日报：
+1.和开发看DTS2025091120010的问题，帮助开发跑测试包，debug问题点。问题出现原因是约束文件中给port约束的时钟没有生效，开发正在debug中
+2.参加常值方案会议
+3.跑Hi813/DE_TSS、Hi8XXE/FE_TSS、Hi813/HIS_TOP的新包结果
+4脚本问题
+处理新泛化AO_SUB上出现的block问题。原因是：SetupOutputMultiClkDriven新包加入了多bit合并，之前的工具通过get_attribute [get_message -message_id SetupOutputMultiClkDriven] -tcl_dict拿到的dict的value只有Port1，出现了多bit合并之后，新包返回的dict中对于多bit的情况返回的是PortList1,脚本之前的get dict命令就会报错。脚本已经适配"	"CJR
+今日分析msg数：188
+今日发现issue数：1
+今日回传case数：1
+日报：
+1.HI1813
+1.1 HIS_TOP
+setup:clock_info03b漏报151条属于Diff213；12条false bit；24条表格滞后导致，新包已经报了。1条属于DTS2025092345973.
 2.新增分析issue
-新增 DTS2025091927617 影响了2条message Hi1813-TOP_LGC  对于input信号，A工具和ENNO都是报SetupPortFullyConstrained，Constraints为inferred abstract_port，但是inferred data clock domain不同， ENNO推了一个，A工具推了很多；而通过incremental schematic，信号的data domain并没有setup_port01里面报的那么多；疑似A工具bug。在ENNO中，通过get_fanout 获取fanout信息，筛选出大部分fanout到FF/clk，存在一条fanout到blackbox的pin，但是blackbox 所有pin都没有时钟。
+新增 DTS2025092345973 影响了1条message HI1813-HIS_TOP 漏报SetupConstraintConflict:set_case_analysis约束port信号TOP/rcv_dc_enb，同时set_abstract_port约束与TOP/rcv_dc_enb相连的指定module bbox的port；A工具会报setup_check01；而enno没有报SetupConstraintConflict。已复现回传。
+
+"	"TZQ
+今日分析msg数：77
+今日发现issue数：
+今日回传case数：
+日报：
+1.Hi1813
+a.HIS_TOP setup部分，SetupRstNetUndefined中44条属于该msg enno报的行为不一致，有时enno会选取和sg不同的instance导致报的net不一样，有时同一条path上enno会报3个net，sg只报1个，属于DTS2025091130149；SetupDataTiedToConst中33条属于loop mux结构，输入和sel都是0，属于Diff213
+"	"TZB
+
+日报：102
+1.HI1813
+1.1 HIS_TOP
+setup:分析clock_info03b漏报，大多数是由于en综合问题导致的常值推导不同以及ecdc没有推常值以标记Diff212,Diff213,还有部分是属于pullup()，A工具综合成常值1，ECDC综合成leaf，会导致漏报常值，但是昨天新包的结果这个问题以及解决了
+2.分析issue
+和研发pe分析DTS2025091745625，本来是想提新差异，因为我们工具对于cgic同步和muxslect同时存在都会报出来，而sg貌似存在优先级，只报了cgic同步，然后Sg报了conv04(diffenable)ecdc工具没报，研发确认是工具问题，后续要修改报出conv04
+"	"SYH
+
+日报：
+今日分析msg数：87
+今日发现issue数：
+今日回传case数：
+1.分析部分
+a)Hi1813-NFI_TOP常值部分，涉及37条Diff2234，50条Diff171
+2.脚本部分
+a)继续重构get_hdl.tcl脚本适配家里环境，目前正在解决多个进程在同一个文件中写内容的位置问题
 3.其他
-a)参加PV周会"	"TZQ
-今日分析msg数：64
-今日发现issue数：
-今日回传case数：
-日报：
-1.Hi1813
-a.HIS_TOP setup部分,SetupPortFullyConstrained都是因为常值导致的unmatch，属于Diff172
-2.其他
-a.参加PV周会"	"TZB
-
-日报：
-1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
-2.新增分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-3.回归分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-4.脚本issue
-CDC-xxx xxx
-5.GUI issue或优化建议：
-CDC-GUI-xxx xxx
-6.脚本任务：
-完成了xxx;
-优化了xxx:
-7.xxx"	"SYH
-
-日报：
-1.脚本部分
-a)整理get_hdl脚本,准备get_hdl_info分享文档
-b)抄get_hdl脚本
-2.其他
-a)参加差异评审会议
-b)参加PV周会"	"今日分析msg数：
-今日发现issue数：
-今日回传case数：
-日报："	"MCH
+a)和袁洁何琴确认DTS2025091639340：结论1，对于select_operator,enno综合结果的所有select pin均为qualifier，对于SG选择其中一条data pin做为qualifier，无法理解。结论2，该issue由多个qualifier互相作用，多重loop后汇聚。可以用diff92解释。"	"MCH
 
 日报：
 1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
@@ -104,20 +95,22 @@ CDC-GUI-xxx xxx
 优化了xxx:
 7.xxx"	"CHY
 今日分析msg数：
-今日发现issue数：1
+今日发现issue数：
 CHY
 日报：
 1.脚本任务：
-简化出现差异时标记流程，已完成
-"	"WH
+修复builtin对比脚本propagate的对比不上问题CDC-4210
+修复builtin对比脚本propagate rst/clk 层次不一致问题，CDC编号还未添加
+添加12个大泛化个case的子module的golden，目前剩余USBC未添加"	"WH
 今日分析msg数：
 今日发现issue数：
 今日回传case数
 日报：
 
-1.分析门禁builtin msg的
-1）builtin对比setuprstpropagated对不成功，报告的reset不一样，实际是同一个nets，感觉建key可以处理成拿到对象，再获取对象上的reset
-2）约束中的get命令存在多个参数，混合正确参数和错误参数是工具不会报错约束中的get命令存在多个参数，混合正确参数和错误参数是工具不会报错
+1.分析门禁9-22的builtin msg的
+1）将前面分析过的9-10的反标到9-22的csv中
+2）部分case转换的sdc未刷新，已更新
+3）脚本中漏抓SyncCellFromToDomainSame，已反馈给心雨
 2.脚本任务
-修改转换脚本set_reset_synchronizer指定的clock为多个时，需要拆分成多条约束的场景
-修改了sgdc中带有#的场景，#前面没有字符串时才当作注释"																													
+修改查找常值在大case上死循环的问题
+"																													
