@@ -1,128 +1,127 @@
-9月24日	"XLL
+9月25日	"XLL
 
 日报：
 1.脚本任务：
-1）完成了run analysis新增统计const的未分析条数功能，进度100%;
-2）回传了部分现场修改的代码
+实现了解析sg moresimple rpt里的fatal error message的文件和行号，根据文件和行号注释对应constraint，批量处理了21个1815E的case;
 2.导入case
-run 1815E的case，分析sg运行失败的原因，总结后看是否能用脚本统一处理
-3.其他
-查看nile平台的log，评估将运行结果、统计数据等信息在nile平台展示的实现方案和工作量"	"ZWL
+1）APP_CORE：Constraint的报错没有一次性报完，在修复了之前的错误后又报了错，再次修复后runsg没有问题，已归档性能数据
+2）BCP_TOP：95NL阶段run ecdc出现了bus error，正前说是环境问题，重run中
+3）BDP_WRAP：95NL的Sg和Ecdc工具均已跑通，已归档了性能数据
+4）CPU_CLUSTER：comment sg脚本运行后constraint就没有问题了，95NL的sg和ecdc都已跑通，且归档了性能数据
+5）DAS_TOP：comment sg脚本运行后constraint就没有问题了，95NL的sg已跑通，且归档了性能数据，ecdc运行中
+6）DDR_SUBSYS：Constraint的报错为obj中有星号，需要加引号，涉及message不多，手动处理了之后报错obj not found，用comment sg的脚本运行后再run，没有问题，95NL的sg已跑通，ecdc运行中；100NL的sg已跑通。均已归档性能数据"	"ZWL
 
 日报：
-1.1813-FE_TSS setup新增107条，未分析0条，反弹原因：未获取old csv，merge后清零
+1.分析lint包在门禁中的新增lint报错，主要误报WireMultiAssign 334条，抽样分析后，发了DTS2025092548625
+分析Hi813 FE_TSS误报常值，为差异Diff171
 2.新增分析issue
-新增：CDC-4225（综合问题）
-3.回归分析issue
-回归：DTS2025080617197（LIGHTV300-PG_SUB 漏报SetupOutputMultiClkDriven，现象是层级导致不报，现已修复）
-DTS2025072814668（sg报reset_sync04，不报Ar_sync，差异Diff255）
-DTS2025091201787（Hi1813 FE_TSS  ecdc综合不一致导致报的和sg报的不一致，现在取flat net后和sg报一致）
-DTS2025091631386（read_deisgn性能劣化，已从14min优化到2min）
+新增：DTS2025092514398（约束命令行为不一致）
+DTS2025092548625（门禁 LINT WireMultiAssign和sg W415行为不一致）
+6.脚本任务：
+完成了run analysis新增统计lint的未分析条数功能，进度100%;
 7.其他
-统计数据"	"LRF
+统计数据
+跑lint的测试包"	"LRF
 
 日报：
-1.Hi18XXE-FE_TSS 常值剩余168条,剩余待分析111条,常值误报原因：ecdc的常值传播路径比sg的更深(常值误报标记DIff171)
-2.回归issue:
-DTS2025090829074 Hi1813-HIS_TOP 漏报CGICAutoInferred
-DTS2025071665688 LIGHTV300-NFI_PHYG 漏报SetupClkMuxNotRcvClk
-DTS2507160013374 LIGHTV300-NFI_PHYG SetupClkMuxNotRcvClk的报告条数存在随机性
-3.其它：
-3.1 和家荣一起看Hi1813-HIS_TOP上Ac_conv04的误报问题
-3.2 提了一个GUI的issue:CDC-GUI-4224 - 在GUI界面执行copy操作时，tool crash
-3.3 查看DTS2025091128685这个issue是否已解决"	"JR
-今日分析msg数：86
+1.Hi18XXE-FE_TSS 常值剩余111条,剩余待分析0条,常值误报原因：ecdc的常值传播路径比sg的更深(常值误报标记DIff171/Diff233)
+2.LIGHTV300-AO_SUB Setup新增2条 剩余待分析0条 反弹原因：ecdc修复issue后，脚本未匹配
+3.回归issue
+DTS2025090521332 Hi1813-HIS_TOP RecirculationMux的增量原理图中的qualifier存在问题
+4.其它：
+4.1 脚本问题55：脚本未能match上SetupOutputMultiClkDriven和Clock_sync06 - 已解决
+4.2 参加差异评审会议
+4.3 参加CDC Usability Discussion会议
+"	"JR
+今日分析msg数：126
 今日发现issue数：
 今日回传case数：
 日报：
 1.分析部分：
-a）Hi18XXE-BCP_TSS 新增58条，剩余待分析0条，反弹原因：2条是Diff-dc，56条是Diff171；
-b）Hi18XXE-NAU_CAU_WRAP 新增16条，剩余待分析0条，反弹原因：16条是Diff171；
-c）Hi18XXE-TSSC_WRAP 新增4条，剩余待分析0条，反弹原因：2条是Diff-dc，2条是Diff171和Diff-dc；
-d）LIGHTV300-HIPHY_SUB 新增117条，剩余待分析108条，反弹原因：8条是差异Diff171，1条是issue，和DTS2025072427522类似；
-2.回归分析issue：
-a）DTS2025091506539 影响了12条message LIGHTV300-HIPHY_SUB 问题概述：同一条ArUnsyncCtrlPath:MssingSynchronizer报了两次--已修复；
-b）DTS2025073006375 影响了2条message LIGHTV300-AO_SUB 问题概述：误报SetupBBoxPinFullyConstrained的constraints--已修复；
-c）DTS2025090223282 影响了4条message LIGHTV300-AO_SUB 问题概述：误报SetupBBoxPinFullyConstrained的constraints--已修复；
-d）DTS2025091738392  影响了1条message Hi1813-HIS_TOP 问题概述：AcSyncDataPath:ValidGate的原理图有问题--已修复；"	"CXY
+a）LIGHTV300-HIPHY_SUB 新增108条，剩余待分析2条，反弹原因：8条是差异Diff234，1条是差异Diff234和Diff170，9条是差异Diff170，73条是差异Diff171，15条是Diff-dc；
+b）LIGHTV300-AO_SUB ac新增20条，剩余待分析0条，反弹原因：都是算法差异Diff8；
+2..其他：
+a）参加差异评审会；
+b）和研发讨论常值相关问题"	"CXY
 
 日报：
-1.回归分析issue。关闭DTS单DTS2025091124116。回归测试通过
-2.因为景烁要等新包到现场，才开始跑新泛化。对于现场当前常值未分析数比较大的case，跑常值脚本，刷新现场数据。加上冯敏的命令之后，常值还需要分析的数量小于2000条
-3.脚本任务
-a)测试康凯关于Diff214的新代码，发现代码中用了fold_bus_bit命令，对于有结构体的port脚本会block，暂时在脚本中写了一个判空结构，规避问题。在苏黎分支上测试新代码，在门禁上无影响
-b)整理最近现场对对比脚本的修改和优化，回传上库"	"CJR
-今日分析msg数：6
-今日发现issue数：
+1.跑测试包
+a）跑在新泛化上跑苏黎的测试包
+b)在门禁上跑lint测试包的结果
+2.脚本issue
+a)修复AO_SUB上出现的SetupOutputMultiClkDriven的新增问题。原因是工具进行了多bit合并，脚本在get_port命令操作时没有进行lsort操作，导致enno的obj顺序和sg的不一致
+b)帮景烁debug新泛化结果反标失败的原因。原因是：oldcsv未加引号，猜测是景烁跑新泛化时，脚本开始对oldcsv进行了自动加引号处理，但是在跑csv的期间，有人对oldcsv进行了分析保存，导致加上的引号掉了，所以反标失败
+3.其他：
+a)参加差异评审会
+b)写常值Diff212，Diff213的脚本proc逻辑，准备和客户串讲的资料"	"CJR
+今日分析msg数：628
+今日发现issue数：2
 今日回传case数：
 日报：
 1.HI1813
-1.1 HIS_TOP
-conv:1条conv01漏报属于Diff229；1条conv04误报属于Diff63；4条conv04误报属于Diff32；2条误报ChyDataBusDiffEnable属于DTS2025060507072，已反馈研发，新算法引入可能消除。
-2.其他
-2.1 和研发看常值问题
-2.2 和研发看setup_port01的问题
-3.脚本
-修改射频统计脚本，将标记为6及2的数据作为未分析的数据。
-"	"TZQ
-今日分析msg数：522
+1.1 TSSC_WRAP 分析常值：10条属于Diff172&diff-dc
+
+1.2 DDR_SUB 分析常值：
+34条属于false_bit；16条属于DTS2025092516642；
+
+1.3 NFI_PHYG_TOP setup新增578条，其中误报了SetupAsyncClkConvOnComb和SetupAsyncClkConvOnMux 425条；误报SetupClkMuxNotRcvClk 153条。问题1：存在同一种GUI问题，dest找到FF的d端了，应该是FF的clk端。影响所有误报，无法从所给出的电路直接看出问题。已提单 DTS2025092536979。问题2：误报的本质原因可能是signal type的传递错误。当异步时钟汇聚后，之后在hier pin被约束为了新的时钟，导致了误报SetupClkMuxNotRcvClk/SetupAsyncClkConvOnComb/SetupAsyncClkConvOnMux。已提单DTS2025092553703。
+
+2.新增分析issue
+新增 DTS2025092516642 影响了16条message HI1813-DDR_SUB 问题概述：1和0同时驱动同一个net，ENNO将net推了常值1；而A工具是不推常值的。因为没有确定的标准给出，所以需要确认此种场景net是否可以推成1还是不推。
+
+新增 DTS2025092536979 影响了578条message HI1813-NFI_PHYG_TOP 问题概述：误报SetupClkMuxNotRcvClk/SetupAsyncClkConvOnComb/SetupAsyncClkConvOnMux所给出的电路是不正确的，dest应该是FF的clk，而不是FF的d端。
+
+新增 DTS2025092536979 影响了578条message HI1813-NFI_PHYG_TOP 问题概述：signal type的传递错误。当异步时钟汇聚后，之后在hier pin被约束为了新的时钟，导致了误报SetupClkMuxNotRcvClk/SetupAsyncClkConvOnComb/SetupAsyncClkConvOnMux。"	"TZQ
+今日分析msg数：149
 今日发现issue数：
 今日回传case数：
 日报：
 1.Hi1813
-a.NAU_CAU_WRAP的常值部分，122条都是属于Diff171或者Diff172，常值部分已全部分析完毕
-b.HIS_TOP的常值部分，400条都是属于Diff171，还剩余309条常值msg未分析
-2.回归分析issue：
-a.DTS2025091522996 影响972条msg Hi1813-HIS_TOP 问题描述：:verilog中的原语pullup()，SG工具综合成常值1，ECDC综合成leaf，ECDC多报了这个leaf/o的ArUnsyncCtrlPath；已修改，现在ECDC能推出常值
-3.其他
-a.与前哥讨论DTS2025092241129，SetupRstNetUndefined增量原理图显示问题，今天讨论时发现增量原理图已显示正常"	"TZQ
-今日分析msg数：202
-今日发现issue数：
+a.HIS_TOP的常值部分，70条都是属于Diff171，21条属于Diff170，46条属于Diff172，12条属于SG DFF的D pin报了推了常值但Q pin没有，Diff234；还剩余170条常值msg未分析
+"	"TZB
+今日分析msg数：138
+今日发现issue数：1
 今日回传case数：
 日报：
 1.Hi1813
-BDP\BCP_TSS\DME_WARP常值误报，多数场景是属于常值ff是从前面的常值ff传播过来，标记Diff171/Diff172，还有小部分是属于sg常值d端报了常值未传播在q端标记Diff234
-2.门禁
-门禁总共分析83条都是属于CDC-4222：set_cdc_sync_cell的-to_clk_design_obj [get_ports {TOP/clk[1]} {TOP/clk[2]}]工具未报告任何报错信息，未停止检查，sg -to_clk clk[1] clk[2]会报SGDCSTX_006，不允许跟多个值，
-"	"SYH
-今日分析msg数：551
-今日发现issue数：
-今日回传case数：
-日报：
-1.分析部分
-a)Hi1813-APP_CORE的常值部分，184条是DTS2025090513353,239条属于Diff248，128条属于Diff212。常值部分分析完毕。
-2.脚本任务：
-a)解决了get_hdl.tcl中多个进程同时写相同文件的问题。增强了脚本中参数的传递，方便维护调用
-3.其他
-a)分析过程中发现有SG漏抓msg的情况，已反馈心雨，心雨已解决
-b)测试包跑DTS2025090513353，部分常值没报对应msg，因该是这部分常值没有进入相关的函数流程。待冯敏修改后重跑
-4.回归issue
-a)DTS2025091639340：Hi1813-APP_CORE，综合不同导致Enno误报AcSyncDataPath，影响11条msg"	"MCH
+HIS_TOP的常值部分，多数场景是属于常值ff是从前面的常值ff传播过来，标记Diff171/Diff172
+2.Hi18XXE
+a.NFI_PHYG_TOP的conv未分析8条已分析8条，主要是工具误报ChyDataBusDiffSyncScheme分析后发现报的没问题，对于一个bus ecdc报了其中bit muxslect，另外bit报了recirculationmux，但是sg也报了与我们对应resaon，不知道为什么没有报conv04，已经和俊鸿说过了，他下周来看
+b.HIS_TOP常值分析30条，剩余0条，多数场景是属于常值ff是从前面的常值ff传播过来，标记Diff171/Diff172，还有小部分是属于sg常值d端报了常值未传播在q端标记Diff234
+3.新增分析issue
+新增 DTS2025092551750 影响了8条message HI18XXE-NFI_PHYG_TOP问题概述：ecdc报出的ChyDataBusDiffSyncScheme增量原理图不全，ecdc报出的ChyDataBusDiffSyncScheme增量原理图，图中只有一个src到dest的sync path，缺少另外一个src到Dest的path"	"SYH
 
 日报：
-1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
-2.新增分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-3.回归分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-4.脚本issue
-CDC-xxx xxx
-5.GUI issue或优化建议：
-CDC-GUI-xxx xxx
-6.脚本任务：
-完成了xxx;
-优化了xxx:
-7.xxx"	"CHY
+今日分析msg数：19
+今日发现issue数：
+今日回传case数：
+1.分析部分
+a)Hi1813-APP_CORE的常值部分，9条是Diff171，
+b)LIGHTV300-NFI_PHYGsetup部分，10条是Diff168
+2.回归分析issue
+a)DTS2025090321573：LIGHTVD300-PG_SUB，常值导致漏报SetupOutputMultiClkDriven，影响1条msg
+b)DTS2025090317207：LIGHTVD300-PG_SUB，Enno误报SetupInputMultiClkSampled，影响1条msg
+c）DTS2025080723986：Enno误报SetupPortFullyConstrainted，影响1条msg
+3.脚本部分
+a)重构proc remove_non_const和verify_all_const.tcl适配家里环境
+4.其他
+a)参加导入case进度会议
+"	"MCH
+
+日报：
+1.导入case："	"CHY
 今日分析msg数：
 今日发现issue数：
 CHY
 日报：
 1.脚本任务：
-将已标记的builtin csv进行merge到cfg1和cfg2
-自对比脚本适配新泛化流程
-"	"WH
-1.分析门禁9-23的builtin msg的
-1)分析builtin cfg1和cfg2的csv中未标记的false和missing
-2）脚本中还有两条漏抓SyncCellFromToDomainSame，已反馈给心雨
+优化builtin的自对比脚本: 可指定工具版本, 配置文件, golden目录, 生成结果目录
+修复部分问题, case name重复的时候会覆盖, 增加caseflag防止同名case覆盖
+2.跑1815E:
+UCP_TOP: sg: running ecdc: todo
+HIS_TOP: sg: running ecdc: todo
+IMU_TOP: sg: done    ecdc: done"	"WH
+1.分析门禁9-23的builtin msg的csv
+set_cdc_sync_cell的help中-to_clk和-to_clk_design_obj均可以跟多个参数，使用多个参数时-to_clk会报错，-to_clk_design_obj不会报错,行为应该保持一致，-from_clk和-from_clk_design_obj同理(CDC-4226)
 2.脚本任务
-构思验证常值传播的脚本逻辑，每个电路器件单独写一个proc,根据常值的输入端遍历其他未给常值的端计算值看是否都等于output端的值"																													
+写常值传播验证的proc,对不同的器件处理成了三种，分别为1值，2值，3值的，验证逻辑已写完，待跑case验证"																													
