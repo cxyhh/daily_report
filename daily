@@ -1,102 +1,140 @@
-10月14日	"XLL
+10月16日	"XLL
 
 日报：
 1.脚本任务：
-1）修复了runtool脚本中生成的csv没有日期字段以及old csv没有正确找到的问题;
-2）定位BDP_WRAP 100NL的增量比对脚本报错问题，是由于脚本中用set signal {*}$signal处理变量时，拿到的是一个数量大于1的列表，展开后直接赋值给set变量报错
-3）定位导入case TOP_LGC的一条message在95NL的csv里应该存在而没有存在的问题，是因为没有将95和100同时run，run95的脚本中处理了sg的message差值，run100的脚本中处理了ecdc的差值，比对时，需要两边的文件同时存在，且没有.lock文件，才能正确比对。如果ru增量的时候，其中一边报错、crash等导致增量文件存在，但是内容为空，则也会导致数据不对。
-2.导入case
-BCP_TOP的比对持续运行中"	"ZWL
+ecdc的runtool工具中加入了启动elint gui和输出elint case对应的case id的功能，方便分析lint时快速启动gui和拿到case id。
+2.lint分析
+分析lint 27个case，涉及100条msg，提了9个issue。"	"ZWL
 
 日报：
-1.分析Hi1813-NFI_TOP中标记CDC-4147的msg，为Diff174；
-分析Hi813-HIS_TOP中标记DTS2025091130149漏报SetupRstNetUndefined的msg，猜测为未检查udp结构，尝试复现case
-
+1.泛化Hi18XXE-NFI_PHYG_TOP setup新增51条，1813-DDR_SUB setup新增4条，LIGHTV300-AO_SUB/NFI_PHYG setup新增18条；以上setup新增均为脚本proc Diff214的优化，已经和心雨一起分析优化；1813-HIS_TOP conv新增一条，为反标问题
+2.新增分析issue
+新增：CDC-4246（Doc Browser的优化建议）
 7.其他
-统计数据
-帮RD俊鸿跑debug包查看随机性问题，但debug包跑出来后，conv04的msg没报了"	"LRF
+森林反馈Ar脚本应该match的msg，但还是漏报误报，复现case供心雨debug；最后发现是导入的脚本需要优化
+8.使用工具体会
+①、Doc Browser中无法搜索，单独打开这个terminal为空，提了一个优化建议CDC-4246"	"LRF
 
 日报：
 1.分析部分
-1815E BDP_WRAP ac共3693条 剩余待分析2196条 差异主要为Diff59/DIff75
-2.其它
-2.1更新导入case-MATA_WRAP的数据
-2.2和RD查看ecdc报""SrcConverge MissingSynchronizer""的电路结构"	"JR
-今日分析msg数：198
-今日发现issue数：1
+lint门禁 6条rule共13个case
+1.1 
+2.新增issue(lint)
+DTS2025101624510/DTS2025101624227/DTS2025101623856
+DTS2025101625287/DTS2025101631827/DTS2025101632538
+DTS2025101634516
+3.其它：
+3.1 参加bus比对讨论会
+"	"JR
+今日分析msg数：400
+今日发现issue数：5
 今日回传case数：
 日报：
 1.分析部分：
-a）导入-1815E-TOP_LGC 新增15110条，剩余待分析14912条，反弹原因：138条在新develop已修复，24条是Diff59,36条是Diff234；
-2.回归分析issue：
-a）DTS2025092630179 影响了56条message H1813E-TOP_LGC 问题概述：误报AcSyncDataPath:ValidGate--已修复；
-3.新增分析issue：
-a）CDC-4243 问题概述：期望实现一个命令可以display原理图时判断source和destination之间有没有CDC问题，没有CDC问题则不能display出完整的原理图，当source和destination之间有一个与门，与门的另一个输入是常值0时，实际上source和destination之间是断开的，但是用display_incremental_schematic可以打开source和destination有连接关系的完整增量原理图，这样如果用户不知道source和destination之间被常值阻断的话，容易误导用户认为source和destination是没有被常值阻断的，因此期望有一个命令如果source和destination之间被常值阻断了，就画不出完整的电路图，且在下方提示用户；
-4.其他：
-a）今天花费时间最多的地方是source1和destination之间有很多的组合逻辑，在组合逻辑中有常值导致source1和destination之间被常值阻断，一开始没找到，因为source2和destination之间有crossing，所以destination的D pin不是常值，因此一开始没有看出来，已提issue CDC-4243"	"CXY
+a）导入H1815-TOP_LGC 新增7227条，剩余待分析7147条，反弹原因：80条是差异Diff75；
+b）lint门禁分析5个rule：E0022、E0027、E0028、E0034和E0036，共分析320条rule，提了5个issue：DTS2025101608974、DTS2025101617418、DTS2025101619804、DTS2025101632177和DTS2025101632715；
+2.新增分析issue：
+a）DTS2025101608974 lint门禁 问题概述：误报E0022；
+b）DTS2025101617418 lint门禁 问题概述：误报E0027；
+c）DTS2025101619804 lint门禁 问题概述：漏报E0027；
+d）DTS2025101632177 lint门禁 问题概述：漏报E0036；
+e）DTS2025101632715 lint门禁 问题概述：漏报E0036；"	"CXY
 
 日报：
-1.分析部分
-a）回归DTS单DTS2025091120010
-2.脚本部分
-a）修改Diff59部分逻辑，优化代码
-b)修复Hi1813/NFI_TOP上发现的脚本bug。原因是在将sg的信号格式转换成enno的格式时，sg的格式在信号名和信号bit之间存在空格，如aa.bb .\gena.ff [32]将信号用转换格式的proc处理时，会被按照空格拆分，将脚本中需要用到转换格式proc的地方都改为用list的方式传入
-c）整理、抄写现场统计脚本
-d）修复setup_port01漏写和重复写的问题，原因是Diff214在处理setup_port01时只考虑到了enno和sg同时报了setup_port01的情况，对于单纯的误报、漏报并没有写操作，所以出现漏写；并且受到Diff185 proc的影响，对于match的部分，在Diff185写了一遍，到Diff214又会再写一遍，导致重复。
-d）在对景烁目录下的case脚本log时发现，现在十月的develop包使用get_version命令返回的version值为：cdc_develop_202509-，问题已经反馈给正前哥"	"CJR
-今日分析msg数：788
-今日发现issue数：
-今日回传case数：
-日报：
-1.分析部分
-1.1 分析导入DDR_SUBSYS
-（1）403条漏报SrcConverge，因为从黑盒出来的信号的时钟信息经过buf后缺失了，导致漏报SrcConverge。此问题在新包已修复。由于存在 较多的此类问题，正在用最新的包重新比对。由于工具较慢且比对时间长，需要几天后出结果。
-（2）34条MissingSynchronizer漏报（95）而在100里面变成了srcconverge漏报，也是同上问题，在新包已报出。
-（3）4条unmatch属于行号问题Diff75.
-（4）34条AcUnsyncCtrlPath（CtrlPotentialSyncRstUndefined）误报，SG报了srcconverge，属于Diff63模糊匹配。
-（5）313条srcconverge误报漏报：SG报的dest是一个bus而ENNO是报存在具体连接关系的dest；属于Diff59.
-
-"	"TZQ
-今日分析msg数：62
-今日发现issue数：
-今日回传case数：
-日报：
-1.分析部分
-a.Hi1813-HIS_TOP conv部分新增3条，剩余分析0条，反弹原因：CDC-4237（1813-HIS_TOP ChyDataBusDiffEnable存在随机性）
-b.门禁-ac和setup(cfg1,cfg2)新增59条，剩余分析3条，反弹原因：ac部分是AcSyncDataPath的reason改变，属于Diff59;Diff63.setup部分是属于issue被鉴定为差异，还有3条是SG在check lint或者builtin报错后停止check，ECDC还是继续check"	"TZB
+1.脚本
+a）修复DDR_SUB上发现的setup_port01脚本重复写的问题，原因是Diff214proc比较时没有考虑到关于port的direction的对比，所以在循环中出现了sg一条和enno两条对应上的情况。
+在debug脚本时发现，关于enno报告的SetupPort相关的message的attribute信息用的key是String1 String2这种格式，并且不同SetupPort的String表示内容不一样，如SetupPortFully的Sting2表示port的约束来源，String4表示port的方向；但是SetupPortNoConstrain的String2表示port的方向。这种展示方式我觉得不太友好，首先SetupPortFullyConstrain和SetupPortNoConstrain都是报告port的约束情况，msg格式统一会更加清楚，并且attribute中的String2、String3、String4含义表达不清楚，建议换成更能表达内容的key，如Constrain、Domain、Direction之类的。已提issueCDC-4249
+b）修复Hi1813/HIS_TOP上发现的脚本bug
+c）完成宽泛对比proc框架：在enno和sg报告的ac相关msg中，如果信号名相同，sync、unsync推断一致，只有bus不同的情况下，在csv中做出标记
+2.其他
+a）用CA给的for_英诺达Lint映射表和enno自己的Elint_当前特性说明表，整理出CA-ENNO_Lint映射表
+b)参加ELint映射表反标讨论会
+c）参加Multi-bits-Merge会议"	"CJR
 
 日报：
-1.分析部分
-a.Hi18XXE-TOP_LGC lint部分 18条，剩余分析0条，原因：当SG设置set_option stop XXX后，SG不会报XXX及下层的lint msg，但ECDC还是会报，智强已提issue:DTS2025101314266
-
-"	"SYH
-今日分析msg数：649
-今日发现issue数：1
-今日回传case数：0
-日报：
-1.导入部分
-a.1815E：NFI_PHYG_TOP_V：分析了649条msg，剩余待分析0条，主要涉及Diff59，Diff63，Diff71，部分在1014版本中解决的issueDTS2025101017707，和一个gui的新issue，DTS2025101421767；
-b.1815E:NFI_TOP_WRAP_V：跑对比时发现脚本存在读入文件错误，已反馈海洋，修复后重跑，发现sg的seesion因为配置文件的改动出现fatal，仍需重跑
-d.shuixing: 重跑更改配置CTSS_L的工具session与对比，95/100的session和对比均跑完，并记录数据
+1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
 2.新增分析issue
-a.DTS2025101421767：增量原理图选择pair有误，点击一条AcNoSyncScheme，src为a[0:1]，des为b[0:1]，但是交叉相连，即a[0]连b[1]。增量原理图显示出了不相连的啊a[0]和b[0],用get_ac_pairs，display_incremental_scheme等方法验证均表明增量原理图显示错误。
-
-今天花费最多时间的确认1815Emodule的对比结果的正确性，分析NFI_PHYG_TOP_V对比结果"	"MCH
+新增/回归 issue号 影响了几条message case名 问题概述
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+4.脚本issue
+CDC-xxx xxx
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+6.脚本任务：
+完成了xxx;
+优化了xxx:
+7.xxx"	"TZQ
 
 日报：
-1.导入case"	"CHY
-日报：
-1.脚本任务：
-修复写出/读取大文件时报错问题，由于终端崩溃需要重新验证正确性
-修复expand_bus_bits传入list时的报错，正在验证"	"WH
-
-日报：
-1.分析门禁case builtin，323条，已分析完
-1)约束set_case_analysis改成set_constant，未反标上，已重新标记
-2)误报QualNameInvaild（CDC-4234）,开发反馈已修复，明天包验证
-3）RstSynchronizerNotInFanoutPath未抓到，跑的脚本没有改到message模版，已反馈更改
+1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
 2.新增分析issue
-1）set_cdc_qualifier命令在指定的设计对象上设置qualifier时，-from clk选项指定的时钟信号与该设计对象上的数据时钟信号存在跨时钟域的情况,报告QualNameInvalid，该message名字存在歧义(CDC-4241)
-2）以前的create_reset的-name选项不存在，报告的CMD-1006,create_reset:command expecs an argument;现在报告的CmdOptionMissingPositionalOption
-create_reset: missing positional option, default number is 1，该message未在spec中 （CDC-4242）
-"																													
+新增/回归 issue号 影响了几条message case名 问题概述
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+4.脚本issue
+CDC-xxx xxx
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+6.脚本任务：
+完成了xxx;
+优化了xxx:
+7.xxx"	"TZB
+
+日报：
+1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
+2.新增分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+4.脚本issue
+CDC-xxx xxx
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+6.脚本任务：
+完成了xxx;
+优化了xxx:
+7.xxx"	"SYH
+
+日报：
+1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
+2.新增分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+4.脚本issue
+CDC-xxx xxx
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+6.脚本任务：
+完成了xxx;
+优化了xxx:
+7.xxx"	"MCH
+
+日报：
+1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
+2.新增分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+3.回归分析issue
+新增/回归 issue号 影响了几条message case名 问题概述
+4.脚本issue
+CDC-xxx xxx
+5.GUI issue或优化建议：
+CDC-GUI-xxx xxx
+6.脚本任务：
+完成了xxx;
+优化了xxx:
+7.xxx"	"CHY
+
+日报：
+1.lint
+分析11个lint rule，提了6个dts单"	"WH
+
+日报：
+1.分析门禁10/15的setup,分析门禁10/16跑的结果
+1)大部分为反标丢失，小部分为新增差异，均已重新标记;几条结果需评差异
+2.新增分析issue
+1）误报SetupPortFullyConstrained，在同一个port上create_clock又create_reset时，以前不报告，现在报告，需评审差异
+2）漏报QualNameInvalid，set_cdc_qualifier指定对象上的时钟和-from clk选项指定的时钟信号不一致，未报告；form_clk，to_clk指定的时钟不存在，也未报告相关rule，1015的包是有报告的（CDC-4248）
+3.lint
+分析3条rule,一个DTS"																													
