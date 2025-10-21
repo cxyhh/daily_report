@@ -19,7 +19,8 @@ CDC-4251（project中的read_design/cdc文件为空）
 CDC-4252（get_module A没有返回值）
 CDC-4253（【Hi1813】【APP_CORE】Ac_conv01存在随机性）
 7.其他
-帮db debug DTS2025092632008性能问题需要的一些信息，debug到blackbox和dff的数量都是一致的"	"LRF
+帮db debug DTS2025092632008性能问题需要的一些信息，debug到blackbox和dff的数量都是一致的
+跑arm包，由于命令改动，把x86的sdc重新全部cp到arm环境下"	"LRF
 日报：
 1.分析部分
 1.1 门禁/lint 共分析1条 分析结论：issue-DTS2025102053473
