@@ -1,109 +1,473 @@
-10月20日	"XLL
+proc is_analyzed {oldResultCsvFile msg_line message_info} {
+    set proc_name [lindex [info level 0] 0]
+    puts_debug_message start $proc_name
+    global arr_result header_list mark_switch
+    set mark_switch 0
+    set message_info [escape_special_chars $message_info]
+    if {$message_info eq ""} {
+        if {[info exists arr_result($msg_line)]} {
+            set result $arr_result($msg_line)
+        } else {
+            set result ""
+        }
+    } else {
+        catch {exec grep "${msg_line},.*${message_info}" $oldResultCsvFile} result
+    }
+	....
+}
+proc setUnmatchMsgLine {msgLine falseType tail message_info {obj ""} {oldResultCsvFile ""}} {
+    set proc_name [lindex [info level 0] 0]
+    global current_time an_flag
+    puts_debug_message start $proc_name
+    set time1 $current_time
+    if {$oldResultCsvFile != "" && [file exist $oldResultCsvFile]} {
+        set an_flag [is_analyzed $oldResultCsvFile $msgLine $message_info]
+        if {$obj ne ""} {
+            set msgLine "$msgLine,${obj}"
+        }
 
-日报：
-1.脚本任务：
-1）发现shuixing CCTS_L的Ar的全量比对经过了一个周末都没有run出来，打开debug_key重新run了一下，发现Ar的message在clock-reset目录下有442个csv，涉及60多万行，就会生成60多万条message，早上看建key是很慢的。现在打开debug key在run全量
-2）导入case BCP_TOP 95NL的增量比对，经过了6天都没有run出来，加入debug_key再run一次看下卡在哪里
-3）森林用优化后的脚本runshuixing DDRS的时候，发现了等待95和100NL之间的等待逻辑有bug，调试定位后发现逻辑确实不对，已经修改并测试通过
-2）lint分析
-分析了4个case，涉及520条message，均是差异diff_b"	"ZWL
+        if {$an_flag eq "new"} {
+            if {[string match "pass-suspect*" [lindex [split $tail ","] 0]]} {
+                set msgLine "$msgLine,$falseType,yes,6,"
+            } else {
+                set msgLine "$msgLine,$falseType,yes,,"
+            }
+        } elseif {$an_flag ne 0} {
+            set msgLine "$msgLine,$falseType,,$an_flag"
+        } else {
+            if {[string match "pass-suspect*" [lindex [split $tail ","] 0]]} {
+                set msgLine "$msgLine,$falseType,,6,"
+            } else {
+                set msgLine "$msgLine,$falseType,,,"
+            }
+        }
+    } else {
+			if {[string match "pass-suspect*" [lindex [split $tail ","] 0]]} {
+				set msgLine "$msgLine,$falseType,,6,"
+			} else {
+				set msgLine "$msgLine,$falseType,,,"
+			}
+	}
+	set msgLine "$msgLine,$tail"
+	#if {$falseType eq "Missing report"} {
+	#    set msgLine "$msgLine,$tail"
+	#} elseif {$falseType eq "False report"} {
+	#    set msgLine "$msgLine,$tail"
+	#} elseif {$falseType eq "Unmatch"} {
+	#    set msgLine "$msgLine,$tail"
+	#}
+	puts_debug_message end $proc_name
+	set time2 $current_time
+	get_proc_time $proc_name $time1 $time2
 
-日报：
-1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
-2.新增分析issue
-把CDC单转为DTS单
-CDC-4191-----》DTS2025102001760
-CDC-4248-----》DTS2025102001852
-新增：CDC-4250（建议message summary全部显示完整msg）
-CDC-4251（project中的read_design/cdc文件为空）
-CDC-4252（get_module A没有返回值）
-CDC-4253（【Hi1813】【APP_CORE】Ac_conv01存在随机性）
-7.其他
-帮db debug DTS2025092632008性能问题需要的一些信息，debug到blackbox和dff的数量都是一致的
-跑arm包，由于命令改动，把x86的sdc重新全部cp到arm环境下"	"LRF
-日报：
-1.分析部分
-1.1 门禁/lint 共分析1条 分析结论：issue-DTS2025102053473
-1.2 Hi18XXE-DDRSUB/lint 共分析5条 分析结论：issue-DTS2025102023446/DTS2025102013762
-2.新增issue
-2.1 DTS2025102053473 影响1条message 门禁/lint 漏报E0205 
-2.2 DTS2025102023446 影响4条message Hi18XXE-DDRSUB/lint 误报E0220
-2.3 DTS2025102013762 影响1条message Hi18XXE-DDRSUB/lint 漏报E0154
-3.回归issue
-3.1 DTS2025101314679 导入1815E-WATA_WRAP/100N 影响4条message 误报MissingSynchronizer
-4.其它
-4.1 参加CDC-4232讨论会
-"	"JR
-今日分析msg数：24
-今日发现issue数：3
-今日回传case数：3
-日报：
-1.分析部分：
-a）门禁 新增1条，剩余待分析0条，反弹原因：是差异Diff500-diff-built_in-017；
-b）lint门禁 分析23条，反弹原因：1条是sg的bug，其他的是issue：DTS2025102049663、DTS2025102052379和DTS2025102053452；
-2.新增分析issue：
-a）DTS2025102049663 影响了3条message lint门禁 问题概述：误报E0236；
-b）DTS2025102052379 影响了16条message lint门禁 问题概述：误报E0236；
-c）DTS2025102053452  影响了3条message lint门禁 问题概述：误报E0236；
-3.回归分析issue：
-a）DTS2025101024744 导入1815E-TOP_LGC 问题概述：漏报AcNoSyncScheme:MissingSynchronizer--已修复；
-b）DTS2025101017707 导入1815E-TOP_LGC 问题概述：漏报AcNoSyncScheme:MissingSynchronizer--已修复；
-c）DTS2025092922816 LIGHTV300-AO_SUB 问题概述：误报CmdFailedInvalidObjOption--新差异Diff500-diff-built_in-063；
-d）DTS2025101007244 门禁 问题概述：ECDC报CMD-1000并停止检查，而A工具报SGDC_cdc_false_path07未停止检查，导致ECDC漏报message--已修复；
-e）DTS2025100946678 门禁 问题描述：误报SetupBBoxPinFullyConstrained的constraints--已修复；
-f）DTS2025072943210 H18XXE APP_CORE 问题描述：误报ChyDataBusDiffSyncScheme--新差异Diff264-diff57-conv04 ；
-4.其他：
-a）帮助RD debug DTS2025101111644；
-b）参加CDC-4232讨论会"	"CXY
-今日分析msg数：30
-今日发现issue数：2
-今日回传case数：
-日报：
-1.脚本问题
-a）处理大case上发现的个别msg反标不上的问题。debug发现原因是对于信号名过长，bit比较多的msg，因为setup的csv中objList列是把obj展开写入的，导致写入的obj不全，有bit缺失的情况，新跑出来的csv和oldcsv中缺失内容不一致，导致反标失败。未能成功找到obj写缺失的原因，怀疑是超字符限制了，但是没能复现成功。
-脚本目前处理方法：修改脚本反标逻辑，从原本的依靠msg，file，num，obj作为关键字反标改为依靠msg，file，num，message去反标，避开obj可能写不全的问题。修改后的脚本在门禁测试无问题
-b）适配builtin 修改QualNameInvalid 为 QualifierFailed的修改，测试修改后的develop包。该包在门禁buitlin上有45条新增。一部分是差异，原本工具报的CmdOptionValueInvalid，现在变成了QualifierFailed所以反标不上。还有一部分是电路里面有打拍，但是约束里面又设置了quailifer，之前工具没有报builtin的msg，现在报了QualifierFailed（提了两个内部issue，CDC-4254、CDC-4255）"	"SYH
-今日分析msg数：641
-今日发现issue数：2
-今日回传case数：
-日报：
-1.lint分析部分
-a.分析了一条rule：E0320：全部待分析：641条，剩余待分析0条。涉及641条msg，44个case提了两个issueDTS2025101806270，DTS2025102017802。
-2.新增分析issue
-a.DTS2025101806270:loop结构elint认为存在负载报E0320，atool不报E0320
-b.DTS2025102017802：task中的信号，不会被综合，但是Elint报告E0320，Atool不报"	"MCH
+	return $msgLine
+}
 
-日报：
-1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
-2.新增分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-3.回归分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-4.脚本issue
-CDC-xxx xxx
-5.GUI issue或优化建议：
-CDC-GUI-xxx xxx
-6.脚本任务：
-完成了xxx;
-优化了xxx:
-7.xxx"	"CHY
+if {$::location != "in-house"} {
+    #set msgLine "${msgId},${rule},${eFileName},${sFileName},${eFileNum},${sFileNum},\"${objList}\""
+    set msgLine "${msgId},${rule},${eFileName},${sFileName},${eFileNum},${sFileNum}"
+} else {
+    #set msgLine "${msgId},${rule},${errorFile},${eFileNum},${sFileNum},\"${objList}\""
+    if {$oldResultCsvFile != "" && [file exist $oldResultCsvFile]} {
+        set msgLine "${msgId},${rule},${errorFile},${eFileNum},${sFileNum}"
+    } else {
+        set msgLine "${msgId},${rule},${errorFile},${eFileNum},${sFileNum},\"${objList}\""
+    }
+}
+if {${eToolMsgObj} eq "" && ${sToolMsgObj} ne "" }{
+    if {$match_type == "pass"} {
+        set msgLine "${msgLine},\"${objList}\",${match_type},,,,$running_flag,,${testName},,$sSeverity,,\"$sMessage\""
+    } else {
+        #set msgLine "[setUnmatchMsgLine ${msgLine} "Missing report" "$running_flag,${unmatchReason},${testName},,$sSeverity,,\"$sMessage\"" ${oldResultCsvFile}]"
+        set msgLine "[setUnmatchMsgLine ${msgLine} "Missing report" "$running_flag,${unmatchReason},${testName},,$sSeverity,,\"$sMessage\"" "${sMessage}" ${objList}  ${oldResultCsvFile}]"
+        set match_type "Missing report"
+        if {$rule== "Clock_info03b" && [info exists an_flag] && $an_flag ne 0} {
+            set fanbiao_diff_flag 1
+        }
+    }
+} elseif {${eToolMsgObj} ne "" && ${sToolMsgObj} eq ""} {
+		if {$match_type == "pass"} {
+			set msgLine "${msgLine},\"${objList}\",${match_type},,,,$running_flag,,${testName},$eSeverity,,\"$eMessage\""
+		} else {
+				if {$msgId == "SetupDataTiedToConst"} {
+					#set msgLine "[setUnmatchMsgLine ${msgLine} "False report" "$running_flag,${unmatchReason},${testName},$eSeverity,,\"$eMessage\"" ${oldResultCsvFile}]"
+					set msgLine "[setUnmatchMsgLine ${msgLine} "False report" "$running_flag,${unmatchReason},${testName},$eSeverity,,\"$eMessage\"  ""$eMessage" ${objList} ${oldResultCsvFile}]"
+					set match_type "False report"
+					if {[info exists an_flag] && [string match "7,pass*" $an_flag]} {
+						set fanbiao_diff_flag 1
+					} elseif {[info exists an_flag] && ([string match "0" $an_flag] || [string match "new" $an_flag])} {
+						if {$::location != "in-house"} {
+							set msgLine "${msgId},${rule},${eFileName},${sFileName},${eFileNum},${sFileNum},\"${objList}\""
+						} else {
+							set msgLine "${msgId},${rule},${errorFile},${eFileNum},${sFileNum},\"${objList}\""
+						}
+						set msgLine "${msgLine},False report,,2,const,,,${testName},$eSeverity,,\"$eMessage\""
+					} elseif {![info exists an_flag]} {
+						set msgLine "${msgLine},False report,yes,2,const,,,${testName},$eSeverity,,\"$eMessage\""
+					}
+				} else {
+					#set msgLine "[setUnmatchMsgLine ${msgLine} "False report" "$running_flag,${unmatchReason},${testName},$eSeverity,,\"$eMessage\"" "${msgId},${rule},${eFileName},${sFileName},${eFileNum},,.*${eMessage}" ${oldResultCsvFile}]"
+					set msgLine "[setUnmatchMsgLine ${msgLine} "False report" "$running_flag,${unmatchReason},${testName},$eSeverity,,\"$eMessage\""  "$eMessage" ${objList} ${oldResultCsvFile}]"
+					set match_type "False report"
+				}
+		}
+} elseif {${eToolMsgObj} ne "" && ${sToolMsgObj} ne ""} {
 
-日报：
-1.lint
-分析8个lint rule，提了1个dts单
-"	"MCH
 
-日报：
-1.门禁/射频/Hi18XXE/Hi1813/LIGHTV300/USBC-xxx 新增xx条，剩余待分析xxx条，反弹原因：xxx
-2.新增分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-3.回归分析issue
-新增/回归 issue号 影响了几条message case名 问题概述
-4.脚本issue
-CDC-xxx xxx
-5.GUI issue或优化建议：
-CDC-GUI-xxx xxx
-6.脚本任务：
-完成了xxx;
-优化了xxx:
-7.xxx"																													
+
+if {$match_type == "Unmatch"} {
+    set msgLine "[setUnmatchMsgLine ${msgLine} ${match_type} "$running_flag,${false_reason},${testName},$eSeverity,$sSeverity,\"$eMessage\",\"$sMessage\"" "\"$eMessage\",\"$sMessage\"" ${objList} ${oldResultCsvFile}]"
+} else {
+    if {$match_type == "match" && $rule == "Clock_info03c"} {
+        global Clock_info03c_clocklist
+        dict set Clock_info03c_clocklist [get_nets [lindex $e_objlist 0] -canonical] 1
+    }
+    if {$match_type == "match" && [string match {pass-*} $running_flag]} {
+        set match_type pass
+    }
+    set msgLine "${msgLine},\"${objList}\",${match_type},,,,$running_flag,$false_reason,${testName},$eSeverity,$sSeverity,\"$eMessage\",\"$sMessage\""
+}
+}
+
+diff.tcl
+proc deal_bus {key_list} {
+    set sd_key {}
+    set kItemList {}
+    foreach kItems $key_list {
+        set tmp [split $kItems "/"]
+        set kItems [join [lreplace $tmp end end [regsub -all {\[.*?\]} [lindex $tmp end] ""] ] "/"]
+        lappend kItemList ${kItems}
+    }
+    set kItemList [lsort -u $kItemList]
+    return ${kItemList}
+}
+
+proc do_diff59-report4-multi_bits_merge {sg_src_nets sg_dest_nets enno_src_net enno_dest_net verbose} {
+    set proc_name [lindex [info level 0] 0]
+    global current_time
+    puts_debug_message start $proc_name
+    upvar $verbose l_verbose
+    set ret 0
+    set have_jiaoji 0
+    set src_have_jiaoji 1
+    set dest_have_jiaoji 1
+    #set sg_src_bus [get_nets $sg_src_nets -bus]
+    #set sg_dest_bus [get_nets $sg_dest_nets -bus]
+    #set enno_src_bus [get_nets $enno_src_net -bus]
+    #set enno_dest_bus [get_nets $enno_dest_net -bus]
+    set sg_src_bus [deal_bus [fold_bus_bits [get_nets $sg_src_nets]]]
+    set sg_dest_bus [deal_bus [fold_bus_bits [get_nets $sg_dest_nets]]]
+    set enno_src_bus [deal_bus [fold_bus_bits [get_nets $enno_src_net]]]
+    set enno_dest_bus [deal_bus [fold_bus_bits [get_nets $enno_dest_net]]]
+
+    if {$sg_src_bus == $enno_src_bus && $sg_dest_bus == $enno_dest_bus} {
+        if {$sg_src_nets ne $enno_src_net} {
+            array set sg_src_dict [concat {*}[lmap elem $sg_src_nets {list $elem 1}]]
+            foreach enno_src $enno_src_net {
+                if {[info exists sg_src_dict($enno_src)]} {
+                    unset sg_src_dict($enno_src)
+                    set src_have_jiaoji 1
+                } else {
+                    set src_have_jiaoji 0
+                    unset sg_src_dict
+                    break
+                }
+            }
+            set src_result [array names sg_src_dict]
+        }
+        if {$sg_dest_nets ne $enno_dest_net} {
+			array set sg_dest_dict [concat {*}[lmap elem $sg_dest_nets {list $elem 1}]]
+			foreach enno_dest $enno_dest_net {
+				if {[info exists sg_dest_dict($enno_dest)]} {
+					unset sg_dest_dict($enno_dest)
+					set dest_have_jiaoji 1
+				} else {
+					set dest_have_jiaoji 0
+					unset sg_dest_dict
+					break
+				}
+			}
+			set dest_result [array names sg_dest_dict]
+		}
+		if {$src_have_jiaoji && $dest_have_jiaoji} {
+			if {[info exists src_result]} {
+				set result $src_result
+			}
+			if {[info exists dest_result]} {
+				lappend result $dest_result
+			}
+			set ret 1
+			set l_verbose [list "[fold_bus_bits $result] Diff59" "[fold_bus_bits $result] Diff59"]
+		}
+
+	}
+	puts_debug_message end $proc_name
+	return $ret
+}
+
+proc suspect-bus_diff {eToolMessageObj sToolMessageObj verbose} {
+    upvar $verbose l_verbose
+    set l_verbose [list "" ""]
+    set ret 0
+
+    set sg_src_nets [self_get_nets [reformat_s_names [list [dict get $sToolMessageObj "SourceName"]]]]
+    if {$sg_src_nets == ""} {
+        set sg_src_nets [self_get_nets [expand_bits [reformat_s_names [list [dict get $sToolMessageObj "SourceName"]]]]]
+    }
+    set sg_dest_nets [self_get_nets [reformat_s_names [list [dict get $sToolMessageObj "DestName"]]]]
+    if {$sg_dest_nets == ""} {
+        set sg_dest_nets [expand_bits [reformat_s_names [list [dict get $sToolMessageObj "DestName"]]]]
+    }
+    set enno_src_nets [self_get_nets [dict get $eToolMessageObj "SourceName"]]
+    if {$enno_src_nets == ""} {
+		set enno_src_nets [expand_bits [dict get $eToolMessageObj "SourceName"]]
+	}
+	set enno_dest_nets [self_get_nets [dict get $eToolMessageObj "DestName"]]
+	if {$enno_dest_nets == ""} {
+		set enno_dest_nets [expand_bits [dict get $eToolMessageObj "DestName"]]
+	}
+	set sg_src_bus [deal_bus [fold_bus_bits [get_nets $sg_src_nets]]]
+	set sg_dest_bus [deal_bus [fold_bus_bits [get_nets $sg_dest_nets]]]
+	set enno_src_bus [deal_bus [fold_bus_bits [get_nets $enno_src_nets]]]
+	set enno_dest_bus [deal_bus [fold_bus_bits [get_nets $enno_dest_nets]]]
+
+	if {$sg_src_bus == $enno_src_bus && $sg_dest_bus == $enno_dest_bus} {
+		set ret 1
+		set only_in_enno ""
+		set only_in_sg ""
+		if {$sg_src_nets ne $enno_src_nets} {
+			array set sg_src_dict [concat {*}[lmap elem $sg_src_nets {list $elem 1}]]
+			foreach enno_src $enno_src_nets {
+				if {[info exists sg_src_dict($enno_src)]} {
+					unset sg_src_dict($enno_src)
+				} else {
+					lappend only_in_enno $enno_src
+				}
+			}
+			set only_in_sg [array names sg_src_dict]
+		}
+		if {$sg_dest_nets ne $enno_dest_nets} {
+			array set sg_dest_dict [concat {*}[lmap elem $sg_dest_nets {list $elem 1}]]
+			foreach enno_dest $enno_dest_nets {
+				if {[info exists sg_dest_dict($enno_dest)]} {
+					unset sg_dest_dict($enno_dest)
+				} else {
+					lappend only_in_enno $enno_dest
+				}
+			}
+			lappend only_in_sg [array names sg_dest_dict]
+		}
+		if {[get_nets $only_in_sg] ne ""} {
+			set only_in_sg [fold_bus_bits [get_nets $only_in_sg]]
+		}
+		if {[get_nets $only_in_enno] ne ""} {
+			set only_in_enno [fold_bus_bits [get_nets $only_in_enno]]
+		}
+		#set l_verbose "bits_only_in_sg $only_in_sg;bits_only_in_enno $only_in_enno"
+		set l_verbose [list bits_only_in_sg:$only_in_sg bits_only_in_enno:$only_in_enno]
+	}
+	return $ret
+}
+
+
+diff_setup
+set id [dict get $eToolMessageObj msgId]
+    set if_infer_abstract_port [get_param cdc.infer_abstract_port]
+    # 如果infer_abstract_port为true,sg的所有Setup_port01都当作 "fully constrained" 来和enno对比;因此只比较port是否一致
+    if {${rule} == "Setup_port01" && ${id} == "SetupPortFullyConstrained" && ${if_infer_abstract_port}} {
+        set s_direction [dict get $sToolMessageObj direction]
+        set e_direction [dict get $eToolMessageObj String4]
+        if {[Diff214-bug56-setup_port01 ${eToolMessageObj} ${sToolMessageObj}]&& $s_direction == $e_direction} {
+            dict set eToolMessageObj runningFlag "pass-Diff214-bug56-setup_port01"
+            writeSetupMsgLine ${resultCsvFileName} ${eToolMessageObj} ${sToolMessageObj} ${testName} "pass" ${oldResultCsvFile}
+            lappend l_s_match_list $s
+            lappend l_e_match_list $e
+            break
+        }
+    }
+    if {[dict exists ${sToolMessageObj} origin_direction] && [dict get ${sToolMessageObj} origin_direction] == "inout" && [string match "SetupPort*" $id]} {
+        set s_direction [dict get $sToolMessageObj direction]
+        if {![regexp {.*as '(.*)'} [dict get $eToolMessageObj Message] reslut e_direction]} {
+            set e_direction "NOT-GET-direction"
+        }
+        if {$s_direction == $e_direction && [Diff214 ${eToolMessageObj} ${sToolMessageObj}]} {
+            dict set eToolMessageObj runningFlag pass-Diff214-bug56-setup_port01
+            writeSetupMsgLine ${resultCsvFileName} ${eToolMessageObj} ${sToolMessageObj} ${testName} "pass" ${oldResultCsvFile}
+            lappend l_s_match_list $s
+            lappend l_e_match_list $e
+            break
+        }
+    }
+
+proc loop_mux_cnt {mux_1_inst ff_q_pin sg_input_value mux_2_inst} {
+		upvar $sg_input_value l_sg_input_value
+		upvar $mux_2_inst l_mux_2_inst
+		set mux_1_a0_pin [get_pins $mux_1_inst -filter {@name == "a0"}]
+		set mux_1_a1_pin [get_pins $mux_1_inst -filter {@name == "a1"}]
+		set i 1
+		set rec_mux_num 0
+		##check whether the loop is mux+ff,and cont the num of loop_mux
+		for {set i 1} {$i <= 2} {incr i} {
+			if {$i == 1} {
+					if {[get_nets $mux_1_a0_pin] eq [get_nets $ff_q_pin]} {
+						##if 1 mux+ff loop
+							set rec_mux_num 1
+							set l_sg_input_value [get_attributes [get_pins $mux_1_a1_pin] -attributes inferred_constant]
+							break
+						} elseif {[get_nets $mux_1_a1_pin] eq [get_nets $ff_q_pin]} {
+							##if 1 mux+ff loop
+								set rec_mux_num 1
+								set l_sg_input_value [get_attributes [get_pins $mux_1_a0_pin] -attributes inferred_constant]
+								break
+						}
+						###mux_1 is close to ff
+						set mux_2_out_pin [get_pins [get_nets $mux_1_a0_pin] -filter {@dir == "out"}]
+						set l_mux_2_inst [get_instances $mux_2_out_pin -filter {@view == "VERIFIC_MUX"}]
+						set mux_2_a0_pin [get_pins [get_instances $mux_2_out_pin -filter {@view == "VERIFIC_MUX"}] -filter {@name == "a0"}]
+						set mux_2_a1_pin [get_pins [get_instances $mux_2_out_pin -filter {@view == "VERIFIC_MUX"}] -filter {@name == "a1"}]
+					}else {
+							if {[get_nets $mux_2_a0_pin] eq [get_nets $ff_q_pin]} {
+							####if 2 mux+ff loop
+								set rec_mux_num 2
+								set l_sg_input_value [get_attributes [get_pins $mux_2_a1_pin] -attributes inferred_constant]
+								break
+							} elseif {[get_nets $mux_2_a1_pin] eq [get_nets $ff_q_pin]} {
+								set rec_mux_num 2
+								set l_sg_input_value [get_attributes [get_pins $mux_2_a0_pin] -attributes inferred_constant]
+								break
+							}
+					}
+		}
+		return $rec_mux_num
+}
+
+proc Diff185-bug46-setup_port01 {SetupPortFullyConstrained_dict lst_Setup_port01_ports lst_Setup_port01_msg} {
+    global resultCsvFileName testName oldResultCsvFile current_time
+    set proc_name [lindex [info level 0] 0]
+    puts_debug_message start $proc_name
+
+    set e_ports [lsort [string map {\{ "" \} ""} [dict keys $SetupPortFullyConstrained_dict]]]
+    set s_ports [lsort $lst_Setup_port01_ports]
+    set Diff185_key 0
+    if {$e_ports == $s_ports} {
+        set Diff185_key 1
+    }
+    foreach eToolMsgObj [dict values $SetupPortFullyConstrained_dict] {
+		if {$Diff185_key == 1} {
+			dict set eToolMsgObj runningFlag pass-Diff185-bug46-setup_port01
+			writeSetupMsgLine ${resultCsvFileName} ${eToolMsgObj} "" ${testName} "pass" ${oldResultCsvFile}
+		}
+	}
+
+	foreach sToolMsgObj $lst_Setup_port01_msg {
+		if {$Diff185_key == 1} {
+			dict set sToolMsgObj runningFlag pass-Diff185-bug46-setup_port01
+			writeSetupMsgLine ${resultCsvFileName} "" ${sToolMsgObj} ${testName} "pass" ${oldResultCsvFile}
+		}
+	}
+	puts_debug_message end $proc_name
+}
+
+
+if {$msgId != "SetupRstNetUndefined"} {
+    set objs [collect_set_up_obj_list $msg_dict $key_msg_obj message_id message_severity line_number file_path is_violation]
+} else {
+    set objs [collect_set_up_obj_list $msg_dict $key_msg_obj message_id message_severity line_number file_path is_violation Pin2]
+}
+#set objs [collect_set_up_obj_list $msg_dict $key_msg_obj message_id message_severity line_number file_path is_violation]
+
+
+} elseif {[suspect-bus_diff $eToolMessageObj $sToolMessageObj l_verbose]} {
+							#set e_unmatchReason [lindex $l_verbose 1]
+							#set s_unmatchReason [lindex $l_verbose 0]
+							set e_unmatchReason $l_verbose
+							set s_unmatchReason $l_verbose
+							dict set eToolMessageObj unmatchReason $e_unmatchReason
+							dict set eToolMessageObj runningFlag [join [concat "pass-suspect-only-bus-different" $reasonFlag] ";"]
+							lset l_e_list $ev $eToolMessageObj
+							dict set sToolMessageObj unmatchReason $s_unmatchReason
+							dict set sToolMessageObj runningFlag [join [concat "pass-suspect-only-bus-different" $reasonFlag] ";"]
+							lset l_s_list $sv $sToolMessageObj
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+if {$aided_proc && [Ac-affected-by-data_const $a_msg running_Flag]} {
+    if {[dict exists $a_msg runningFlag]} {
+        dict set a_msg runningFlag [join [concat [dict get $a_msg runningFlag] $running_Flag] ";"]
+	} else {
+		dict set a_msg runningFlag $running_Flag
+	}
+	writeAcMsgLine $resultCsvFileName "" $a_msg "" $oldResultCsvFile
+	continue
+}
+
+
+} elseif {[string first "msgId SetupPort" ${e_list}] != -1} {
+		foreach eToolMsgObj ${e_list} {
+			if {[dict get ${eToolMsgObj} msgId] == "SetupPortFullyConstrained"} {
+				writeSetupMsgLine ${resultCsvFileName} ${eToolMsgObj} "" ${testName} "" ${oldResultCsvFile}
+			}
+		}
+	} elseif {[string first "Rule Setup_port01" ${s_list}] != -1} {
+		foreach sToolMsgObj ${s_list} {
+			if {[dict get ${sToolMsgObj} Rule] == "Setup_port01"} {
+				writeSetupMsgLine ${resultCsvFileName} "" ${sToolMsgObj} ${testName} "" ${oldResultCsvFile}
+			}
+
+		}
+	}
+
+QualNameInvalid 	{{Object '%' spcified in command set_cdc_qualifier is an invalid qualifier in constraint}}
+SyncCellFromToDomainSame 	{{The domain '%' specified by option '-from_clk' is the same with that specified by option '-to_clk' in command 'set_cdc_sync_cell'} 
+							{The domain '%' specified by option '%' is the same with that specified by option '%' in command 'set_cdc_sync_cell'} 
+							{The domain '%' of clock '%' specified by option '%' is the same with that of clock '%' specified by option '%' in command 'set_cdc_sync_cell'}}
+
+
+Propagate_Resets,SetupRstPropagated {
+    # obj | line | file | level
+    set type [string trim [lindex $s_Obj end]]
+    if {$type == ""} {
+        set s_Obj [lreverse [lrange $s_Obj 0 end-1]]
+    }
+    set s_Obj [reformat_s_names_setup $s_Obj]
+    if {[lindex $e_Obj 0] in [split [lindex $s_Obj 0] ","]} {
+        lset s_Obj 0 [lindex $e_Obj 0]
+    }
+    set e_rst_net [get_nets [lindex $e_Obj 0] -canonical]
+    if {$e_rst_net == ""} {
+        set e_rst_net [get_nets [get_pins [lindex $e_Obj 0]] -canonical]
+    }
+    lset e_Obj 0 $e_rst_net
+    set s_rst_net [get_nets [lindex $s_Obj 0] -canonical]
+	if {$s_rst_net == ""} {
+		set s_rst_net [get_nets [get_pins [lindex $s_Obj 0]] -canonical]
+	}
+	lset s_Obj 0 $s_rst_net
+}
+
+Propagate_Resets,SetupRstNotPropagated {
+    # obj | line | file | level
+    set type [string trim [lindex $s_Obj end]]
+    if {$type == "not"} {
+        set s_Obj [lreverse [lrange $s_Obj 0 end-1]]
+    }
+    set s_Obj [reformat_s_names_setup $s_Obj]
+    if {[lindex $e_Obj 0] in [split [lindex $s_Obj 0] ","]} {
+        lset s_Obj 0 [lindex $e_Obj 0]
+    }
+    set e_rst_net [get_nets [lindex $e_Obj 0] -canonical]
+    if {$e_rst_net == ""} {
+        set e_rst_net [get_nets [get_pins [lindex $e_Obj 0]] -canonical]
+    }
+    lset e_Obj 0 $e_rst_net
+    set s_rst_net [get_nets [lindex $s_Obj 0] -canonical]
+    if {$s_rst_net == ""} {
+        set s_rst_net [get_nets [get_pins [lindex $s_Obj 0]] -canonical]
+    }
+    lset s_Obj 0 $s_rst_net
+}
