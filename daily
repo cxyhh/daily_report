@@ -404,3 +404,1322 @@ dict set arMsgIdMap "Reset_sync04" {"ChyArSyncMultiTimes"}
 #dict set arMsgMap "MultiFlop" {"(Multi-flop reset synchronizer|MultiFlop\)}"
 #dict set arMsgMap "UDS" {"(User-Defined reset Synchronizer|UDS\)"}
 #dict set arMsgMap "GeneratedReset" {"(Generated reset|GeneratedReset\)}
+
+
+newcount.tcl
+#!/bin/tclsh8.5
+
+proc print_help {} {
+    puts "Usage: newcount.tcl \[option\] \[value\]"
+    puts "Options:"
+    puts "-v | -version <value> 	set ECDC version of the result csv file. e.g. 0513"
+    puts "-f | -file <value> 		set the date of the result csv file. e.g. 2024_05_13"
+    puts "-r | -rule <value> 		set the rules list for running. e.g. \"\\ar ac setup\", ac, ar..."
+    puts "-an | -anonymize <value> 	set the flag to: 1 - means anonymize sensitive information, 0 - means no need to anonymize sensitive information. By default 0" 
+    puts "-h print help message"
+}
+#set args [lassign $argv arg]
+for {set i 0} {$i < [llength $argv]} {incr i} {
+    set arg [lindex $argv $i]
+    switch -- $arg {
+        -v {
+            set version [lindex $argv [expr $i + 1]]
+        }
+        -version {
+            set version [lindex $argv [expr $i + 1]]
+        }
+        -f {
+            set file_name [lindex $argv [expr $i + 1]]
+        }
+        -file_name {
+            set file_name [lindex $argv [expr $i + 1]]
+        }
+        -an {
+            set anony [lindex $argv [expr $i + 1]]
+        }
+        -anonymize {
+            set anony [lindex $argv [expr $i + 1]]
+        }
+        -r {
+            set ruleList [string tolower [lindex $argv [expr $i + 1]]]
+        }
+        -rule {
+            set ruleList [string tolower [lindex $argv [expr $i + 1]]]
+        }
+        -h {
+            print_help
+            exit 0
+        }
+        -help {
+            print_help
+            exit 0
+			}
+		}
+}
+
+if {![info exists version]} {
+    puts "Please input \[version\] according to the help messages\n"
+    print_help
+    exit 0
+}
+if {![info exists file_name]} {
+    puts "Please input \[date\] according to the help messages\n"
+    print_help
+    exit 0
+}
+if {![info exists anony]} {
+    puts "No anonymization flag is set, use the default value 0 - means no need to anonymize sensitive information\n"
+    set anony 0
+}
+#set ruleList {AC AR SETUP}
+#set ruleList {AC}
+set ac_csv $file_name
+set ar_csv $file_name
+set setup_csv $file_name
+set builtin_csv $file_name
+set cur_dir [file dirname [info script]]
+source "/tmpdata/ranwu_staff_3/yWX1311860/workspace/bin/script/main.tcl"
+source "$cur_dir/mapdict.tcl"
+set csh_dir "$cur_dir/new_count_csv.sh"
+set csv "csv_summary.csv"
+set output "CDC_V${version}_date[clock format [clock seconds] -format "%m%d"].csv"
+##set tags "2 3 4 5 6 8 9"
+set tags "7"
+set reasons_need_tell_rules {"MultiFlop" "MissingSynchronizer"}
+proc clean_env {fileNameList} {
+    foreach fileName $fileNameList {
+        catch {exec ls | grep $fileName} result
+        if {![regexp "child process exited abnormally" $result]} {
+            set ret [file delete $result]
+            if {$ret eq ""} {
+                puts "delete file $fileName"
+            } else {
+                puts "failed to delete file $fileName"
+            }
+        }
+    }
+}
+proc unique_e_reasons {e_reasons return_list} {
+	upvar $return_list in_return_list
+    foreach reason $e_reasons {
+        if {[lsearch -exact $in_return_list $reason] eq -1} {
+            lappend in_return_list $reason
+        }
+    }
+}
+
+proc get_sg_reasons_count_dict {sg_reasons data_csv sg_reason_count_dict} {
+    upvar $sg_reason_count_dict reason_count_dict
+    foreach reason $sg_reasons {
+        set s_total 0
+        set s_missing 0
+        #set s_match 0
+        #set s_pass 0
+        set i 1
+        while {$i < 10} {
+            set s_mark_$i 0
+            set i [expr $i + 1]
+        }
+        catch {exec grep $reason $data_csv} grep_lines
+		if {![regexp {child process exited abnormally} $grep_lines]} {
+            set lines [split $grep_lines "\n"]
+            foreach line $lines {
+                set columns [split $line ","]
+                set s_reason [lindex $columns 0]
+                set s_total [lindex $columns 1]
+                set s_missing [lindex $columns 2]
+                #set s_match [lindex $columns 3]
+                #set s_pass [lindex $columns 4]
+                set s_mark_1 [lindex $columns 7]
+                set s_mark_2 [lindex $columns 8]
+                set s_mark_3 [lindex $columns 9]
+                set s_mark_4 [lindex $columns 10]
+                set s_mark_5 [lindex $columns 11]
+                set s_mark_6 [lindex $columns 12]
+                set s_mark_7 [lindex $columns 13]
+                set s_mark_8 [lindex $columns 14]
+                set s_mark_9 [lindex $columns 15]
+                dict set tmp_dict total $s_total
+                dict set tmp_dict missing $s_missing
+#                dict set tmp_dict match $s_match
+#                dict set tmp_dict pass $s_pass
+                dict set tmp_dict s_mark_1 $s_mark_1
+                dict set tmp_dict s_mark_2 $s_mark_2
+                dict set tmp_dict s_mark_3 $s_mark_3
+				dict set tmp_dict s_mark_4 $s_mark_4
+				dict set tmp_dict s_mark_5 $s_mark_5
+				dict set tmp_dict s_mark_6 $s_mark_6
+				dict set tmp_dict s_mark_7 $s_mark_7
+				dict set tmp_dict s_mark_8 $s_mark_8
+				dict set tmp_dict s_mark_9 $s_mark_9
+				dict set reason_count_dict $reason $s_reason $tmp_dict
+			}
+		} else {
+			dict set tmp_dict total 0
+			dict set tmp_dict missing 0
+#			dict set tmp_dict match 0
+#			dict set tmp_dict pass 0
+			dict set tmp_dict s_mark_1 0
+			dict set tmp_dict s_mark_2 0
+			dict set tmp_dict s_mark_3 0
+			dict set tmp_dict s_mark_4 0
+			dict set tmp_dict s_mark_5 0
+			dict set tmp_dict s_mark_6 0
+			dict set tmp_dict s_mark_7 0
+			dict set tmp_dict s_mark_8 0
+			dict set tmp_dict s_mark_9 0
+			dict set reason_count_dict $reason $reason $tmp_dict
+		}
+	}
+}
+
+proc get_enno_reasons_count_dict {enno_lines data_csv enno_reason_count_dict} {
+    upvar $enno_reason_count_dict reason_count_dict
+    set reason_count_dict {}
+    set tmp_dict {}
+    set total 0
+    set false 0
+    set match 0
+    set pass 0
+    set rate 0
+    set rate_without_issue 0
+    set i 1
+    while {$i < 10} {
+        set e_mark_$i 0
+        set i [expr $i + 1]
+    }
+    set enno_lines [split $enno_lines "\n"]
+    foreach line $enno_lines {
+        set columns [split $line ","]
+        set e_reason_list [lindex $columns 0]
+		set total [lindex $columns 1]
+		set false [lindex $columns 2]
+		set match [lindex $columns 3]
+		set pass [lindex $columns 4]
+		set e_mark_1 [lindex $columns 7]
+		set e_mark_2 [lindex $columns 8]
+		set e_mark_3 [lindex $columns 9]
+		set e_mark_4 [lindex $columns 10]
+		set e_mark_5 [lindex $columns 11]
+		set e_mark_6 [lindex $columns 12]
+		set e_mark_7 [lindex $columns 13]
+		set e_mark_8 [lindex $columns 14]
+		set e_mark_9 [lindex $columns 15]
+		foreach e_reason $e_reason_list {
+			if {[dict exists $reason_count_dict $e_reason]} {
+				set attributes [dict get $reason_count_dict $e_reason]
+				dict set tmp_dict total [expr $total + [dict get $attributes total]]
+				dict set tmp_dict false [expr $false + [dict get $attributes false]]
+				dict set tmp_dict match [expr $match + [dict get $attributes match]]
+				dict set tmp_dict pass [expr $pass + [dict get $attributes pass]]
+				set i 1
+				while {$i < 10} {
+					dict set tmp_dict e_mark_$i [expr [set e_mark_$i] + [dict get $attributes e_mark_$i]]
+					set i [expr $i + 1]
+				}
+			} else {
+				dict set tmp_dict total $total
+				dict set tmp_dict false $false
+				dict set tmp_dict match $match
+				dict set tmp_dict pass $pass
+				dict set tmp_dict rate $rate
+				set i 1
+				while {$i < 10} {
+					dict set tmp_dict e_mark_$i [set e_mark_$i]
+					set i [expr $i + 1]
+				}
+			}
+			if {[dict get $tmp_dict total] ne 0} {
+				dict set tmp_dict rate [expr {round(double([dict get $tmp_dict false]) / double([dict get $tmp_dict total]) * 10000) / 100.0}]
+			}
+			dict set reason_count_dict $e_reason $tmp_dict
+		}
+	}
+}
+
+proc write_ac_v2_data {data_csv output_csv enno_msg} {
+    set e_rule ""
+    set s_rule ""
+    set e_total 0
+    set e_false 0
+    set e_match 0
+    set e_pass 0
+    set e_rate 0
+    set e_rate_without_issue 0
+	
+    set sTotal_all 0
+    set s_missing_all 0
+    set s_missing_issue_all 0
+    set missing_rate_all 0
+    set missing_rate_without_issue_all 0
+    set eTotal_all 0
+    set e_false_all 0
+    set e_false_issue_all 0
+    set false_rate_all 0
+    set false_rate_without_issue_all 0
+	
+    set reason_dict [concat $::reasonSync $::reasonUnsync $::reasonNosync]
+    set sg_reasons [dict keys $reason_dict]
+    set e_reasons [dict values $reason_dict]
+    set enno_reasons {}
+    unique_e_reasons $e_reasons enno_reasons
+    set sg_reason_count_dict {}
+    set enno_reason_count_dict {}
+    get_sg_reasons_count_dict $sg_reasons $data_csv sg_reason_count_dict
+    get_enno_reasons_count_dict $enno_msg $data_csv enno_reason_count_dict
+    if {$sg_reason_count_dict ne {}} {
+        foreach {s_reason_pattern s_reason_dict} $sg_reason_count_dict {
+            set s_total 0
+            set s_missing 0
+#            set s_match 0
+#            set s_pass 0
+            set s_rate 0
+            set s_rate_without_issue 0
+            #set s_rate_without_const 0
+            set i 1
+            while {$i < 10} {
+                set s_mark_$i 0
+                incr i
+            }
+            foreach {s_reason s_count} $s_reason_dict {
+                set s_total [expr $s_total + [dict get $s_count total]]
+                set s_missing [expr $s_missing + [dict get $s_count missing]]
+				
+#				set s_match [expr $s_match + [dict get $s_count match]]
+#				set s_pass [expr $s_pass + [dict get $s_count pass]]
+				set i 1
+				while {$i < 10} {
+					set s_mark_$i [expr [dict get $s_count s_mark_$i] + [set s_mark_${i}]]
+					set i [expr $i + 1]
+				}
+				set sTotal_all [expr $sTotal_all + $s_total]
+				set s_missing_all [expr $s_missing_all + $s_missing - $s_mark_5]
+				set s_missing_issue_all [expr $s_missing_issue_all + $s_mark_1 + $s_mark_2]
+				}
+				if {$s_total ne 0} {
+					set s_rate [expr {round(double($s_missing - $s_mark_5) / double($s_total) * 10000) / 100.0}]
+					set s_rate_without_issue [expr {round(double($s_missing - $s_mark_1-$s_mark_2 - $s_mark_5) / double($s_total) * 10000) / 100.0}]
+					#set s_rate_without_const [expr {round(double($s_missing - $s_mark_2 - $s_mark_5) / double($s_total) * 10000) / 100.0}]
+				}
+				set s_rate "$s_rate%"
+				set s_rate_without_issue "$s_rate_without_issue%"
+				#set s_rate_without_const "$s_rate_without_const%"
+				if {[dict exists $reason_dict $s_reason_pattern]} {
+					set e_reason [dict get $reason_dict $s_reason_pattern]
+					if {[dict exists $enno_reason_count_dict $e_reason]} {
+						set e_count [dict get $enno_reason_count_dict $e_reason]
+						set e_total [dict get $e_count total]
+						set e_false [dict get $e_count false]
+						set e_match [expr [dict get $e_count match] + [dict get $e_count pass]]
+#						set e_pass [dict get $e_count pass]
+						set e_rate [dict get $e_count rate]
+						set e_rate_without_issue 0
+						#set e_rate_without_const 0
+						set i 1
+						while {$i < 10} {
+							set e_mark_$i [dict get $e_count e_mark_$i]
+							set i [expr $i + 1]
+						}
+						set eTotal_all [expr $e_total + $eTotal_all]
+						set e_false_all [expr $e_false_all + $e_false - $e_mark_5]
+						set e_false_issue_all [expr $e_false_issue_all +$e_mark_1 + $e_mark_2]
+						if {$e_total ne 0} {
+							set e_rate [expr {round(double($e_false - $e_mark_5) / double($e_total) * 10000) / 100.0}]
+							set e_rate_without_issue [expr {round(double($e_false - $e_mark_1 - $e_mark_2 - $e_mark_5) / double($e_total) * 10000) / 100.0}]
+						}
+						dict unset enno_reason_count_dict $e_reason
+					} else {
+						set e_count 0
+						set e_total 0
+						set e_false 0
+						set e_match 0  
+						set e_pass 0  
+						set e_rate 0  
+						set e_rate_without_issue 0  
+						#set e_rate_without_const 0  
+						set i 1  
+						while {$i < 10} {  
+							set e_mark_$i 0  
+							incr i  
+						}
+					}
+						set e_rate "$e_rate%"  
+						set e_rate_without_issue "$e_rate_without_issue%"  
+						#set e_rate_without_const "$e_rate_without_const%"  
+						} else {  
+							set e_total ""  
+							set e_false ""  
+							set e_match ""  
+							set e_pass ""  
+							set e_rate ""  
+							set e_rate_without_issue ""  
+							#set e_rate_without_const ""  
+							set i 1  
+							while {$i < 10} {  
+								set e_mark_$i ""  
+								set i [expr $i + 1]  
+							}
+						}
+						if {$e_reason ne ""} {  
+							set e_rule [dict get $::ennoRuleMap $e_reason]  
+							set s_rule [dict get $::sgRuleMap $s_reason_pattern]  
+							if {[lsearch $::reasons_need_tell_rules $e_reason] ne -1} {  
+								set e_rule "Ac$e_rule"  
+							}  
+						}  
+						if {$::anony} {  
+							set enno $e_rule  
+							set sg $s_rule  
+						} else {  
+							set enno $e_reason  
+							set sg $s_reason_pattern  
+						}  
+						write_to_file $output_csv "$enno,$sg,$s_total,$e_total,$e_match,$s_missing,$e_false,$s_rate,$e_rate,$s_rate_without_issue,$e_rate_without_issue,$s_mark_1,$s_mark_5,$s_mark_7,$e_mark_1,$e_mark_5,$e_mark_7"  
+						} 
+					}
+					if {$enno_reason_count_dict ne {}} {  
+						foreach {e_reason e_count} $enno_reason_count_dict {  
+								set e_total [dict get $e_count total]
+								set e_false [dict get $e_count false]
+								set e_match [dict get $e_count match]
+								set e_pass [dict get $e_count pass]
+								set e_rate [dict get $e_count rate]
+								if {$e_total ne 0} {
+									set e_rate [expr {round(double($e_false - $e_mark_5) / double($e_total) * 10000) / 100.0}]
+									set e_rate_without_issue [expr {round(double($e_false - $e_mark_1 - $e_mark_5) / double($e_total) * 10000) / 100.0}]
+								}
+								set e_rate "$e_rate%"
+								set e_rate_without_issue "$e_rate_without_issue"
+								if {$e_reason ne ""} {
+									set e_rule [dict get $::ennoRuleMap $e_reason]
+									foreach {k v} $reason_dict {
+										if {$v eq $e_reason} {
+											set s_reason $k
+											break
+										}
+									}
+									set s_rule [dict get $::sgRuleMap $s_reason]
+								}
+								if {$::anony} {
+									set enno $e_rule
+									set sg $s_rule
+								} else {
+									set enno $e_reason
+									set sg $s_reason
+								}
+								write_to_file $output_csv "$enno,$sg,,$e_total,[expr $e_match + $e_pass],,$e_false,,$e_rate,,$e_rate_without_issue"
+							}
+						}
+						if {$sTotal_all ne 0} {
+							set missing_rate_all [expr {round(double($s_missing_all) / double($sTotal_all) * 10000) / 100.0}]
+							set missing_rate_without_issue_all [expr {round(double($s_missing_all - $s_missing_issue_all) / double($sTotal_all) * 10000) / 100.0}]
+						}
+						if {$eTotal_all ne 0} {
+							set false_rate_all [expr {round(double($e_false_all) / double($eTotal_all) * 10000) / 100.0}]
+							set false_rate_without_issue_all [expr {round(double($e_false_all - $e_false_issue_all) / double($eTotal_all) * 10000) / 100.0}]
+						}
+						set missing_rate_all "$missing_rate_all%"
+						set false_rate_all "$false_rate_all%"
+						set missing_rate_without_issue_all "$missing_rate_without_issue_all%"
+						set false_rate_without_issue_all "$false_rate_without_issue_all%"
+						write_to_file $output_csv ",,,,,,,$missing_rate_all,$false_rate_all,$missing_rate_without_issue_all,$false_rate_without_issue_all,,,,,,"
+}
+
+proc write_setup_data {data_csv output_csv {sg_msg ""}} {
+    set sg_flag 1
+    if {$sg_msg eq ""} {
+        set sg_msg [dict keys $::setupMsgIdMap]
+        set sg_flag 0
+    }
+    set sTotal_all 0
+    set eTotal_all 0
+    set s_missing_all 0
+    set e_false_all 0
+    set s_missing_issue_all 0
+    set e_false_issue_all 0
+    set missing_rate_all 0
+    set false_rate_all 0
+    set missing_rate_without_issue_all 0
+    set missing_rate_without_issue 0
+    set false_rate_without_issue_all 0
+    foreach sMsg $sg_msg {
+        if {$sg_flag} {
+            set sRule [lindex [split $sMsg ","] 0]
+        } else {
+            set sRule $sMsg
+        }
+        #if {"Ac_conv02" eq $sRule} {
+        #    continue
+        #}
+        set sTotal 0
+        set sMissing 0
+        set missing_rate 0
+        set missing_rate_without_issue 0
+        set i 1
+        while {$i < 10} {
+            set s_mark_$i 0
+            set i [expr $i + 1]
+        }
+        set eMsgIds [dict get $::setupMsgIdMap $sRule]
+        set flag 1
+        if {[dict exists $::setupMsgIdMap $sRule]} {
+            foreach eId $eMsgIds {
+                set eTotal 0
+                set eFalse 0
+                set false_rate 0
+                set false_rate_without_issue 0
+                set match 0
+                set i 1
+                while {$i < 10} {
+					set e_mark_$i 0  
+					set i [expr $i + 1]  
+				}  
+				#puts "Enno message Id: $eId"  
+				set eRule [dict get $::ennoRuleMap $eId]  
+				catch {exec grep $eId $data_csv} eLine  
+				catch {exec grep "^$sRule," $data_csv} sLine  
+				if {[regexp {child process exited abnormally} $sLine] && [regexp {child process exited abnormally} $eLine]} {  
+					continue  
+				} else {  
+					if {[regexp "child process exited abnormally" $eLine]} {  
+						set eTotal 0  
+						set eFalse 0  
+						set false_rate 0  
+						set false_rate_without_issue 0  
+						set match 0  
+						set i 1  
+						while {$i < 10} {  
+							set e_mark_$i ""  
+							set i [expr $i + 1]  
+						}  
+					} else {  
+						set eList [split $eLine ","]  
+						set eTotal [lindex $eList 1]  
+						set eFalse [lindex $eList 2]  
+						set match [expr $eTotal - $eFalse]  
+						set e_mark_1 [lindex $eList 6]  
+						set e_mark_2 [lindex $eList 7]  
+						set e_mark_3 [lindex $eList 8]  
+						#set e_mark_4 [lindex $eList 9]  
+						set e_mark_5 [lindex $eList 10]  
+						#set e_mark_6 [lindex $eList 11]  
+						set e_mark_7 [lindex $eList 12]  
+						#set e_mark_8 [lindex $eList 13]  
+						#set e_mark_9 [lindex $eList 14]  
+						set eTotal_all [expr $eTotal + $eTotal_all]  
+						set e_false_all [expr $e_false_all + $eFalse - $e_mark_5]  
+						set e_false_issue_all [expr $e_false_issue_all + $e_mark_1 + $e_mark_2 + $e_mark_3]  
+						if {$eTotal ne 0} {  
+							set false_rate [expr {round(double($eFalse - $e_mark_5) / double($eTotal) * 10000) / 100.0}]  
+							set false_rate_without_issue [expr {round(double($eFalse-$e_mark_1-$e_mark_2-$e_mark_5-$e_mark_3) / double($eTotal) * 10000) / 100.0}]  
+						}  
+						#set false_rate "$false_rate%"  
+					}  
+				if {$flag} {  
+					if {[regexp {child process exited abnormally} $sLine]} {  
+						set sTotal 0
+						set sMissing 0  
+						set missing_rate 0  
+						set missing_rate_without_issue 0  
+						set i 1  
+						while {$i < 10} {  
+							set s_mark_$i 0  
+							set i [expr $i + 1]  
+						}  
+						} else {  
+							set lines [split $sLine "\n"]  
+							foreach line $lines {  
+								set sLineList [split $line ","]  
+								set sTotal [lindex $sLineList 1]  
+								set sMissing [lindex $sLineList 2]  
+								set s_mark_1 [lindex $sLineList 5]  
+								set s_mark_2 [expr $s_mark_2 + [lindex $sLineList 6]]  
+								set s_mark_3 [expr $s_mark_3 + [lindex $sLineList 7]]  
+								#set s_mark_4 [expr $s_mark_4 + [lindex $sLineList 8]]  
+								set s_mark_5 [lindex $sLineList 9]  
+								#set s_mark_6 [expr $s_mark_6 + [lindex $sLineList 10]]  
+								set s_mark_7 [lindex $sLineList 11]  
+								#set s_mark_8 [expr $s_mark_8 + [lindex $sLineList 12]]  
+								#set s_mark_9 [expr $s_mark_9 + [lindex $sLineList 13]]  
+								set sTotal_all [expr $sTotal_all + $sTotal]  
+								set s_missing_all [expr $s_missing_all + $sMissing - $s_mark_5]  
+								set s_missing_issue_all [expr $s_missing_issue_all + $s_mark_1 + $s_mark_2 + $s_mark_3]  
+							}  
+							if {$sTotal ne 0} {  
+								set missing_rate [expr {round(double($sMissing - $s_mark_5) / double($sTotal) * 10000) / 100.0}]  
+								set missing_rate_without_issue [expr {round(double($sMissing- $s_mark_1-$s_mark_2 - $s_mark_5 - $s_mark_3) / double($sTotal) * 10000) / 100.0}]  
+							}
+							}
+							set sRulePattern [dict get $::sgRuleMap $sRule]  
+							set flag 0  
+						} else {  
+							set sTotal 0  
+							set sMissing 0  
+							set missing_rate 0  
+							set missing_rate_without_issue 0  
+							set i 1  
+							while {$i < 10} {  
+								set s_mark_$i 0  
+								set i [expr $i + 1]  
+							}  
+						}  
+						set eRule [dict get $::ennoRuleMap $eId]
+						if {$sTotal eq "" && $eTotal eq ""} {
+							continue
+						}
+						if {$::anony} {
+							set enno $eRule
+							set sg $sRulePattern
+						} else {
+							set enno $eId
+							set sg $sRule
+						}
+						set missing_rate "$missing_rate%"
+						set false_rate "$false_rate%"
+						set missing_rate_without_issue "$missing_rate_without_issue%"
+						set false_rate_without_issue "$false_rate_without_issue%"
+						write_to_file $output_csv "$enno,$sg,$sTotal,$eTotal,$match,$sMissing,$eFalse,$missing_rate,$false_rate,$missing_rate_without_issue,$false_rate_without_issue,$s_mark_1,$s_mark_5,$s_mark_7,$e_mark_1,$e_mark_5,$e_mark_7"
+						}
+					}
+				}
+			}
+			if {$sTotal_all ne 0} {
+				set missing_rate_all [expr {round(double($s_missing_all) / double($sTotal_all) * 10000) / 100.0}]
+				set missing_rate_without_issue_all [expr {round(double($s_missing_all - $s_missing_issue_all) / double($sTotal_all) * 10000) / 100.0}]
+			}
+			if {$eTotal_all ne 0} {
+				set false_rate_all [expr {round(double($e_false_all) / double($eTotal_all) * 10000) / 100.0}]
+				set false_rate_without_issue_all [expr {round(double($e_false_all - $e_false_issue_all) / double($eTotal_all) * 10000) / 100.0}]
+			}
+			set missing_rate_all "$missing_rate_all%"
+			set false_rate_all "$false_rate_all%"
+			set missing_rate_without_issue_all "$missing_rate_without_issue_all%"
+			set false_rate_without_issue_all "$false_rate_without_issue_all%"
+write_to_file $output_csv ",,,,,,,$missing_rate_all,$false_rate_all,$missing_rate_without_issue_all,$false_rate_without_issue_all,,,,,,"
+}
+
+proc write_builtin_data {data_csv output_csv {sg_msg ""}} {
+    set sg_flag 1
+    if {$sg_msg eq ""} {
+        set sg_msg [dict keys $::builtinMsgIdMap]
+        set sg_flag 0
+    }
+    set sTotal_all 0
+    set eTotal_all 0
+    set s_missing_all 0
+    set e_false_all 0
+    set s_missing_issue_all 0
+    set e_false_issue_all 0
+    set missing_rate_all 0
+    set false_rate_all 0
+    set missing_rate_without_issue_all 0
+    set missing_rate_without_issue 0
+    set false_rate_without_issue_all 0
+    foreach sMsg $sg_msg {
+        if {$sg_flag} {
+            set sRule [lindex [split $sMsg ","] 0]
+        } else {
+            set sRule $sMsg
+        }
+		
+        set sTotal 0
+        set sMissing 0
+        set missing_rate 0
+        set missing_rate_without_issue 0
+        set i 1
+        while {$i < 10} {
+            set s_mark_$i 0
+            set i [expr $i + 1]
+        }
+        set eMsgIds [dict get $::builtinMsgIdMap $sRule]
+        set flag 1
+        if {[dict exists $::builtinMsgIdMap $sRule]} {
+            foreach eId $eMsgIds {
+                set eTotal 0
+                set eFalse 0
+                set false_rate 0
+                set false_rate_without_issue 0
+                set match 0
+                set i 1
+                while {$i < 10} {
+					set e_mark_$i 0  
+					set i [expr $i + 1]  
+				}  
+				#puts "Enno message Id: $eId"  
+				set eRule [dict get $::ennoRuleMap $eId]  
+				catch {exec grep $eId $data_csv} eLine  
+				catch {exec grep "^$sRule," $data_csv} sLine  
+				if {[regexp {child process exited abnormally} $sLine] && [regexp {child process exited abnormally} $eLine]} {  
+					continue  
+				} else {  
+					if {[regexp "child process exited abnormally" $eLine]} {  
+						set eTotal 0  
+						set eFalse 0  
+						set false_rate 0  
+						set false_rate_without_issue 0  
+						set match 0  
+						set i 1  
+						while {$i < 10} {  
+							set e_mark_$i ""  
+							set i [expr $i + 1]  
+						}  
+					} else {  
+						set eList [split $eLine ","]  
+						set eTotal [lindex $eList 1]  
+						set eFalse [lindex $eList 2]  
+						set match [expr $eTotal - $eFalse]  
+						set e_mark_1 [lindex $eList 6]  
+						set e_mark_2 [lindex $eList 7]  
+						#set e_mark_3 [lindex $eList 8]  
+						#set e_mark_4 [lindex $eList 9]  
+						set e_mark_5 [lindex $eList 10]  
+						#set e_mark_6 [lindex $eList 11]  
+						set e_mark_7 [lindex $eList 12]  
+						#set e_mark_8 [lindex $eList 13]  
+						#set e_mark_9 [lindex $eList 14]  
+						set eTotal_all [expr $eTotal + $eTotal_all]  
+						set e_false_all [expr $e_false_all + $eFalse - $e_mark_5]  
+						set e_false_issue_all [expr $e_false_issue_all + $e_mark_1 + $e_mark_2]  
+						if {$eTotal ne 0} {  
+							set false_rate [expr {round(double($eFalse - $e_mark_5) / double($eTotal) * 10000) / 100.0}]  
+							set false_rate_without_issue [expr {round(double($eFalse-$e_mark_1-$e_mark_2-$e_mark_5) / double($eTotal) * 10000) / 100.0}]  
+						}  
+						#set false_rate "$false_rate%"  
+					}  
+				}  
+				if {$flag} {  
+					if {[regexp {child process exited abnormally} $sLine]} {  
+						set sTotal 0
+						set sMissing 0  
+						set missing_rate 0  
+						set missing_rate_without_issue 0  
+						set i 1  
+						while {$i < 10} {  
+							set s_mark_$i 0  
+							set i [expr $i + 1]  
+						}  
+						} else {  
+							set lines [split $sLine "\n"]  
+							foreach line $lines {  
+								set sLineList [split $line ","]  
+								set sTotal [expr $sTotal + [lindex $sLineList 1]]
+								set sMissing [expr $sMissing + [lindex $sLineList 2]]
+								set s_mark_1 [expr $s_mark_1 + [lindex $sLineList 5]]
+								set s_mark_2 [expr $s_mark_2 + [lindex $sLineList 6]]  
+								set s_mark_3 [expr $s_mark_3 + [lindex $sLineList 7]]  
+								#set s_mark_4 [expr $s_mark_4 + [lindex $sLineList 8]]  
+								set s_mark_5 [expr $s_mark_5 + [lindex $sLineList 9]]
+								#set s_mark_6 [expr $s_mark_6 + [lindex $sLineList 10]]  
+								set s_mark_7 [expr $s_mark_7 + [lindex $sLineList 11]]
+								#set s_mark_8 [expr $s_mark_8 + [lindex $sLineList 12]]  
+								#set s_mark_9 [expr $s_mark_9 + [lindex $sLineList 13]]  
+								set sTotal_all [expr $sTotal_all + $sTotal]  
+								set s_missing_all [expr $s_missing_all + $sMissing - $s_mark_5]  
+								set s_missing_issue_all [expr $s_missing_issue_all + $s_mark_1 + $s_mark_2]  
+							}  
+							if {$sTotal ne 0} {  
+								set missing_rate [expr {round(double($sMissing - $s_mark_5) / double($sTotal) * 10000) / 100.0}]  
+								set missing_rate_without_issue [expr {round(double($sMissing- $s_mark_1-$s_mark_2 - $s_mark_5) / double($sTotal) * 10000) / 100.0}]
+								}
+							}  
+							set sRulePattern [dict get $::sgRuleMap $sRule]  
+							set flag 0  
+						} else {  
+							set sTotal 0  
+							set sMissing 0  
+							set missing_rate 0  
+							set missing_rate_without_issue 0  
+							set i 1  
+							while {$i < 10} {  
+								set s_mark_$i 0  
+								set i [expr $i + 1]  
+							}  
+						}  
+						set eRule [dict get $::ennoRuleMap $eId]
+						if {$sTotal eq "" && $eTotal eq ""} {
+							continue
+						}
+						if {$::anony} {
+							set enno $eRule
+							set sg $sRulePattern
+						} else {
+							set enno $eId
+							set sg $sRule
+						}
+						set missing_rate "$missing_rate%"
+						set false_rate "$false_rate%"
+						set missing_rate_without_issue "$missing_rate_without_issue%"
+						set false_rate_without_issue "$false_rate_without_issue%"
+						write_to_file $output_csv "$enno,$sg,$sTotal,$eTotal,$match,$sMissing,$eFalse,$missing_rate,$false_rate,$missing_rate_without_issue,$false_rate_without_issue,$s_mark_1,$s_mark_5,$s_mark_7,$e_mark_1,$e_mark_5,$e_mark_7"
+						}
+					}
+				}
+			}
+			if {$sTotal_all ne 0} {
+				set missing_rate_all [expr {round(double($s_missing_all) / double($sTotal_all) * 10000) / 100.0}]
+				set missing_rate_without_issue_all [expr {round(double($s_missing_all - $s_missing_issue_all) / double($sTotal_all) * 10000) / 100.0}]
+			}
+			if {$eTotal_all ne 0} {
+				set false_rate_all [expr {round(double($e_false_all) / double($eTotal_all) * 10000) / 100.0}]
+				set false_rate_without_issue_all [expr {round(double($e_false_all - $e_false_issue_all) / double($eTotal_all) * 10000) / 100.0}]
+			}
+			set missing_rate_all "$missing_rate_all%"
+			set false_rate_all "$false_rate_all%"
+			set missing_rate_without_issue_all "$missing_rate_without_issue_all%"
+			set false_rate_without_issue_all "$false_rate_without_issue_all%"
+			write_to_file $output_csv ",,,,,,,$missing_rate_all,$false_rate_all,$missing_rate_without_issue_all,$false_rate_without_issue_all,,,,,,"
+}
+
+proc write_ar_data {data_csv output_csv {sg_msg ""}} {
+    set sg_flag 1
+    if {$sg_msg eq ""} {
+        set sg_msg [dict keys $::arMsgIdMap]
+        set sg_flag 0
+    }
+    set sTotal_all 0
+    set s_missing_all 0
+    set s_missing_issue_all 0
+    set missing_rate_all 0
+    set missing_rate_without_issue_all 0
+    set eTotal_all 0
+    set e_false_all 0
+    set e_false_issue_all 0
+    set false_rate_all 0
+    set false_rate_without_issue_all 0
+    foreach sMsg $sg_msg {
+        if {$sg_flag} {
+            set sRule [lindex [split $sMsg ","] 0]
+        } else {
+            set sRule $sMsg
+        }
+        set sTotal 0
+        set sMissing 0
+        set missing_rate 0
+        set missing_rate_without_issue 0
+        set i 1
+        while {$i < 10} {
+            set s_mark_$i 0
+            set i [expr $i + 1]
+        }
+        set eMsgIds [dict get $::arMsgIdMap $sRule]
+        set flag 1
+        if {[dict exists $::arMsgIdMap $sRule]} {
+            foreach eId $eMsgIds {
+                set eTotal 0
+                set eFalse 0
+                set false_rate 0
+                set false_rate_without_issue 0
+                set match 0
+                set i 1
+                while {$i < 10} {
+					set e_mark_$i 0  
+					set i [expr $i + 1]  
+				}  
+				#puts "Enno message Id: $eId"  
+				set eRule [dict get $::ennoRuleMap $eId]  
+				catch {exec grep $eId $data_csv} eLine  
+				catch {exec grep "^$sRule," $data_csv} sLine  
+				if {[regexp {child process exited abnormally} $sLine] && [regexp {child process exited abnormally} $eLine]} {  
+					continue  
+				} else {  
+					if {[regexp "child process exited abnormally" $eLine]} {  
+						set eTotal 0  
+						set eFalse 0  
+						set false_rate 0  
+						set false_rate_without_issue 0  
+						set match 0  
+						set i 1  
+						while {$i < 10} {  
+							set e_mark_$i ""  
+							set i [expr $i + 1]  
+						}  
+					} else {  
+						set eList [split $eLine ","]  
+						set eTotal [lindex $eList 1]  
+						set eFalse [lindex $eList 2]  
+						set match [expr $eTotal - $eFalse]  
+						set e_mark_1 [lindex $eList 6]  
+						set e_mark_2 [lindex $eList 7]  
+						set e_mark_5 [lindex $eList 10]  
+						set e_mark_7 [lindex $eList 12]  
+						set eTotal_all [expr $eTotal + $eTotal_all]  
+						set e_false_all [expr $e_false_all + $eFalse - $e_mark_5]  
+						set e_false_issue_all [expr $e_false_issue_all + $e_mark_1 + $e_mark_2]  
+						if {$eTotal ne 0} {  
+							set false_rate [expr {round(double($eFalse - $e_mark_5) / double($eTotal) * 10000) / 100.0}]  
+							set false_rate_without_issue [expr {round(double($eFalse-$e_mark_1 - $e_mark_2 - $e_mark_5) / double($eTotal) * 10000) / 100.0}]  
+						}  
+					}  
+				if {$flag} {  
+					if {[regexp {child process exited abnormally} $sLine]} {  
+						set sTotal 0  
+						set sMissing 0  
+						set missing_rate 0  
+						set i 1  
+						while {$i < 10} {  
+							set s_mark_$i 0  
+							set i [expr $i + 1]
+						}
+					} else {
+							set lines [split $sLine "\n"]
+							foreach line $lines {
+								set sLineList [split $line ","]
+								set sTotal [expr $sTotal + ([lindex $sLineList 1])]
+								set sMissing [expr $sMissing + ([lindex $sLineList 2])]
+								set s_mark_1 [expr $s_mark_1 + ([lindex $sLineList 5])]
+								set s_mark_5 [expr $s_mark_5 + ([lindex $sLineList 9])]
+								set s_mark_7 [expr $s_mark_7 + ([lindex $sLineList 11])]
+							}
+							set sTotal_all [expr $sTotal_all + $sTotal]
+							set s_missing_all [expr $s_missing_all + $sMissing - $s_mark_5]
+							set s_missing_issue_all [expr $s_missing_issue_all +$s_mark_1 + $s_mark_2]
+							if {$sTotal ne 0} {
+								set missing_rate [expr {round(double($sMissing - $s_mark_5) / double($sTotal) * 10000) / 100.0}]
+								set missing_rate_without_issue [expr {round(double($sMissing-$s_mark_1 - $s_mark_2 - $s_mark_5) / double($sTotal) * 10000) / 100.0}]
+							}
+						}
+						set sRulePattern [dict get $::sgRuleMap $sRule]
+							set flag 0
+					} else {
+						set sTotal 0
+						set sMissing 0
+						set missing_rate 0
+						set missing_rate_without_issue 0
+						set i 1
+						while {$i < 10} {
+							set s_mark_$i 0
+							set i [expr $i + 1]
+						}
+						}
+						#set eRule [dict get $::ennoRuleMap $eId]
+						if {$sTotal eq "" && $eTotal eq ""} {
+							continue
+						}
+						if {$::anony} {
+							set enno $eRule
+							set sg $sRulePattern
+						} else {
+							set enno $eId
+							set sg $sRule
+						}
+						set missing_rate "$missing_rate%"
+						set false_rate "$false_rate%"
+						set missing_rate_without_issue "$missing_rate_without_issue%"
+						set false_rate_without_issue "$false_rate_without_issue%"
+						write_to_file $output_csv "$enno,$sg,$sTotal,$eTotal,$match,$sMissing,$eFalse,$missing_rate,$false_rate,$missing_rate_without_issue,$false_rate_without_issue,$s_mark_1,$s_mark_5,$s_mark_7,$e_mark_1,$e_mark_5,$e_mark_7"
+						}
+					}
+				}
+			}
+			if {$sTotal_all ne 0} {
+				set missing_rate_all [expr {round(double($s_missing_all) / double($sTotal_all) * 10000) / 100.0}]
+				set missing_rate_without_issue_all [expr {round(double($s_missing_all - $s_missing_issue_all) / double($sTotal_all) * 10000) / 100.0}]
+			}
+			if {$eTotal_all ne 0} {
+				set false_rate_all [expr {round(double($e_false_all) / double($eTotal_all) * 10000) / 100.0}]
+				set false_rate_without_issue_all [expr {round(double($e_false_all - $e_false_issue_all) / double($eTotal_all) * 10000) / 100.0}]
+			}
+			set missing_rate_all "$missing_rate_all%"
+			set false_rate_all "$false_rate_all%"
+			set missing_rate_without_issue_all "$missing_rate_without_issue_all%"
+			set false_rate_without_issue_all "$false_rate_without_issue_all%"
+			write_to_file $output_csv ",,,,,,,$missing_rate_all,$false_rate_all,$missing_rate_without_issue_all,$false_rate_without_issue_all,,,,,,"
+}
+
+set start [clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]
+puts "run start..."
+puts "Start time:$start"
+puts "Environment..."
+clean_env "$csv"
+#clean_env "$output"
+puts "counting..."
+foreach rule $ruleList {
+    puts "rule $rule"
+    exec $csh_dir -f [set ${rule}_csv] -i $tags 2&>1 | tee /dev/tty;
+    #return
+    puts "file $csv for $rule is generated."
+    set output "[file dirname $output]/[file rootname [file tail $output]]_${rule}.csv"
+    clean_env "[file tail $output]"
+    set flag 0
+    if {$flag == 0} {
+        write_to_file $output "Enno_rule,A_rule,A_report_num,Enno_report_num,Enno_match_num,A_report_only,Enno_report_only,miss_rate,false_rate,miss_rate_without_issue,false_rate_without_issue,miss_report_issue(1),miss_report_script(5),miss_report_diff(7),false_report_issue(1),false_report_script(5),false_report_diff(7)"
+        set flag 1
+    }
+    set rule [string toupper $rule]
+#   set msg [exec awk 'F, {"if ($1!~/^[a-z]/) print \\"$1\\""}' $csv]
+    set start_line [exec grep -n "${rule}_ENNO_RULE_NAME" $csv | cut -d: -f1]
+    set end_line [exec grep -n "${rule}_SG_MESSAGE" $csv | cut -d: -f1]
+    if {[expr $start_line +1]} != $end_line} {
+        set enno_msg [exec sed -n "[expr ${start_line} + 1],[expr ${end_line} - 1]p" $csv]
+    } else {
+        set enno_msg ""
+    }
+    set sg_msg [exec tail -n +[expr ${end_line} + 1] $csv]
+    if ($rule eq "AC") {
+        write_ac_v2_data $csv $output $enno_msg
+    } elseif ($rule eq "AR") {
+        #write_ar_data $csv $output $enno_msg $sg_msg
+        write_ar_data $csv $output
+    } elseif ($rule eq "BUILTIN") {
+        write_builtin_data $csv $output
+    } else {
+        write_setup_data $csv $output
+    }
+puts "$rule end:[clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]"
+}
+puts "run end!"
+set end [clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]
+puts "Start time:$start  End time:$end"
+
+new_count.sh
+#!/bin/bash
+__print_font_color__ () {	
+		color=$1
+		string=$2
+		case ${color} in
+			-red)		echo -e "\033[31m${string}\033[0m";;
+			-green)		echo -e "\033[32m${string}\033[0m";;
+			-yellow)	echo -e "\033[33m${string}\033[0m";;
+			-blue)		echo -e "\033[34m${string}\033[0m";;
+		esac
+}
+ignore=""
+count=0
+for simple in $ignore; do
+		if [ $count -eq 0]
+		then
+			tab="^$simple$"
+		else
+			tab="$tab|^$simple$"
+		fi
+		((count++))
+done
+do_ac_msg(){
+	
+	echo "AC_ENNO_MESSAGE_ID,TOTAL,FALSE,MATCH,PASS,RATE,FAKE_MATCH">>csv_summary.csv	
+	for i in $(cat $1 | awk -F',' 'NR>1 && $1 != "" {print $1}'| sort | uniq);do
+		enno_msgid=$i;
+		enno_total=$(grep -c "${i}" $1 );
+		real_match=$(awk -v key="$i" -v tab="$tab" -F, '$1 == key && $15 ~ /^match$/ {print}' $1 | wc -l);
+		pass=$(awk -v key="$i" -v tab="$tab" -F, '$1 == key && $15 ~ /pass.*$/ {print}' $1 | wc -l);
+		fake_match=0
+		if ["$ignore" = "" ]
+		then
+			match=$((real_match+pass));
+		else
+			match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $17 ~tab) || ($1 == key && $15 ~ /^(match|pass.*)$/) {print}' $1 |wc -l);
+			fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $17 ~ tab) {print}' $1 | wc -l);
+		fi
+		mark_1=$(awk -v key="$i" -F , '($14 == key && $17 ~ /^1$/) {print}' $1 | wc -l);
+		mark_2=$(awk -v key="$i" -F , '($14 == key && $17 ~ /^2$/) {print}' $1 | wc -l);
+		mark_3=0;#mark_3=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^3$/) {print}' $1 | wc -l);
+		mark_4=0;#mark_4=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^4$/) {print}' $1 | wc -l);
+		mark_5=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^5$/) {print}' $1 | wc -l);
+		mark_6=0;#mark_6=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^6$/) {print}' $1 | wc -l);
+		mark_7=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^7$/) {print}' $1 | wc -l);
+		mark_8=0;#mark_8=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^8$/) {print}' $1 | wc -l);
+		mark_9=0;#mark_9=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^9$/) {print}' $1 | wc -l);
+		mark_a=0;#mark_a=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^a$/) {print}' $1 | wc -l);
+		mark_b=0;#mark_b=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^b$/) {print}' $1 | wc -l);
+		
+		enno_false=$((enno_total-match));
+		rate=`echo "scale=4; $enno_false / $enno_total * 100" | bc`
+		echo "$i,$enno_total,$enno_false,$real_match,$pass,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b">> csv_summary.csv;
+	done
+
+
+	echo "AC_ENNO_RULE_NAME,TOTAL, FALSE,MATCH,PASS,RATE,FAKE_MATCH" >>csv_summary.csv
+	awk -F',' 'NR>1 && $13 != "" {print $13}' $1 | sort | uniq |while read line
+	do
+		sg_msg=$line;
+		sg_total=$(awk -v key="$line" -F,'$13 == key {print}' $1 | wc -l)
+		real_match=$(awk -v key="$line" -v tab="$tab" -F,'$13 == key && $15 ~ /^match$/ {print}' $1 | wc -l);
+		pass=$(awk -v key="$line" -v tab="$tab" -F, '$13 == key && $15 ~ /pass.*$/ {print}' $1 | wc -l);
+		fake_match=0
+		if [ "$ignore" = "" ]
+		then
+			match=$(awk -v key="$line" -v tab="$tab" -F, '$13 == key && $15 ~ /^(match|pass.*)$/ {print}' $1 | wc -l);
+		else
+			match=$(awk -v key="$line" -v tab="$tab" -F, '($13 == key && $17 ~ tab) || ($13 ==key && $15 ~ /^(match|pass.*)$/) {print}' $1 | wc -l);
+			fake_match=$(awk -v key="$line" -v tab="$tab" -F, '($13 == key && $17 ~ tab) {print}' $1 | wc -l);
+		fi
+		mark_1=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^1$/) {print}' $1 | wc -l);
+		mark_2=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^2$/) {print}' $1 | wc -l);
+		mark_3=0;#mark_3=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^3$/) {print}' $1 | wc -l);
+		mark_4=0;#mark_4=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^4$/) {print}' $1 | wc -l);
+		mark_5=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^5$/) {print}' $1 | wc -l);
+		mark_6=0;#mark_6=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^6$/) {print}' $1 | wc -l);
+		mark_7=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^7$/) {print}' $1 | wc -l);
+		mark_8=0;#mark_8=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^8$/) {print}' $1 | wc -l);
+		mark_9=0;#mark_9=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^9$/) {print}' $1 | wc -l);
+		mark_a=0;#mark_a=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^a$/) {print}' $1 | wc -l);
+		mark_b=0;#mark_b=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^b$/) {print}' $1 | wc -l);
+		sg_missing=$((sg_total-match));
+		rate=`echo "scale=4; $sg_missing / $sg_total * 100" | bc`
+		echo "$line,$sg_total,$sg_missing,$real_match,$pass,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b">> csv_summary.csv;
+	done
+	
+	echo "AC_SG_MESSAGE,TOTAL,MISSING,MATCH,PASS,RATE,FAKE_MATCH" >> csv_summary.csv
+	awk -F',' 'NR>1 && $14 != "" {print $14}' $1 | sort | uniq | while read line
+		do
+		sg_msg=$line;
+		sg_total=$(awk -v key="$line" -F , '$14 == key {print}' $1 | wc -l)
+		real_match=$(awk -v key="$line" -v tab="$tab" -F , '$14 == key && $15 ~ /^match$/ {print}' $1 | wc -l);
+		pass=$(awk -v key="$line" -v tab="$tab" -F , '$14 == key && $15 ~ /pass.*$/ {print}' $1 | wc -l);
+		fake_match=0
+		if [ "$ignore" = "" ]
+		then
+			match=$((real_match+pass));
+		else
+			match=$(awk -v key="$line" -v tab="$tab" -F , '($14 == key && $17 ~ tab) || ($14 == key && $15 ~ /^(match|pass.*)$/) {print}' $1 | wc -l);
+			fake_match=$(awk -v key="$line" -v tab="$tab" -F , '($14 == key && $17 ~ tab) {print}' $1 | wc -l);
+		fi
+		mark_1=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^1$/) {print}' $1 | wc -l);
+		mark_2=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^2$/) {print}' $1 | wc -l);
+		mark_3=0;#mark_3=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^3$/) {print}' $1 | wc -l);
+		mark_4=0;#mark_4=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^4$/) {print}' $1 | wc -l);
+		mark_5=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^5$/) {print}' $1 | wc -l);
+		mark_6=0;#mark_6=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^6$/) {print}' $1 | wc -l);
+		mark_7=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^7$/) {print}' $1 | wc -l);
+		mark_8=0;#mark_8=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^8$/) {print}' $1 | wc -l);
+		mark_9=0;#mark_9=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^9$/) {print}' $1 | wc -l);
+		mark_a=0;#mark_a=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^a$/) {print}' $1 | wc -l);
+		mark_b=0;#mark_b=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^b$/) {print}' $1 | wc -l);
+		sg_missing=$((sg_total-match));
+		rate=`echo "scale=4; $sg_missing / $sg_total * 100" | bc`
+		echo "$line,$sg_total,$sg_missing,$real_match,$pass,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b" >> csv_summary.csv;
+	done
+}
+
+do_ar_msg() {
+	echo "AR_ENNO_RULE_NAME,TOTAL, FALSE,MATCH,RATE,FAKE_MATCH" >>csv_summary.csv
+	for i in $(cat $1 | awk -F',' 'NR>1 {print $1}'| sort | uniq);do
+		enno_msgid=$i;
+		enno_total=$(grep "^${i}," "$1" | wc -l);
+		real_match=$(awk -v key="$i" -F, '$1 == key && $7 ~ /match/ {print}' $1 | wc -l);
+		pass=0
+		fake match=0
+		if ["$ignore" = "" ]
+		then
+			enno_match=$real_match;
+		else
+			enno_match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $9 ~ tab) || $1 == key && ($7 ~ /match/ || $7 ~/.*pass.*/ ) {print}' $1 |wc -l);
+			fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $9 ~ tab) {print}' $1 | wc -l);
+			pass=$(awk -v key="$i" -v tab="$tab" -F , '$1 == key && $7 ~ /.*pass.*/ {print}' $1 | wc -l);
+		fi
+		mark_1=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^1$/) {print}' $1 | wc -l);
+		mark_2=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^2$/) {print}' $1 | wc -l);
+		mark_3=0;#mark_3=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^3$/) {print}' $1 | wc -l);
+		mark_4=0;#mark_4=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^4$/) {print}' $1 | wc -l);
+		mark_5=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^5$/) {print}' $1 | wc -l);
+		mark_6=0;#mark_6=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^6$/) {print}' $1 | wc -l);
+		mark_7=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^7$/) {print}' $1 | wc -l);
+		mark_8=0;#mark_8=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^8$/) {print}' $1 | wc -l);
+		mark_9=0;#mark_9=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^9$/) {print}' $1 | wc -l);
+		mark_a=0;#mark_a=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^a$/) {print}' $1 | wc -l);
+		mark_b=0;#mark_b=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^b$/) {print}' $1 | wc -l);
+		
+		enno_false_report_num=$((enno_total-enno_match));
+		rate=`echo "scale=4; $enno_false_report_num / $enno_total * 100" | bc`
+		echo "$enno_msgid,$enno_total,$enno_false_report_num,$real_match,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass">> csv_summary.csv
+	done
+	
+	echo "AR_SG_MESSAGE,TOTAL,MISSING,RATE,FAKE_MATCH" >> csv_summary.csv
+	for i in $(cat $1 | awk -F',' 'NR>1 {print $2}'| sort | uniq);do
+		sg_rule=$i;
+		sg_total=$(grep ",${i}," $1 | wc -l);
+		pass=0
+		fake match=0
+		if ["$ignore" = "" ];then
+			sg_match=$(awk -v key="$i" -F, '$2 == key && ($7 ~ /match/ || $7 ~/.*pass.*$/ {print}' $1 |wc -l);
+		else
+			sg_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $9 ~tab) || ($2 == key && ($7 ~ /match/ || $7 ~ /.*pass.*$/)) {print}' $1 |wc -l);
+			fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $9 ~ tab) {print}' $1 | wc -l);
+			pass=$(awk -v key="$i" -v tab="$tab" -F , '$2 == key && $7 ~ /.*pass.*/ {print}' $1 | wc -l);
+		fi
+		
+		mark_1=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^1$/) {print}' $1 | wc -l);
+		mark_2=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^2$/) {print}' $1 | wc -l);
+		mark_3=0;#mark_3=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^3$/) {print}' $1 | wc -l);
+		mark_4=0;#mark_4=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^4$/) {print}' $1 | wc -l);
+		mark_5=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^5$/) {print}' $1 | wc -l);
+		mark_6=0;#mark_6=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^6$/) {print}' $1 | wc -l);
+		mark_7=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^7$/) {print}' $1 | wc -l);
+		mark_8=0;#mark_8=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^8$/) {print}' $1 | wc -l);
+		mark_9=0;#mark_9=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^9$/) {print}' $1 | wc -l);
+		mark_a=0;#mark_a=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^a$/) {print}' $1 | wc -l);
+		mark_b=0;#mark_b=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^b$/) {print}' $1 | wc -l);
+		sg_missing_report_num=$((sg_total-sg_match));
+		rate=`echo "scale=4; $sg_missing_report_num / $sg_total * 100" | bc`
+		echo "$sg_rule,$sg_total,$sg_missing_report_num,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass" >> csv_summary.csv;
+	done	
+}
+
+do_setup_msg() {
+    echo "SETUP_ENNO_RULE_NAME,TOTAL,FALSE,MATCH,RATE,FAKE_MATCH" >> csv_summary.csv
+    awk -F',' 'NR>1 && $1 != "" {print $1}' $1 | sort | uniq | while read line;
+    do
+        #for i in $(cat $1 | awk -F'',' 'NR>1 {print $1}' | sort | uniq); do
+            enno_msgid=$line ;
+            enno_total=$(grep "^${line}" $1 | wc -l) ;
+            real_match=$(awk -v key="$line" -F, '$1 == key && $8 ~ /^match$/ {print}' $1 | wc -l);
+            fake_match=0
+            pass=0
+            if [ "$ignore" = "" ]
+            then
+                enno_match=$real_match;
+            else
+                enno_match=$(awk -v key="$line" -v tab="$tab" -F, '($1 == key && $10 ~ tab || $1 == key && ($8 ~ /^match$/ || $8 ~/.*pass.*$/) {print}' $1 | wc -l);
+                fake_match=$(awk -v key="$line" -v tab="$tab" -F, '($1 == key && $10 ~ tab) {print}' $1 | wc -l);
+                pass=$(awk -v key="$line" -v tab="$tab" -F, '$1 == key && $8 ~ /^pass$/ {print}' $1 | wc -l);
+            fi
+			mark_1=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^1$/) {print}' $1 | wc -l);
+			mark_2=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^2$/) {print}' $1 | wc -l);
+			mark_3=0;#mark_3=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^3$/) {print}' $1 | wc -l);
+			mark_4=0;#mark_4=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^4$/) {print}' $1 | wc -l);
+			mark_5=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^5$/) {print}' $1 | wc -l);
+			mark_6=0;#mark_6=$(awk -v key="$line" -F , '($14 == key && $10 ~ /^6$/) {print}' $1 | wc -l);
+			mark_7=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^7$/) {print}' $1 | wc -l);
+			mark_8=0;#mark_8=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^8$/) {print}' $1 | wc -l);
+			mark_9=0;#mark_9=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^9$/) {print}' $1 | wc -l);
+			mark_a=0;#mark_a=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^a$/) {print}' $1 | wc -l);
+			mark_b=0;#mark_b=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^b$/) {print}' $1 | wc -l);
+            enno_false_report_num=$((enno_total-enno_match)) ;
+            rate=`echo "scale=4; $enno_false_report_num / $enno_total * 100" | bc`
+            echo "$enno_msgid,$enno_total,$enno_false_report_num,$real_match,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass" >> csv_summary.csv
+done
+echo "SETUP_SG_MESSAGE,TOTAL,MISSING,RATE,FAKE_MATCH" >> csv_summary.csv
+for i in $(cat $1 | awk -F',' 'NR>1 {print $2}'| sort | uniq);do
+		sg_rule=$i;
+		sg_total=$(grep ",${i}," $1 | wc -l);
+		fake_match=0
+		pass=0
+		if ["$ignore" = "" ];then
+			sg_match=$(awk -v key="$i" -F, '$2 == key && ($8 ~ /^match$/ || $8 ~/.*pass.*$/) {print}' $1 |wc -l);
+		else
+			sg_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $10 ~ tab) || ($2 == key && ($8 ~ /^match$/ || $8 ~ /.*pass*$/)) {print}' $1 |wc -l);
+			fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $10 ~ tab) {print}' $1 | wc -l);
+			pass=$(awk -v key="$i" -v tab="$tab" -F , '$2 == key && $8 ~ /^pass$/ {print}' $1 | wc -l);
+		fi
+		mark_1=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^1$/) {print}' $1 | wc -l);
+		mark_2=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^2$/) {print}' $1 | wc -l);
+		mark_3=0;#mark_3=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^3$/) {print}' $1 | wc -l);
+		mark_4=0;#mark_4=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^4$/) {print}' $1 | wc -l);
+		mark_5=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^5$/) {print}' $1 | wc -l);
+		mark_6=0;#mark_6=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^6$/) {print}' $1 | wc -l);
+		mark_7=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^7$/) {print}' $1 | wc -l);
+		mark_8=0;#mark_8=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^8$/) {print}' $1 | wc -l);
+		mark_9=0;#mark_9=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^9$/) {print}' $1 | wc -l);
+		mark_a=0;#mark_a=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^a$/) {print}' $1 | wc -l);
+		mark_b=0;#mark_b=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^b$/) {print}' $1 | wc -l);
+		
+		sg_missing_report_num=$((sg_total-sg_match));
+		rate=`echo "scale=4; $sg_missing_report_num / $sg_total * 100" | bc`
+		echo "$sg_rule,$sg_total,$sg_missing_report_num,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass" >> csv_summary.csv;
+	done
+}
+
+do_builtin_msg() {
+    echo "BUILTIN_ENNO_RULE_NAME,TOTAL,FALSE,MATCH,RATE,FAKE_MATCH" >> csv_summary.csv
+    for i in $(cat $1 | awk -F',' 'NR>1 {print $1}' | sort | uniq); do
+            enno_msgid=$i ;
+            enno_total=$(grep "^${i}" "$1" | wc -l) ;
+            real_match=$(awk -v key="$i" -F, '$1 == key && $8 ~ /^match$/ {print}' $1 | wc -l);
+            fake_match=0
+            pass=0
+            if [ "$ignore" = "" ]
+            then
+                enno_match=$real_match;
+            else
+                enno_match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $10 ~ tab) || $1 == key && ($8 ~ /^match$/ || $8 ~/.*pass.*$/) {print}' $1 | wc -l);
+                fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $10 ~ tab) {print}' $1 | wc -l);
+                pass=$(awk -v key="$i" -v tab="$tab" -F, '$1 == key && $8 ~ /^pass$/ {print}' $1 | wc -l);
+            fi
+			mark_1=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^1$/) {print}' $1 | wc -l);
+			mark_2=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^2$/) {print}' $1 | wc -l);
+			mark_3=0;#mark_3=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^3$/) {print}' $1 | wc -l);
+			mark_4=0;#mark_4=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^4$/) {print}' $1 | wc -l);
+			mark_5=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^5$/) {print}' $1 | wc -l);
+			mark_6=0;#mark_6=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^6$/) {print}' $1 | wc -l);
+			mark_7=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^7$/) {print}' $1 | wc -l);
+			mark_8=0;#mark_8=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^8$/) {print}' $1 | wc -l);
+			mark_9=0;#mark_9=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^9$/) {print}' $1 | wc -l);
+			mark_a=0;#mark_a=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^a$/) {print}' $1 | wc -l);
+			mark_b=0;#mark_b=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^b$/) {print}' $1 | wc -l);
+            enno_false_report_num=$((enno_total-enno_match)) ;
+            rate=`echo "scale=4; $enno_false_report_num / $enno_total * 100" | bc`
+            echo "$enno_msgid,$enno_total,$enno_false_report_num,$real_match,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass" >> csv_summary.csv
+done
+echo "BUILTIN_SG_MESSAGE,TOTAL,MISSING,RATE,FAKE_MATCH" >> csv_summary.csv
+for i in $(cat $1 | awk -F',' 'NR>1 {print $2}'| sort | uniq);do
+		sg_rule=$i;
+		sg_total=$(grep ",${i}," $1 | wc -l);
+		fake_match=0
+		pass=0
+		if ["$ignore" = "" ]
+		then
+			sg_match=$(awk -v key="$i" -F, '$2 == key && ($8 ~ /^match$/ || $8 ~/.*pass.*$/ {print}' $1 |wc -l);
+		else
+			sg_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $10 ~tab) || ($2 == key && ($8 ~ /^match$/ || $8 ~/^pass$/) ) {print}' $1 |wc -l);
+			fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $10 ~ tab) {print}' $1 | wc -l);
+			pass=$(awk -v key="$i" -v tab="$tab" -F , '$2 == key && $8 ~ /^pass$/ {print}' $1 | wc -l);
+		fi
+		mark_1=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^1$/) {print}' $1 | wc -l);
+		mark_2=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^2$/) {print}' $1 | wc -l);
+		mark_3=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^3$/) {print}' $1 | wc -l);
+		mark_4=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^4$/) {print}' $1 | wc -l);
+		mark_5=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^5$/) {print}' $1 | wc -l);
+		mark_6=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^6$/) {print}' $1 | wc -l);
+		mark_7=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^7$/) {print}' $1 | wc -l);
+		mark_8=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^8$/) {print}' $1 | wc -l);
+		mark_9=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^9$/) {print}' $1 | wc -l);
+		mark_a=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^a$/) {print}' $1 | wc -l);
+		mark_b=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^b$/) {print}' $1 | wc -l);
+		
+		sg_missing_report_num=$((sg_total-sg_match));
+		rate=`echo "scale=4; $sg_missing_report_num / $sg_total * 100" | bc`
+		echo "$sg_rule,$sg_total,$sg_missing_report_num,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass" >> csv_summary.csv;
+	done
+}
+
+print_help() {
+    echo "Usage: count_csv.sh [option]"
+    echo "Options:"
+    echo "-f <value>    Set csv file name which you wanna do count."
+    echo "-i            ignore mark"
+    echo "-h            Print help info"
+}
+
+while getopts "i:f:h" opt; do
+    case ${opt} in
+        f) filename=${OPTARG} ;;
+        i) ignore=${OPTARG} ;;
+        h)
+            print_help
+            exit 0
+            ;;
+    esac
+done
+
+for simple in $ignore; do
+    if [ $count -eq 0 ]
+    then
+        tab="^$simple$"
+    else
+        tab="$tab|^$simple$"
+    fi
+    ((count++))
+done
+echo "file:$filename"
+if echo "$filename" | grep -q "ac"; then
+    do_ac_msg $filename
+elif echo "$filename" | grep -q "setup"; then
+    do_setup_msg $filename
+elif echo "$filename" | grep -q "ar_"; then
+    do_ar_msg $filename
+elif echo "$filename" | grep -q "builtin"; then
+    do_builtin_msg $filename
+else
+    echo "ERROR: Invalid filename"
+	exit 1
+fi
