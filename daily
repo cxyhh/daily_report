@@ -1,473 +1,406 @@
-proc is_analyzed {oldResultCsvFile msg_line message_info} {
-    set proc_name [lindex [info level 0] 0]
-    puts_debug_message start $proc_name
-    global arr_result header_list mark_switch
-    set mark_switch 0
-    set message_info [escape_special_chars $message_info]
-    if {$message_info eq ""} {
-        if {[info exists arr_result($msg_line)]} {
-            set result $arr_result($msg_line)
-        } else {
-            set result ""
-        }
-    } else {
-        catch {exec grep "${msg_line},.*${message_info}" $oldResultCsvFile} result
-    }
-	....
-}
-proc setUnmatchMsgLine {msgLine falseType tail message_info {obj ""} {oldResultCsvFile ""}} {
-    set proc_name [lindex [info level 0] 0]
-    global current_time an_flag
-    puts_debug_message start $proc_name
-    set time1 $current_time
-    if {$oldResultCsvFile != "" && [file exist $oldResultCsvFile]} {
-        set an_flag [is_analyzed $oldResultCsvFile $msgLine $message_info]
-        if {$obj ne ""} {
-            set msgLine "$msgLine,${obj}"
-        }
+mapdict.tcl
+#!/bin/tclsh8.5
 
-        if {$an_flag eq "new"} {
-            if {[string match "pass-suspect*" [lindex [split $tail ","] 0]]} {
-                set msgLine "$msgLine,$falseType,yes,6,"
-            } else {
-                set msgLine "$msgLine,$falseType,yes,,"
-            }
-        } elseif {$an_flag ne 0} {
-            set msgLine "$msgLine,$falseType,,$an_flag"
-        } else {
-            if {[string match "pass-suspect*" [lindex [split $tail ","] 0]]} {
-                set msgLine "$msgLine,$falseType,,6,"
-            } else {
-                set msgLine "$msgLine,$falseType,,,"
-            }
-        }
-    } else {
-			if {[string match "pass-suspect*" [lindex [split $tail ","] 0]]} {
-				set msgLine "$msgLine,$falseType,,6,"
-			} else {
-				set msgLine "$msgLine,$falseType,,,"
-			}
-	}
-	set msgLine "$msgLine,$tail"
-	#if {$falseType eq "Missing report"} {
-	#    set msgLine "$msgLine,$tail"
-	#} elseif {$falseType eq "False report"} {
-	#    set msgLine "$msgLine,$tail"
-	#} elseif {$falseType eq "Unmatch"} {
-	#    set msgLine "$msgLine,$tail"
-	#}
-	puts_debug_message end $proc_name
-	set time2 $current_time
-	get_proc_time $proc_name $time1 $time2
+dict set cmdMap "clock" "create_clock"
+dict set cmdMap "reset" "create_reset"
+dict set cmdMap "set_case_analysis" "set_case_analysis"
+dict set cmdMap "quasi_static" "create_static"
+dict set cmdMap "qualifier" "set_qualifier"
+dict set cmdMap "sync_cell" "set_sync_cell"
+dict set cmdMap "set_top" "current_design"
+dict set cmdMap "abstract_port" "set_abstract_port"
 
-	return $msgLine
-}
+#dict set msgIdMap "MultiFlop" {Multi-flop reset synchronizer}
+#dict set msgIdMap "PortConstrained" {"Reset constrained through abstract_port constraint"}
+#dict set msgIdMap "UDS" {User-Defined reset Synchronizer}
+#dict set msgIdMap "MissingSynchronizer" {Reset_sync02}
+#dict set msgIdMap "GeneratedReset" {Generated reset}
 
-if {$::location != "in-house"} {
-    #set msgLine "${msgId},${rule},${eFileName},${sFileName},${eFileNum},${sFileNum},\"${objList}\""
-    set msgLine "${msgId},${rule},${eFileName},${sFileName},${eFileNum},${sFileNum}"
-} else {
-    #set msgLine "${msgId},${rule},${errorFile},${eFileNum},${sFileNum},\"${objList}\""
-    if {$oldResultCsvFile != "" && [file exist $oldResultCsvFile]} {
-        set msgLine "${msgId},${rule},${errorFile},${eFileNum},${sFileNum}"
-    } else {
-        set msgLine "${msgId},${rule},${errorFile},${eFileNum},${sFileNum},\"${objList}\""
-    }
-}
-if {${eToolMsgObj} eq "" && ${sToolMsgObj} ne "" }{
-    if {$match_type == "pass"} {
-        set msgLine "${msgLine},\"${objList}\",${match_type},,,,$running_flag,,${testName},,$sSeverity,,\"$sMessage\""
-    } else {
-        #set msgLine "[setUnmatchMsgLine ${msgLine} "Missing report" "$running_flag,${unmatchReason},${testName},,$sSeverity,,\"$sMessage\"" ${oldResultCsvFile}]"
-        set msgLine "[setUnmatchMsgLine ${msgLine} "Missing report" "$running_flag,${unmatchReason},${testName},,$sSeverity,,\"$sMessage\"" "${sMessage}" ${objList}  ${oldResultCsvFile}]"
-        set match_type "Missing report"
-        if {$rule== "Clock_info03b" && [info exists an_flag] && $an_flag ne 0} {
-            set fanbiao_diff_flag 1
-        }
-    }
-} elseif {${eToolMsgObj} ne "" && ${sToolMsgObj} eq ""} {
-		if {$match_type == "pass"} {
-			set msgLine "${msgLine},\"${objList}\",${match_type},,,,$running_flag,,${testName},$eSeverity,,\"$eMessage\""
-		} else {
-				if {$msgId == "SetupDataTiedToConst"} {
-					#set msgLine "[setUnmatchMsgLine ${msgLine} "False report" "$running_flag,${unmatchReason},${testName},$eSeverity,,\"$eMessage\"" ${oldResultCsvFile}]"
-					set msgLine "[setUnmatchMsgLine ${msgLine} "False report" "$running_flag,${unmatchReason},${testName},$eSeverity,,\"$eMessage\"  ""$eMessage" ${objList} ${oldResultCsvFile}]"
-					set match_type "False report"
-					if {[info exists an_flag] && [string match "7,pass*" $an_flag]} {
-						set fanbiao_diff_flag 1
-					} elseif {[info exists an_flag] && ([string match "0" $an_flag] || [string match "new" $an_flag])} {
-						if {$::location != "in-house"} {
-							set msgLine "${msgId},${rule},${eFileName},${sFileName},${eFileNum},${sFileNum},\"${objList}\""
-						} else {
-							set msgLine "${msgId},${rule},${errorFile},${eFileNum},${sFileNum},\"${objList}\""
-						}
-						set msgLine "${msgLine},False report,,2,const,,,${testName},$eSeverity,,\"$eMessage\""
-					} elseif {![info exists an_flag]} {
-						set msgLine "${msgLine},False report,yes,2,const,,,${testName},$eSeverity,,\"$eMessage\""
-					}
-				} else {
-					#set msgLine "[setUnmatchMsgLine ${msgLine} "False report" "$running_flag,${unmatchReason},${testName},$eSeverity,,\"$eMessage\"" "${msgId},${rule},${eFileName},${sFileName},${eFileNum},,.*${eMessage}" ${oldResultCsvFile}]"
-					set msgLine "[setUnmatchMsgLine ${msgLine} "False report" "$running_flag,${unmatchReason},${testName},$eSeverity,,\"$eMessage\""  "$eMessage" ${objList} ${oldResultCsvFile}]"
-					set match_type "False report"
-				}
-		}
-} elseif {${eToolMsgObj} ne "" && ${sToolMsgObj} ne ""} {
+dict set reasonSync {^\"Conventional multi-flop .*} "MultiFlop"
+#dict set reasonSync {^\"Conventional multi-flop for metastability technique} "MultiFlop"
+#dict set reasonSync {^\"Conventional multi-flop (library-cell) for metastability technique} "MultiFlop"
+#dict set reasonSync {^\"Conventional multi-flop synchronizer is hanging} "MultiFlop"
+dict set reasonSync {^\"synchronizing cell(cell name : .*)} "UserDefinedCell"
+dict set reasonSync {^\"does not require synchronization (long-delay/quasi-static)} "LongDelaySignal"
+dict set reasonSync {^\"qualifier .* defined on destination} "UserDefinedQual"
+dict set reasonSync {^\"Synchronization at And gate.*} "ValidGate"
+dict set reasonSync {^\"Merges with valid .* qualifier} "ValidGate"
+dict set reasonSync {^\"Mux-select sync.*} "MuxSelect"
+dict set reasonSync {^\"Recirculation flop.*} "RecirculationMux"
+dict set reasonSync {^\"Enable Based [Synchronizer|User-Defined Qualifier]} "RecirculationMux"
+dict set reasonSync {^\"Clock Gate Synchronization (auto-detected clock gating)} "CGICAutoInferred"
+dict set reasonSync {^\"Clock Gate Synchronization (user-defined clock gating cell)} "CGICUserDefinedCell"
+dict set reasonSync {^\"Clock Gate Synchronization (library clock gating cell)} "CGICLibraryCell"
+dict set reasonSync {^\"Clock Based User-Defined Qualifier} "CGICUserDefinedQual"
+dict set reasonUnsync {^\"Clock domains of destination instance and synchronizer flop do not match} "CtrlClkDomainMismatch"
+dict set reasonUnsync {^\"Combinational logic used between crossing} "NonstaticComboInCrossing"
+dict set reasonUnsync {^\"Unsynchronized synchronous reset} "UnsyncSyncRst"
+dict set reasonUnsync {^\"Destination instance is driving multiple paths} "MultiFanout"
+dict set reasonUnsync {^\"Invalid synchronizer module/cell .*} "InvalidSyncCell"
+dict set reasonUnsync {^\"Sync reset used in multi-flop synchronizer} "CtrlPotentialSynRstUndefined"
+dict set reasonUnsync {^\"Gating logic not accepted: gate-type invalid} "InvalidGate"
+dict set reasonUnsync {^\"Gating logic not accepted: source drives MUX select input} "SrcMuxSelPin"
+dict set reasonUnsync {^\"Gating logic not accepted: source and \(qualifier\|user-defined qualifier\) drive MUX data inputs} "QualMuxDataPin"
+dict set reasonUnsync {^\"Gating logic not accepted: only sources drive MUX data inputs; atleast one destination domain signal should drive a MUX data input} "NoDestMuxDataPin"
+dict set reasonUnsync {^\"\(User-defined qualifier\|Qualifier\) merges with another source with non-deterministic enable condition before gating logic} "QualMergesOtherSrc"
+dict set reasonUnsync {^\"Qualifier not accepted: crossing sources is the same as source of qualifier} "SrcSameAsQualSrc"
+dict set reasonUnsync {^\"(User-defined qualifier\|Qualifier\) merges with the same source before gating logic} "QualMergesSameSrc"
+dict set reasonUnsync {^\"Qualifier not found} "MissingSynchronizer"
+dict set reasonNoSync {^\Synchronizer flop is the destination flop for another crossing} "MissingSynchronizer"
+dict set reasonNoSync {^\"Sources from different domains converge before being synchronized} "SrcConverge"
 
 
-
-if {$match_type == "Unmatch"} {
-    set msgLine "[setUnmatchMsgLine ${msgLine} ${match_type} "$running_flag,${false_reason},${testName},$eSeverity,$sSeverity,\"$eMessage\",\"$sMessage\"" "\"$eMessage\",\"$sMessage\"" ${objList} ${oldResultCsvFile}]"
-} else {
-    if {$match_type == "match" && $rule == "Clock_info03c"} {
-        global Clock_info03c_clocklist
-        dict set Clock_info03c_clocklist [get_nets [lindex $e_objlist 0] -canonical] 1
-    }
-    if {$match_type == "match" && [string match {pass-*} $running_flag]} {
-        set match_type pass
-    }
-    set msgLine "${msgLine},\"${objList}\",${match_type},,,,$running_flag,$false_reason,${testName},$eSeverity,$sSeverity,\"$eMessage\",\"$sMessage\""
-}
-}
-
-diff.tcl
-proc deal_bus {key_list} {
-    set sd_key {}
-    set kItemList {}
-    foreach kItems $key_list {
-        set tmp [split $kItems "/"]
-        set kItems [join [lreplace $tmp end end [regsub -all {\[.*?\]} [lindex $tmp end] ""] ] "/"]
-        lappend kItemList ${kItems}
-    }
-    set kItemList [lsort -u $kItemList]
-    return ${kItemList}
-}
-
-proc do_diff59-report4-multi_bits_merge {sg_src_nets sg_dest_nets enno_src_net enno_dest_net verbose} {
-    set proc_name [lindex [info level 0] 0]
-    global current_time
-    puts_debug_message start $proc_name
-    upvar $verbose l_verbose
-    set ret 0
-    set have_jiaoji 0
-    set src_have_jiaoji 1
-    set dest_have_jiaoji 1
-    #set sg_src_bus [get_nets $sg_src_nets -bus]
-    #set sg_dest_bus [get_nets $sg_dest_nets -bus]
-    #set enno_src_bus [get_nets $enno_src_net -bus]
-    #set enno_dest_bus [get_nets $enno_dest_net -bus]
-    set sg_src_bus [deal_bus [fold_bus_bits [get_nets $sg_src_nets]]]
-    set sg_dest_bus [deal_bus [fold_bus_bits [get_nets $sg_dest_nets]]]
-    set enno_src_bus [deal_bus [fold_bus_bits [get_nets $enno_src_net]]]
-    set enno_dest_bus [deal_bus [fold_bus_bits [get_nets $enno_dest_net]]]
-
-    if {$sg_src_bus == $enno_src_bus && $sg_dest_bus == $enno_dest_bus} {
-        if {$sg_src_nets ne $enno_src_net} {
-            array set sg_src_dict [concat {*}[lmap elem $sg_src_nets {list $elem 1}]]
-            foreach enno_src $enno_src_net {
-                if {[info exists sg_src_dict($enno_src)]} {
-                    unset sg_src_dict($enno_src)
-                    set src_have_jiaoji 1
-                } else {
-                    set src_have_jiaoji 0
-                    unset sg_src_dict
-                    break
-                }
-            }
-            set src_result [array names sg_src_dict]
-        }
-        if {$sg_dest_nets ne $enno_dest_net} {
-			array set sg_dest_dict [concat {*}[lmap elem $sg_dest_nets {list $elem 1}]]
-			foreach enno_dest $enno_dest_net {
-				if {[info exists sg_dest_dict($enno_dest)]} {
-					unset sg_dest_dict($enno_dest)
-					set dest_have_jiaoji 1
-				} else {
-					set dest_have_jiaoji 0
-					unset sg_dest_dict
-					break
-				}
-			}
-			set dest_result [array names sg_dest_dict]
-		}
-		if {$src_have_jiaoji && $dest_have_jiaoji} {
-			if {[info exists src_result]} {
-				set result $src_result
-			}
-			if {[info exists dest_result]} {
-				lappend result $dest_result
-			}
-			set ret 1
-			set l_verbose [list "[fold_bus_bits $result] Diff59" "[fold_bus_bits $result] Diff59"]
-		}
-
-	}
-	puts_debug_message end $proc_name
-	return $ret
-}
-
-proc suspect-bus_diff {eToolMessageObj sToolMessageObj verbose} {
-    upvar $verbose l_verbose
-    set l_verbose [list "" ""]
-    set ret 0
-
-    set sg_src_nets [self_get_nets [reformat_s_names [list [dict get $sToolMessageObj "SourceName"]]]]
-    if {$sg_src_nets == ""} {
-        set sg_src_nets [self_get_nets [expand_bits [reformat_s_names [list [dict get $sToolMessageObj "SourceName"]]]]]
-    }
-    set sg_dest_nets [self_get_nets [reformat_s_names [list [dict get $sToolMessageObj "DestName"]]]]
-    if {$sg_dest_nets == ""} {
-        set sg_dest_nets [expand_bits [reformat_s_names [list [dict get $sToolMessageObj "DestName"]]]]
-    }
-    set enno_src_nets [self_get_nets [dict get $eToolMessageObj "SourceName"]]
-    if {$enno_src_nets == ""} {
-		set enno_src_nets [expand_bits [dict get $eToolMessageObj "SourceName"]]
-	}
-	set enno_dest_nets [self_get_nets [dict get $eToolMessageObj "DestName"]]
-	if {$enno_dest_nets == ""} {
-		set enno_dest_nets [expand_bits [dict get $eToolMessageObj "DestName"]]
-	}
-	set sg_src_bus [deal_bus [fold_bus_bits [get_nets $sg_src_nets]]]
-	set sg_dest_bus [deal_bus [fold_bus_bits [get_nets $sg_dest_nets]]]
-	set enno_src_bus [deal_bus [fold_bus_bits [get_nets $enno_src_nets]]]
-	set enno_dest_bus [deal_bus [fold_bus_bits [get_nets $enno_dest_nets]]]
-
-	if {$sg_src_bus == $enno_src_bus && $sg_dest_bus == $enno_dest_bus} {
-		set ret 1
-		set only_in_enno ""
-		set only_in_sg ""
-		if {$sg_src_nets ne $enno_src_nets} {
-			array set sg_src_dict [concat {*}[lmap elem $sg_src_nets {list $elem 1}]]
-			foreach enno_src $enno_src_nets {
-				if {[info exists sg_src_dict($enno_src)]} {
-					unset sg_src_dict($enno_src)
-				} else {
-					lappend only_in_enno $enno_src
-				}
-			}
-			set only_in_sg [array names sg_src_dict]
-		}
-		if {$sg_dest_nets ne $enno_dest_nets} {
-			array set sg_dest_dict [concat {*}[lmap elem $sg_dest_nets {list $elem 1}]]
-			foreach enno_dest $enno_dest_nets {
-				if {[info exists sg_dest_dict($enno_dest)]} {
-					unset sg_dest_dict($enno_dest)
-				} else {
-					lappend only_in_enno $enno_dest
-				}
-			}
-			lappend only_in_sg [array names sg_dest_dict]
-		}
-		if {[get_nets $only_in_sg] ne ""} {
-			set only_in_sg [fold_bus_bits [get_nets $only_in_sg]]
-		}
-		if {[get_nets $only_in_enno] ne ""} {
-			set only_in_enno [fold_bus_bits [get_nets $only_in_enno]]
-		}
-		#set l_verbose "bits_only_in_sg $only_in_sg;bits_only_in_enno $only_in_enno"
-		set l_verbose [list bits_only_in_sg:$only_in_sg bits_only_in_enno:$only_in_enno]
-	}
-	return $ret
-}
+dict set setupMsgIdMap "Clock_info01" {"SetupClkInferred"}
+dict set setupMsgIdMap "Clock_info03a" {"SetupClkNetUndefined"}
+dict set setupMsgIdMap "Clock_info03b" {"SetupDataTiedToConst"}
+dict set setupMsgIdMap "Clock_info03c" {"SetupClkTiedToConst"}
+dict set setupMsgIdMap "Clock_info05b" {"SetupAsyncClkConvOnComb"}
+dict set setupMsgIdMap "Clock_info05" {"SetupAsyncClkConvOnMux"}
+dict set setupMsgIdMap "Clock_info05c" {"SetupClkMuxNotRcvClk"}
+dict set setupMsgIdMap "Setup_clockreset01" {"SetupClkUndefined" "SetupRstUndefined"}
+dict set setupMsgIdMap "Setup_check01" {"SetupConstraintConflict"}
+dict set setupMsgIdMap "Setup_port01" {"SetupFullyConstrained" "SetupPortPartiallyConstrained" "SetupPortNoConstraint" "SetupPortIgnoredSeqClkUnconstrained" "SetupPortIgnoredUnconnected" "SetupPortIgnoredNotToSeq"}
+dict set setupMsgIdMap "Setup_blackbox01" {"SetupBBoxPinNoConstraint" "SetupBBoxPinFullyConstrained" "SetupBBoxPinPartiallyConstrained" "SetupBBoxPinIgnored"}
+dict set setupMsgIdMap "Clock_glitch05" {"SetupClockGlitch"}
+dict set setupMsgIdMap "Clock_converge01" {"IntegrityClockConverge"}
+dict set setupMsgIdMap "Ar_converge01" {"IntegrityRstConvOnComb"}
+dict set setupMsgIdMap "Ac_coherency06" {"ChyAcSyncMultiTimes"}
+dict set setupMsgIdMap "Ac_conv03" {"ChyDiffSrcConv"}
+dict set setupMsgIdMap "Ac_conv04" {"ChyCtrlBusNoConv" "ChyDataBusDiffSyncScheme" "ChyDataBusDiffEnable"}
+dict set setupMsgIdMap "Ac_conv01" {"ChySameSrcConvIncSeq"}
+dict set setupMsgIdMap "Ac_conv02" {"ChySameSrcConvExcSeq"}
+dict set setupMsgIdMap "Clock_sync05a" {"SetupInputMultiClkSampled"}
+dict set setupMsgIdMap "Clock_sync05" {"SetupInputMultiClkSampled"}
+dict set setupMsgIdMap "Clock_sync06" {"SetupOutputMultiClkDriven"}
+dict set setupMsgIdMap "Ac_resetvalue01" {"SetupRstSenseMissing"}
+dict set setupMsgIdMap "Reset_info01" {"SetupRstInferred"}
+dict set setupMsgIdMap "Reset_info09a" {"SetupRstNetUndefined"}
+##builtins verify
+dict set builtinMsgIdMap "SGDCSTX_002" {"CmdInvalid"}
+dict set builtinMsgIdMap "SGDCSTX_003" {"CMD-1002" "ObjectIsNotFound" "CMD-1000" "CMD-1001" "CMD-1006" "CMD-1016"}
+dict set builtinMsgIdMap "SGDCSTX_004" {"CMD-1005" "CMD-1006" "CMD-1000" "ClockNameOrSourceMustSpecified" "CmdFailedInvalidObjArg"}
+dict set builtinMsgIdMap "SGDCSTX_008" {"CMD-1006" "CMD-1016" "CMD-1007" "OptionDependencyError" "RstSenseInvalid" "ClkSrcObjIllegal" "CmdOptionValueInvalid" "ObjectIsNotFound" "ConstraintValueFailed" "CmdArgValueInvalid" "CdcFalsePathOptionMissing" "CMD-1000" "CMD-1002" "CmdFailedInvalidObjArg" "CmdFailedInvalidObjOption"}
+dict set builtinMsgIdMap "SGDCSTX_009" {"CmdEndingDoubleQuoteMissing" "CMD-1006"}
+dict set builtinMsgIdMap "SGDCSTX_011" {"CMD-1000" "objectIsNotFound" "CMD-1005" "CMD-1016"}
+dict set builtinMsgIdMap "SGDCSTX_012" {"CMD-1000" "MultiArgsInvalid"}
+dict set builtinMsgIdMap "SGDCSTX_013" {"ObjectsNotFound" "CdcFalsePathOptionMissing" "ClkSrcObjIllegal" "CMD-1007" "ConstraintValueFailed" "RstSenseInvalid" "CmdArgValueInvalid"}
+dict set builtinMsgIdMap "SGDCSTX_019" {"ObjectsNotFound" "CmdFailedPathOptionMissing" "ClkSrcObjIllegal" "CMD-1007" "ConstraintValueFailed" "RstSenseInvalid" "CmdArgValueInvalid"}
+dict set builtinMsgIdMap "SGDCWNN_121" {"ClockNameExisted"}
+dict set builtinMsgIdMap "SGDCSTX_007" {"CMD-2085" "CmdArgValueNotSingle" "OptionDependencyError" "CMD-1002" "CMD-1006" "ClockNameExisted"}
+dict set builtinMsgIdMap "checkSGDC_nottogether01" {"CMD-1007"}
+dict set builtinMsgIdMap "checkSGDC_together02" {"OptionDependencyError" "CMD-1000" "CMD-1002" "CmdOptionValueInvalid"}
+dict set builtinMsgIdMap "Propagate_Clocks" {"SetupClkNotPropagated" "SetupClkPropagated"}
+dict set builtinMsgIdMap "Propagate_Resets" {"SetupRstNotPropagated" "SetupRstPropagated"}
+dict set builtinMsgIdMap "SGDC_clock01" {"CLKSrcObjIllegal" "ObjectUnusedInDesign" "CMD-1005"}
+dict set builtinMsgIdMap "SGDC_reset01" {"RstSrcObjIllegal" "CmdFailedInvalidObjArg"}
+dict set builtinMsgIdMap "SGDC_reset02" {"RstNameExisted" "CmdFailedInvalidObjArg"}
+dict set builtinMsgIdMap "SGDC_reset03" {"RstNameExisted"}
+dict set builtinMsgIdMap "SGDC_reset04" {"AstSenseInvalid" "CMD-1002"}
+dict set builtinMsgIdMap "SGDC_reset_synchronizer01" {"ObjectsNotFound" "ObjectUnusedInDesign"}
+dict set builtinMsgIdMap "SGDC_reset_synchronizer02" {"RstSynchronizerNotInFanoutPath"}
+dict set builtinMsgIdMap "SGDC_reset_synchronizer03" {"ObjectsNotFound" "ObjectUnusedInDesign" "CmdOptionValueInvalid" "CmdOverride" "CmdOptionValueNotSingle"}
+dict set builtinMsgIdMap "SGDC_reset_synchronizer04" {"CmdOptionValueInvalid"}
+dict set builtinMsgIdMap "SGDC_reset_synchronizer05" {"ObjectsNotFound" "ObjectUnusedInDesign"}
+dict set builtinMsgIdMap "SGDC_reset_synchronizer06" {"CmdOptionValueInvalid" "ObjectUnusedInDesign"}
+dict set builtinMsgIdMap "SGDC_reset_synchronizer07" {"CmdOptionValueInvalid" "ObjectsIsNotFound" "ObjectUnusedInDesign" "CmdOverride"}
+dict set builtinMsgIdMap "SGDC_reset_synchronizer08" {"RstSynchronizerUnused"}
+dict set builtinMsgIdMap "SGDC_reset_synchronizer10" {"CmdOverride"}
+dict set builtinMsgIdMap "FalsePathSetup" {"CdcFalsePathNoCrossing" "CmdOptionValueInvalid" "CdcFalsePathUnmatched" "CMD-1000" "MultipleFalsePath"}
+dict set builtinMsgIdMap "SGDC_cdc_false_path01" {"ObjectsIsNotFound" "CdcFalsePathOptionMissing" "CmdOptionValueInvalid" "CdcFalsePathNoCrossing"}
+dict set builtinMsgIdMap "SGDC_cdc_false_path02" {"ObjectsIsNotFound" "CdcFalsePathOptionMissing" "CMD-1000" "CmdOptionValueInvalid"}
+dict set builtinMsgIdMap "SGDC_cdc_false_path05" {"CmdNoOptionInput"}
+dict set builtinMsgIdMap "SGDC_cdc_false_path06" {"CdcFalsePathUnmatched" "CmdOptionValueInvalid" "CdcFalsePathNoCrossing" "CdcFalsePathOptionMissing" "CMD-1000"}
+dict set builtinMsgIdMap "SGDC_cdc_false_path07" {"CdcFalsePathOptionMissing" "CmdOptionValueInvalid" "CdcFalsePathNoCrossing" "CdcFalsePathUnmatched" "CMD-1000" "CMD-2085"}
+dict set builtinMsgIdMap "SGDC_qualifier01" {"ObjectsIsNotFound" "ObjectUnusedInDesign" "QualNameInvalid" "CMD-1002" "CMD-1006"}
+dict set builtinMsgIdMap "SGDC_qualifier02a" {"CmdOptionValueInvalid" "ObjectsIsNotFound"}
+dict set builtinMsgIdMap "SGDC_qualifier02b" {"ObjectsIsNotFound" "CmdOptionValueInvalid"}
+dict set builtinMsgIdMap "SGDC_qualifier02c" {"CmdOptionValueInvalid"}
+dict set builtinMsgIdMap "SGDC_qualifier03a" {"CmdOptionValueInvalid" "ObjectsIsNotFound"}
+dict set builtinMsgIdMap "SGDC_qualifier03b" {"ObjectsIsNotFound" "CmdOptionValueInvalid"}
+dict set builtinMsgIdMap "SGDC_qualifier03c" {"CmdOptionValueInvalid"}
+dict set builtinMsgIdMap "SGDC_qualifier09" {"CMD-1005" "CmdOptionNotSpecified" "QualNameInvalid"}
+dict set builtinMsgIdMap "SGDC_qualifier10" {"QualFromToDomainSame" "CmdOptionValueInvalid"}
+dict set builtinMsgIdMap "SGDC_qualifier15" {"CMD-1005" "CMD-1006" "CMD-1002"}
+dict set builtinMsgIdMap "SGDC_quasi_static01" {"ObjectsIsNotFound" "ObjectUnusedInDesign" "CmdFailedInvalidObjArg" "CMD-1006"}
+dict set builtinMsgIdMap "SGDC_abstract_port01" {"AbstractPortModuleUninstantiated" "ConstraintValueFailed" "CMD-2085"}
+dict set builtinMsgIdMap "SGDC_IP_block01" {"IPBlockModuleUninstantiated" "ObjectsIsNotFound"}
+dict set builtinMsgIdMap "SGDC_sync_cell04" {"SyncCellFromToDomainSame"}
+#dict set builtinMsgIdMap "QualifierSetup" {"CmdOptionValueInvalid"}
+#dict set builtinMsgIdMap "SYNTH_5255" {"OutOfRangeInBitSelect"}
 
 
-diff_setup
-set id [dict get $eToolMessageObj msgId]
-    set if_infer_abstract_port [get_param cdc.infer_abstract_port]
-    # 如果infer_abstract_port为true,sg的所有Setup_port01都当作 "fully constrained" 来和enno对比;因此只比较port是否一致
-    if {${rule} == "Setup_port01" && ${id} == "SetupPortFullyConstrained" && ${if_infer_abstract_port}} {
-        set s_direction [dict get $sToolMessageObj direction]
-        set e_direction [dict get $eToolMessageObj String4]
-        if {[Diff214-bug56-setup_port01 ${eToolMessageObj} ${sToolMessageObj}]&& $s_direction == $e_direction} {
-            dict set eToolMessageObj runningFlag "pass-Diff214-bug56-setup_port01"
-            writeSetupMsgLine ${resultCsvFileName} ${eToolMessageObj} ${sToolMessageObj} ${testName} "pass" ${oldResultCsvFile}
-            lappend l_s_match_list $s
-            lappend l_e_match_list $e
-            break
-        }
-    }
-    if {[dict exists ${sToolMessageObj} origin_direction] && [dict get ${sToolMessageObj} origin_direction] == "inout" && [string match "SetupPort*" $id]} {
-        set s_direction [dict get $sToolMessageObj direction]
-        if {![regexp {.*as '(.*)'} [dict get $eToolMessageObj Message] reslut e_direction]} {
-            set e_direction "NOT-GET-direction"
-        }
-        if {$s_direction == $e_direction && [Diff214 ${eToolMessageObj} ${sToolMessageObj}]} {
-            dict set eToolMessageObj runningFlag pass-Diff214-bug56-setup_port01
-            writeSetupMsgLine ${resultCsvFileName} ${eToolMessageObj} ${sToolMessageObj} ${testName} "pass" ${oldResultCsvFile}
-            lappend l_s_match_list $s
-            lappend l_e_match_list $e
-            break
-        }
-    }
+####Ac and Setup anony
+dict set ennoRuleMap "MultiFlop" "E001"
+dict set ennoRuleMap "RecirculationMux" "E002"
+dict set ennoRuleMap "MuxSelect" "E003"
+dict set ennoRuleMap "ValidateGate" "E004"
+dict set ennoRuleMap "LongDelaySignal" "E005"
+dict set ennoRuleMap "UserDefinedCell" "E006"
+dict set ennoRuleMap "CGICLibraryCell" "E007"
+dict set ennoRuleMap "CGICUserDefinedQual" "E008"
+dict set ennoRuleMap "CGICAutoInferred" "Enno001"
+dict set ennoRuleMap "CGICUserDefinedCell" "Enno002"
+dict set ennoRuleMap "StaticCombInCrossing" "Enno003"
+dict set ennoRuleMap "UserDefinedQual" "Enno004"
+#dict set ennoRuleMap "QualifierNotFound" "AcUnsync001"
+dict set ennoRuleMap "NonstaticComboInCrossing" "AcUnsync002"
+dict set ennoRuleMap "SrcConverge" "AcUnsync003"
+dict set ennoRuleMap "CtrlClkDomainMismatch" "AcUnsync004"
+dict set ennoRuleMap "MultiFanout" "AcUnsync005"
+dict set ennoRuleMap "CtrlPotentialSynRstUndefined" "AcUnsync006"
+dict set ennoRuleMap "QualMergesOtherSrc" "AcUnsync007"
+dict set ennoRuleMap "QualMergesSameSrc" "AcUnsync008"
+dict set ennoRuleMap "SrcSameAsQualSrc" "AcUnsync009"
+dict set ennoRuleMap "InvalidGate" "AcUnsync010"
+dict set ennoRuleMap "SrcMuxSelPin" "AcUnsync011"
+dict set ennoRuleMap "QualMuxDataPin" "AcUnsync012"
+dict set ennoRuleMap "NoDestMuxDataPin" "AcUnsync013"
+dict set ennoRuleMap "UnsyncSyncRst" "Enno006"
+dict set ennoRuleMap "InvalidSyncCell" "Enno007"
+#dict set ennoRuleMap "ArSyncCtrlPath" "Enno008"
+#dict set ennoRuleMap "ArUnsyncCtrlPath" "Enno009"
+dict set ennoRuleMap "EnableBasedSync" "E009"
+#dict set ennoRuleMap "UDS" "ArSync002"
+#dict set ennoRuleMap "PortConstraint" "ArSync003"
+#dict set ennoRuleMap "GeneratedReset" "ArSync004"
+dict set ennoRuleMap "MissingSynchronizer" "Unsync001"
+dict set ennoRuleMap "SetupClkInferred" "Enno009"
+dict set ennoRuleMap "SetupClkUndefined" "Setup001"
+dict set ennoRuleMap "SetupRstUndefined" "Setup002"
+dict set ennoRuleMap "SetupClkNetUndefined" "Setup003"
+#dict set ennoRuleMap "SetupClkNetFromBB" "Setup004"
+#dict set ennoRuleMap "SetupClkNetUnconnected" "Setup005"
+dict set ennoRuleMap "SetupClkTiedToConst" "Setup007"
+dict set ennoRuleMap "SetupAsyncClkConvOnMux" "Setup008"
+dict set ennoRuleMap "SetupAsyncClkConvOnComb" "Setup009"
+#dict set ennoRuleMap "SetupSyncClkConvOnMux" "Setup012"
+#dict set ennoRuleMap "SetupSyncClkConvOnComb" "Setup013"
+dict set ennoRuleMap "SetupRstBlocked" "Setup020"
+dict set ennoRuleMap "SetupPortFullyConstrained" "Setup021"
+dict set ennoRuleMap "SetupPortIgnoredSeqClkUnconstrained" "Setup022"
+dict set ennoRuleMap "SetupPortIgnoredUnconnected" "Setup023"
+dict set ennoRuleMap "SetupPortIgnoredNotToSeq" "Setup024"
+dict set ennoRuleMap "SetupPortPartiallyConstrained" "Setup025"
+dict set ennoRuleMap "SetupPortNoConstraint" "Setup026"
+dict set ennoRuleMap "SetupConstraintConflict" "Setup027"
+dict set ennoRuleMap "SetupBBoxPinNoConstraint" "Setup028"
+dict set ennoRuleMap "SetupBBoxPinFullyConstrained" "Setup029"
+dict set ennoRuleMap "SetupInputMultiClkSampled" "Setup030"
+dict set ennoRuleMap "SetupOutputMultiClkDriven" "Setup031"
+dict set ennoRuleMap "SetupDataTiedToConst" "Setup032"
+dict set ennoRuleMap "SetupClkMuxNotRcvClk" "Setup033"
+dict set ennoRuleMap "SetupClockGlitch" "Setup034"
+dict set ennoRuleMap "SetupBBoxPinPartiallyConstrained" "Setup035"
+dict set ennoRuleMap "SetupBBoxPinIgnored" "Setup036"
+dict set ennoRuleMap "SetupRstSenseMissing" "Setup037"
+dict set ennoRuleMap "SetupRstInferred" "Setup038"
+dict set ennoRuleMap "SetupRstNetUndefined" "Setup039"
+dict set ennoRuleMap "IntegrityRstConvOnComb" "Integrity001"
+dict set ennoRuleMap "IntegrityClockConverge" "Integrity002"
+dict set ennoRuleMap "ArFromUnconstrainedClk" "Enno010"
+#dict set ennoRuleMap "ArFromAsyncClk" ""
+dict set ennoRuleMap "ChyAcSyncMultiTimes" "Chy002"
+dict set ennoRuleMap "ChyCtrlBusNoConv" "Chy003"
+dict set ennoRuleMap "ChyDataBusDiffEnable" "Chy004"
+dict set ennoRuleMap "ChyDataBusDiffSyncScheme" "Chy005"
+dict set ennoRuleMap "ChySameSrcConvIncSeq" "AcConv01"
+dict set ennoRuleMap "ChySameSrcConvExcSeq" "AcConv02"
+dict set ennoRuleMap "ChyDiffSrcConv" "AcConv03"
+#dict set ennoRuleMap "" ""
+#####builtIn verify
+dict set ennoRuleMap "CmdInvalid" "cmd01"
+dict set ennoRuleMap "CmdEndingDoubleQuoteMissing" "cmd02"
+dict set ennoRuleMap "CmdOverride" "cmd03"
+dict set ennoRuleMap "CmdOptionValueInvalid" "Cmd04"
+dict set ennoRuleMap "CmdNoOptionInput" "cmd05"
+dict set ennoRuleMap "CmdFailedInvalidObjArg" "cmd06"
+dict set ennoRuleMap "CmdArgValueInvalid" "cmd07"
+dict set ennoRuleMap "CmdArgValueNotSingle" "cmd08"
+#dict set ennoRuleMap "ClockNameOrSourceMustSpecified" "cmd09"
+dict set ennoRuleMap "CmdOptionValueNotSingle" "cmd10"
+dict set ennoRuleMap "CmdOptionNotSpecified" "cmd11"
+dict set ennoRuleMap "CmdFailedInvalidObjOption" "cmd12"
+dict set ennoRuleMap "ConstraintValueFailed" "con01"
+dict set ennoRuleMap "ConstraintValueInvalid" "con02"
+dict set ennoRuleMap "CMD-1000" "1000"
+dict set ennoRuleMap "CMD-1001" "1001"
+dict set ennoRuleMap "CMD-1002" "1002"
+dict set ennoRuleMap "CMD-1005" "1005"
+dict set ennoRuleMap "CMD-1006" "1006"
+dict set ennoRuleMap "CMD-1007" "1007"
+dict set ennoRuleMap "CMD-1016" "1016"
+dict set ennoRuleMap "CMD-2084" "2084"
+dict set ennoRuleMap "CMD-2085" "2085"
+dict set ennoRuleMap "ReadFailed" "failed01"
+dict set ennoRuleMap "ClockNameExisted" "clk01"
+dict set ennoRuleMap "SetupClkNotPropagated" "Clk02"
+dict set ennoRuleMap "SetupClkPropagated" "Clk03"
+dict set ennoRuleMap "ClkSrcObjIllegal" "Clk04"
+dict set ennoRuleMap "ClockNameOrSourceMustSpecified" "clk05"
+dict set ennoRuleMap "SetupRstNotPropagated" "Rst01"
+dict set ennoRuleMap "SetupRstPropagated" "Rst02"
+dict set ennoRuleMap "RstSrcObjIllegal" "Rst03"
+dict set ennoRuleMap "RstNameExisted" "Rst04"
+dict set ennoRuleMap "RstSenseInvalid" "Rst05"
+dict set ennoRuleMap "RstSynchronizerNotInFanoutPath" "Rst06"
+dict set ennoRuleMap "RstSynchronizerUnused" "Rst07"
+dict set ennoRuleMap "CdcFalsePathNoCrossing" "false01"
+dict set ennoRuleMap "CdcFalsePathUnmatched" "false02"
+dict set ennoRuleMap "CdcFalsePathOptionMissing" "false03"
+dict set ennoRuleMap "MultipleFalsePath" "false04"
+dict set ennoRuleMap "ObjectIsNotFound" "obj01"
+dict set ennoRuleMap "ObjectUnusedInDesign" "obj02"
+dict set ennoRuleMap "MultiArgsInvalid" "multi01"
+dict set ennoRuleMap "OptionDependencyError" "Depe01"
+dict set ennoRuleMap "QualFromToDomainSame" "Qual01"
+dict set ennoRuleMap "QualNameInvalid" "Qual02"
+dict set ennoRuleMap "AbstractPortModuleUninstantiated" "port01"
+dict set ennoRuleMap "IpBlockModuleUninstantiated" "ip01"
+dict set ennoRuleMap "SyncCellFromToDomainSame" "cell01"
+dict set ennoRuleMap "SyncCellFailed" "cell02"
+dict set ennoRuleMap "OutOfRangeInBitSelect" "out01"
+#Ar
+dict set ennoRuleMap "ArSyncCtrlPath" ArSync001
+dict set ennoRuleMap "ArUnsyncCtrlPath" ArSync002
+dict set ennoRuleMap "ChyArSyncMultiTimes" ArSync003
+####Ac and Setup anony
+dict set sgRuleMap {^\Conventional multi-flop .*} "A004"
+dict set sgRuleMap {^\synchronizing cell(cell name : .*)} "A009"
+dict set sgRuleMap {^\does not require synchronization (long-delay/quasi-static)}} "A003"
+dict set sgRuleMap {^\qualifier .* defined on destination} "A010"
+dict set sgRuleMap {^\Synchronization at And gate.*} "A011"
+dict set sgRuleMap {^\ Merges with valid .* qualifier} "A012"
+dict set sgRuleMap {^\ Mux-select sync.*} "A005"
+dict set sgRuleMap {^\ Recirculation flop.*} "A006"
+dict set sgRuleMap {^\ Clock Gate Synchronization (auto-detected clock gating)} "A001"
+dict set sgRuleMap {^\ Clock Gate Synchronization (user-defined clock gating cell)} "A002"
+dict set sgRuleMap {^\ Clock Gate Synchronization (library clock gating cell)} "A035"
+dict set sgRuleMap {^\ Enable Based [Synchronizer|User-Defined Qualifier]} "A007"
+dict set sgRuleMap {^\ Clock domains of destination instance and synchronizer flop do not match} "A013"
+dict set sgRuleMap {^\ Combinational logic used between crossing} "A019"
+dict set sgRuleMap {^\ Unsynchronized synchronous reset} "A033"
+dict set sgRuleMap {^\ Destination instance is driving multiple paths} "A017"
+dict set sgRuleMap {^\ Invalid synchronizer module/cell .*} "A016"
+dict set sgRuleMap {^\ Sync reset used in multi-flop synchronizer} "A014"
+dict set sgRuleMap {^\ Gating logic not accepted: gate-type invalid} "A015"
+dict set sgRuleMap {^\ Gating logic not accepted: source drives MUX select input} "A031"
+dict set sgRuleMap {^\ Gating logic not accepted: source and \qualifier|user-defined qualifier) drive MUX data inputs} "A028"
+dict set sgRuleMap {^\ Gating logic not accepted: only sources drive MUX data inputs; atleast one destination domain signal should drive a MUX data input} "A018"
+dict set sgRuleMap {^\ (\User-defined qualifier|Qualifier\) merges with another source with non-deterministic enable condition before gating logic} "A024"
+dict set sgRuleMap {^\ (\User-defined qualifier|Qualifier\) merges with the same source as source of qualifier} "A032"
+dict set sgRuleMap {^\ (\User-defined qualifier|Qualifier\) merges with the same source before gating logic} "A026"
+dict set sgRuleMap {^\ Qualifier not found} "A020"
+dict set sgRuleMap {^\ Sources from different domains converge before being synchronized} "A030"
+dict set sgRuleMap {^\ Synchronizer flop is the destination flop for another crossing} "A021"
+dict set sgRuleMap {^\ User-defined qualifier merges with another source before gating logic} "A022"
+dict set sgRuleMap {^\ Qualifier merges with another source before gating logic} "A023"
+dict set sgRuleMap {^\ Clock Based User-Defined Qualifier} "A034"
+#dict set sgRuleMap "Generated reset" "B001"
+#dict set sgRuleMap "GeneratedReset" "B001"
+dict set sgRuleMap "Multi-flop reset synchronizer" "B002"
+dict set sgRuleMap "MultiFlop" "B002"
+dict set sgRuleMap "Reset constrained through abstract_port constraint" "B003"
+dict set sgRuleMap "User-Defined reset Synchronizer" "B004"
+dict set sgRuleMap "UDS" "B004"
+dict set sgRuleMap "MissingSynchronizer" "B005"
+#dict set sgRuleMap "" ""
+#dict set sgRuleMap "" ""
+dict set sgRuleMap "Ac_coherency06" "C001"
+dict set sgRuleMap "Ac_conv01" "C002"
+dict set sgRuleMap "Ac_conv02" "C003"
+dict set sgRuleMap "Ac_conv03" "C004"
+dict set sgRuleMap "Ac_conv04" "C005"
+dict set sgRuleMap "Ar_converge01" "C006"
+dict set sgRuleMap "Clock_converge01" "C007"
+dict set sgRuleMap "Clock_glitch05" "C008"
+dict set sgRuleMap "Clock_info01" "C009"
+dict set sgRuleMap "Clock_info03a" "C010"
+dict set sgRuleMap "Clock_info03c" "C011"
+dict set sgRuleMap "Clock_info05" "C012"
+dict set sgRuleMap "Clock_info05b" "C013"
+dict set sgRuleMap "Clock_info05c" "C014"
+dict set sgRuleMap "Setup_blackbox01" "C016"
+dict set sgRuleMap "Setup_check01" "C017"
+dict set sgRuleMap "Setup_clockreset01" "C018"
+dict set sgRuleMap "Setup_port01" "C019"
+dict set sgRuleMap "Clock_info03b" "C020"
+dict set sgRuleMap "Clock_sync05a" "C021"
+dict set sgRuleMap "Clock_sync05" "C026"
+dict set sgRuleMap "Clock_sync06" "C022"
+dict set sgRuleMap "Ac_resetvalue01" "C023"
+dict set sgRuleMap "Reset_info01" "C024"
+dict set sgRuleMap "Reset_info09a" "C025"
+#dict set splitMap "gating_logic" {"AcUnsyncInvalidGate" "AcUnsyncSrcMuxSelPin" "AcUnsyncNoDestMuxDataPin" "AcUnsyncQualMuxDataPin"}
+#dict set splitMap "clock_gating" {"AcSyncCGICLibrary" "AcSyncCGICAutoInferred" "AcSyncCGICUserDefinedCell" "AcSyncCGICUserDefinedQual"}
+####builtIn anon
+dict set sgRuleMap "FalsePathSetup" "D001"
+dict set sgRuleMap "Propagate_Clocks" "D002"
+dict set sgRuleMap "Propagate_Resets" "D003"
+dict set sgRuleMap "SGDCSTX_002" "D004"
+dict set sgRuleMap "SGDCSTX_003" "D006"
+dict set sgRuleMap "SGDCSTX_004" "D007"
+dict set sgRuleMap "SGDCSTX_007" "D008"
+dict set sgRuleMap "SGDCSTX_008" "D009"
+dict set sgRuleMap "SGDCSTX_009" "D010"
+dict set sgRuleMap "SGDCSTX_011" "D011"
+dict set sgRuleMap "SGDCSTX_012" "D012"
+dict set sgRuleMap "SGDCSTX_013" "D013"
+dict set sgRuleMap "SGDCSTX_019" "D014"
+dict set sgRuleMap "SGDCSTX_020" "D015"
+dict set sgRuleMap "SGDCWRN_121" "D016"
+dict set sgRuleMap "SGDCWRN_123" "D017"
+dict set sgRuleMap "SGDC_cdc_false_path01" "D018"
+dict set sgRuleMap "SGDC_cdc_false_path02" "D019"
+dict set sgRuleMap "SGDC_cdc_false_path05" "D020"
+dict set sgRuleMap "SGDC_cdc_false_path06" "D021"
+dict set sgRuleMap "SGDC_cdc_false_path07" "D022"
+dict set sgRuleMap "SGDC_clock01" "D023"
+dict set sgRuleMap "SGDC_qualifier01" "D024"
+dict set sgRuleMap "SGDC_qualifier02a" "D025"
+dict set sgRuleMap "SGDC_qualifier02b" "D026"
+dict set sgRuleMap "SGDC_qualifier02c" "D027"
+dict set sgRuleMap "SGDC_qualifier03a" "D028"
+dict set sgRuleMap "SGDC_qualifier03b" "D029"
+dict set sgRuleMap "SGDC_qualifier03c" "D030"
+dict set sgRuleMap "SGDC_qualifier08" "D031"
+dict set sgRuleMap "SGDC_qualifier09" "D032"
+dict set sgRuleMap "SGDC_qualifier10" "D033"
+dict set sgRuleMap "SGDC_qualifier15" "D034"
+dict set sgRuleMap "SGDC_quasi_static01" "D035"
+dict set sgRuleMap "SGDC_reset01" "D036"
+dict set sgRuleMap "SGDC_reset02" "D037"
+dict set sgRuleMap "SGDC_reset03" "D038"
+dict set sgRuleMap "SGDC_reset04" "D039"
+dict set sgRuleMap "SGDC_reset_synchronizer01" "D040"
+dict set sgRuleMap "SGDC_reset_synchronizer02" "D041"
+dict set sgRuleMap "SGDC_reset_synchronizer03" "D042"
+dict set sgRuleMap "SGDC_reset_synchronizer04" "D043"
+dict set sgRuleMap "SGDC_reset_synchronizer05" "D044"
+dict set sgRuleMap "SGDC_reset_synchronizer06" "D045"
+dict set sgRuleMap "SGDC_reset_synchronizer07" "D046"
+dict set sgRuleMap "SGDC_reset_synchronizer08" "D047"
+dict set sgRuleMap "SGDC_reset_synchronizer10" "D048"
+dict set sgRuleMap "checkSGDC_Together02" "D049"
+dict set sgRuleMap "checkSGDC_nottogether01" "D050"
+dict set sgRuleMap "SGDC_IP_block01" "D051"
+dict set sgRuleMap "SGDC_sync_cell04" "D053"
+dict set sgRuleMap "SGDC_abstract_port01" "D52"
+dict set sgRuleMap "SyncCellSetup" "D54"
+dict set sgRuleMap "SYNTH_5255" "D55"
 
-proc loop_mux_cnt {mux_1_inst ff_q_pin sg_input_value mux_2_inst} {
-		upvar $sg_input_value l_sg_input_value
-		upvar $mux_2_inst l_mux_2_inst
-		set mux_1_a0_pin [get_pins $mux_1_inst -filter {@name == "a0"}]
-		set mux_1_a1_pin [get_pins $mux_1_inst -filter {@name == "a1"}]
-		set i 1
-		set rec_mux_num 0
-		##check whether the loop is mux+ff,and cont the num of loop_mux
-		for {set i 1} {$i <= 2} {incr i} {
-			if {$i == 1} {
-					if {[get_nets $mux_1_a0_pin] eq [get_nets $ff_q_pin]} {
-						##if 1 mux+ff loop
-							set rec_mux_num 1
-							set l_sg_input_value [get_attributes [get_pins $mux_1_a1_pin] -attributes inferred_constant]
-							break
-						} elseif {[get_nets $mux_1_a1_pin] eq [get_nets $ff_q_pin]} {
-							##if 1 mux+ff loop
-								set rec_mux_num 1
-								set l_sg_input_value [get_attributes [get_pins $mux_1_a0_pin] -attributes inferred_constant]
-								break
-						}
-						###mux_1 is close to ff
-						set mux_2_out_pin [get_pins [get_nets $mux_1_a0_pin] -filter {@dir == "out"}]
-						set l_mux_2_inst [get_instances $mux_2_out_pin -filter {@view == "VERIFIC_MUX"}]
-						set mux_2_a0_pin [get_pins [get_instances $mux_2_out_pin -filter {@view == "VERIFIC_MUX"}] -filter {@name == "a0"}]
-						set mux_2_a1_pin [get_pins [get_instances $mux_2_out_pin -filter {@view == "VERIFIC_MUX"}] -filter {@name == "a1"}]
-					}else {
-							if {[get_nets $mux_2_a0_pin] eq [get_nets $ff_q_pin]} {
-							####if 2 mux+ff loop
-								set rec_mux_num 2
-								set l_sg_input_value [get_attributes [get_pins $mux_2_a1_pin] -attributes inferred_constant]
-								break
-							} elseif {[get_nets $mux_2_a1_pin] eq [get_nets $ff_q_pin]} {
-								set rec_mux_num 2
-								set l_sg_input_value [get_attributes [get_pins $mux_2_a0_pin] -attributes inferred_constant]
-								break
-							}
-					}
-		}
-		return $rec_mux_num
-}
 
-proc Diff185-bug46-setup_port01 {SetupPortFullyConstrained_dict lst_Setup_port01_ports lst_Setup_port01_msg} {
-    global resultCsvFileName testName oldResultCsvFile current_time
-    set proc_name [lindex [info level 0] 0]
-    puts_debug_message start $proc_name
+#####Ar
+dict set arRuleMap "Ar_sync01" AR01
+dict set arRuleMap "Ar_unsync01" AR02
+dict set arRuleMap "Reset_sync02" AR03
+dict set arRuleMap "Reset_sync04" AR04
 
-    set e_ports [lsort [string map {\{ "" \} ""} [dict keys $SetupPortFullyConstrained_dict]]]
-    set s_ports [lsort $lst_Setup_port01_ports]
-    set Diff185_key 0
-    if {$e_ports == $s_ports} {
-        set Diff185_key 1
-    }
-    foreach eToolMsgObj [dict values $SetupPortFullyConstrained_dict] {
-		if {$Diff185_key == 1} {
-			dict set eToolMsgObj runningFlag pass-Diff185-bug46-setup_port01
-			writeSetupMsgLine ${resultCsvFileName} ${eToolMsgObj} "" ${testName} "pass" ${oldResultCsvFile}
-		}
-	}
+dict set arMsgIdMap "Ar_sync01" {"ArSyncCtrlPath"}
+dict set arMsgIdMap "Ar_unsync01" {"ArUnsyncCtrlPath"}
+dict set arMsgIdMap "Reset_sync02" {"ArUnsyncCtrlPath"}
+dict set arMsgIdMap "Reset_sync04" {"ChyArSyncMultiTimes"}
 
-	foreach sToolMsgObj $lst_Setup_port01_msg {
-		if {$Diff185_key == 1} {
-			dict set sToolMsgObj runningFlag pass-Diff185-bug46-setup_port01
-			writeSetupMsgLine ${resultCsvFileName} "" ${sToolMsgObj} ${testName} "pass" ${oldResultCsvFile}
-		}
-	}
-	puts_debug_message end $proc_name
-}
-
-
-if {$msgId != "SetupRstNetUndefined"} {
-    set objs [collect_set_up_obj_list $msg_dict $key_msg_obj message_id message_severity line_number file_path is_violation]
-} else {
-    set objs [collect_set_up_obj_list $msg_dict $key_msg_obj message_id message_severity line_number file_path is_violation Pin2]
-}
-#set objs [collect_set_up_obj_list $msg_dict $key_msg_obj message_id message_severity line_number file_path is_violation]
-
-
-} elseif {[suspect-bus_diff $eToolMessageObj $sToolMessageObj l_verbose]} {
-							#set e_unmatchReason [lindex $l_verbose 1]
-							#set s_unmatchReason [lindex $l_verbose 0]
-							set e_unmatchReason $l_verbose
-							set s_unmatchReason $l_verbose
-							dict set eToolMessageObj unmatchReason $e_unmatchReason
-							dict set eToolMessageObj runningFlag [join [concat "pass-suspect-only-bus-different" $reasonFlag] ";"]
-							lset l_e_list $ev $eToolMessageObj
-							dict set sToolMessageObj unmatchReason $s_unmatchReason
-							dict set sToolMessageObj runningFlag [join [concat "pass-suspect-only-bus-different" $reasonFlag] ";"]
-							lset l_s_list $sv $sToolMessageObj
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-if {$aided_proc && [Ac-affected-by-data_const $a_msg running_Flag]} {
-    if {[dict exists $a_msg runningFlag]} {
-        dict set a_msg runningFlag [join [concat [dict get $a_msg runningFlag] $running_Flag] ";"]
-	} else {
-		dict set a_msg runningFlag $running_Flag
-	}
-	writeAcMsgLine $resultCsvFileName "" $a_msg "" $oldResultCsvFile
-	continue
-}
-
-
-} elseif {[string first "msgId SetupPort" ${e_list}] != -1} {
-		foreach eToolMsgObj ${e_list} {
-			if {[dict get ${eToolMsgObj} msgId] == "SetupPortFullyConstrained"} {
-				writeSetupMsgLine ${resultCsvFileName} ${eToolMsgObj} "" ${testName} "" ${oldResultCsvFile}
-			}
-		}
-	} elseif {[string first "Rule Setup_port01" ${s_list}] != -1} {
-		foreach sToolMsgObj ${s_list} {
-			if {[dict get ${sToolMsgObj} Rule] == "Setup_port01"} {
-				writeSetupMsgLine ${resultCsvFileName} "" ${sToolMsgObj} ${testName} "" ${oldResultCsvFile}
-			}
-
-		}
-	}
-
-QualNameInvalid 	{{Object '%' spcified in command set_cdc_qualifier is an invalid qualifier in constraint}}
-SyncCellFromToDomainSame 	{{The domain '%' specified by option '-from_clk' is the same with that specified by option '-to_clk' in command 'set_cdc_sync_cell'} 
-							{The domain '%' specified by option '%' is the same with that specified by option '%' in command 'set_cdc_sync_cell'} 
-							{The domain '%' of clock '%' specified by option '%' is the same with that of clock '%' specified by option '%' in command 'set_cdc_sync_cell'}}
-
-
-Propagate_Resets,SetupRstPropagated {
-    # obj | line | file | level
-    set type [string trim [lindex $s_Obj end]]
-    if {$type == ""} {
-        set s_Obj [lreverse [lrange $s_Obj 0 end-1]]
-    }
-    set s_Obj [reformat_s_names_setup $s_Obj]
-    if {[lindex $e_Obj 0] in [split [lindex $s_Obj 0] ","]} {
-        lset s_Obj 0 [lindex $e_Obj 0]
-    }
-    set e_rst_net [get_nets [lindex $e_Obj 0] -canonical]
-    if {$e_rst_net == ""} {
-        set e_rst_net [get_nets [get_pins [lindex $e_Obj 0]] -canonical]
-    }
-    lset e_Obj 0 $e_rst_net
-    set s_rst_net [get_nets [lindex $s_Obj 0] -canonical]
-	if {$s_rst_net == ""} {
-		set s_rst_net [get_nets [get_pins [lindex $s_Obj 0]] -canonical]
-	}
-	lset s_Obj 0 $s_rst_net
-}
-
-Propagate_Resets,SetupRstNotPropagated {
-    # obj | line | file | level
-    set type [string trim [lindex $s_Obj end]]
-    if {$type == "not"} {
-        set s_Obj [lreverse [lrange $s_Obj 0 end-1]]
-    }
-    set s_Obj [reformat_s_names_setup $s_Obj]
-    if {[lindex $e_Obj 0] in [split [lindex $s_Obj 0] ","]} {
-        lset s_Obj 0 [lindex $e_Obj 0]
-    }
-    set e_rst_net [get_nets [lindex $e_Obj 0] -canonical]
-    if {$e_rst_net == ""} {
-        set e_rst_net [get_nets [get_pins [lindex $e_Obj 0]] -canonical]
-    }
-    lset e_Obj 0 $e_rst_net
-    set s_rst_net [get_nets [lindex $s_Obj 0] -canonical]
-    if {$s_rst_net == ""} {
-        set s_rst_net [get_nets [get_pins [lindex $s_Obj 0]] -canonical]
-    }
-    lset s_Obj 0 $s_rst_net
-}
+#dict set arMsgMap "PortConstraint" "Reset constrained through abstract_port constraint"
+#dict set arMsgMap "MultiFlop" {"(Multi-flop reset synchronizer|MultiFlop\)}"
+#dict set arMsgMap "UDS" {"(User-Defined reset Synchronizer|UDS\)"}
+#dict set arMsgMap "GeneratedReset" {"(Generated reset|GeneratedReset\)}
