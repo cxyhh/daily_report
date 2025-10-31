@@ -438,3 +438,273 @@ while {[gets $file1 line] >= 0} {
     }
 }
 close $file1
+
+
+remark_small_case_from_dc_verify
+remark_small_case_from_dc_verify.tcl
+source /tmpdata/ranwu_staff_3/yWX1311860/workspace/bin/script/get_hdl.tcl
+proc remark_small_case_from_dc_verify {csv_file sdc_path} {
+    set fin [open $csv_file r]
+    set file_name [file tail $csv_file]
+    set dir_name [file dirname $csv_file]
+    set top_name [get_top]
+    set output_dir [file normalize "${top_name}_output"]
+    if {[file isdirectory ${output_dir}]} {
+        puts "INFO: rm old output dir ${output_dir}"
+        rm -rf ${output_dir}
+    }
+    if {! [file isdirectory ${output_dir}]} {
+        mkdir ${output_dir}
+    }
+    while {[gets $fin line] >= 0} {
+        set obj_not_found 0
+        set ff_list [list]
+        if {[regexp "SetupDataTiedToConst,,.*enno_const" $line] || [regexp "SetupDataTiedToConst,,.*,,.*,.*,False report,,," $line]} {
+            set ff [lindex [string trim [lindex [split $line ","] 6] "\""] 0]
+            puts "ff:$ff"
+            if {[llength $ff] > 0} {
+                foreach one_ff $ff {
+                    set ff_obj [get_instances "[get_top]/$one_ff"]
+                    if {$ff_obj ne ""} {
+                        lappend ff_list {*} $ff_obj
+                    } else {
+                        set obj_not_found 1
+                        break
+                    }
+                }
+                if {$obj_not_found eq 0} {
+                    verify_singal_const_flop_flow $ff_list $::GenName $sdc_path
+                }
+            }
+        }
+}
+close $fin
+
+
++++++++get_hdl.tcl++++
+#package require Thread
+#can not use package "Thread" in CA
+
+set ::SCRIPT_PATH [file dirname [file normalize [info script]]]
+set ::CURRENT_PATH [pwd]
+set ::COMMAND_NAME [info nameofexecutable]
+
+# Cache: find the specified line rtl
+proc get_line_cache {file_name line_num} {
+    # Check whether the file cache exists
+    if {[info exists ::::file_line_cache($file_name)]} {
+        # check whether the file has been modified
+        if {[file mtime $file_name] != $::file_mtime($file_name)} {
+            set fd [open $file_name "r"]
+            set ::file_line_cache($file_name) [split [read $fd] "\n"]
+            close $fd
+            set ::file_mtime($file_name) [file mtime $file_name]
+        }
+        # Cache valid
+    } else {
+        # load file
+        set fd [open $file_name "r"]
+        set ::file_line_cache($file_name) [split [read $fd] "\n"]
+        close $fd
+        set ::file_mtime($file_name) [file mtime $file_name]
+    }
+    return [lindex ::::file_line_cache($file_name) [expr {$line_num - 1}]]
+}
+# print rtl code
+proc print_rtl {obj_list additionalList file_w {extra_info_pin {list {}}}} {
+    set fp [open "$file_w" w]
+    foreach obj_li $obj_list {
+        set file [lindex $obj_li 0]
+        set line [lindex $obj_li 1]
+        # set lineContent [exec sed -n "${line}p" "$file"]
+        set lineContent [get_line_cache $file $line]
+        if {[llength $extra_info_pin] == 3} {
+            if {$file eq [lindex $extra_info_pin 0] && $line eq [lindex $extra_info_pin 1]} {
+                set extra_str [lindex $extra_info_pin 2]
+                puts $fp $extra_str
+            }
+        }
+        puts $fp "$lineContent"
+		if {[lsearch $additionalList $obj_li] != -1} {
+			if {[regexp {\)\s*;} $lineContent]} {
+				continue
+			} else {
+				puts $fp ");"
+			}
+		}
+	}
+	close $fp
+}
+
+
+# Print the complete port
+proc get_single_const_rtl {log_obj file_w} {
+    set obj_list [get_hdl_info [get_instances $log_obj]]
+    # get the message of the last port in module
+    set additionallist [lsort -dictionary -unique [get_hdl_info -locate]]
+        set extra_info_pin [get_hdl_info -extra_info_pin]
+    # print code into multiple files
+    print_rtl $obj_list $additionallist $file_w $extra_info_pin
+    parse_param_macro $file_w
+}
+
+# Put parameters and macro definitions first
+proc parse_param_macro { file_name } {
+    set param_macro ""
+    set fd [open $file_name "r"]
+    set line_list [split [read $fd] "\n"]
+    close $fd
+
+    set fd [open "tmp.v" "w"]
+    set in_module 0
+    foreach li $line_list {
+        if {[regexp {^\s*module} $li]} {
+            set in_module 1
+            puts $fd $li
+        } elseif {[regexp {endmodule} $li]} {
+            set in_module 0
+            puts $fd $li
+        } else {
+            if {$in_module} {
+                puts $fd $li
+            } else {
+                append param_macro "$li\n"
+            }
+        }
+    }
+    close $fd
+    set module_str [exec cat "tmp.v"]
+	set fd [open $file_name "w"]
+	puts $fd "$param_macro"
+	puts $fd "$module_str"
+	close $fd
+}
+#
+# Process the sdc file
+#------------------------
+#	set_top -module TOP
+#	create_clock
+#	set_reset
+#----------------------------
+#	catch {set_top -module TOP}
+#	catch {create_clock}
+#	catch {set_reset}
+#------------------------
+proc catch_sdc {sdc_path top_name} {
+    set inFile [open $sdc_path r]
+    set outFile [open "catch_${top_name}.sdc" w]
+    while {{gets $inFile sdc_line} != -1} {
+        if { ![regexp {^\s*$} $sdc_line] && ![string match "#*" $sdc_line] } {
+            puts $outFile "catch { $sdc_line }"
+        }
+    }
+
+    close $inFile
+    close $outFile
+    return [file normalize ${::CURRENT_PATH}/catch_${top_name}.sdc]
+}
+
+# Verify that the rtl code is correct
+proc verify_hdl {msgid_num catch_sdc_path msgid log_obj top_name GenName file_name output_path} {
+    #set file_name "${top_name}_${msgid_num}.v"
+    exec ${::COMMAND_NAME} -inline_tcl "set top $top_name\n set GenName ${GenName}\n set file_name $file_name\n set sdc_path ${catch_sdc_path}\n set msgid $msgid\n set obj [list $log_obj]\n set where 0" -s $::SCRIPTPATH/verify_get_hdl.tcl -log_file ${output_path}/ecdc.log
+    set ret [catch {grep "Failed to execute the command: 'read_design'" ${output_path}/ecdc.log}]
+    return $ret
+}
+proc get_const_hdl { log_obj file_name sdc_path top GenName} {
+    get_single_const_rtl 0 $log_obj $file_name
+    catch_sdc $sdc_path $top
+    exec ${::COMMAND_NAME} -inline_tcl "set top $top\n set GenName ${GenName}\n set file_name $file_name\n set sdc_path $sdc_path\n set msgid SetupDataTiedToConst\n set obj ${log_obj}\n set where 1" -s $::SCRIPTPATH/verify_get_hdl.tcl
+.......
+
+
+
+
+runDC_for_small_case.sh
+#!/bin/csh
+echo "Begin running dc!"
+set run_script_path="/tmpdata/ranwu_staff_3/hwX1313647/bin/run_script"
+set run_path="$1"
+set run_path= `realpath ${run_path}`
+set verilogPath="$2"
+echo "verilogPath:$verilogPath"
+#set verilogPath=`realpath "${verilogPath}"`
+set sdcPath="$3"
+set sdcPath=`realpath ${sdcPath}`
+set caseName=`basename ${verilogPath}`
+set caseName="$caseName:s/.v//"
+set topName=`sed -n 's/.*set_top -module *\([^\ ]*\).*/\1/p' ${sdcPath}`
+echo "caseName: ${caseName}"
+echo "topName: ${topName}"
+
+rm -rf ${run_path}/dc_output
+mkdir ${run_path}/dc_output
+cd ${run_path}/dc_output
+
+source /software/hicad/cshrc/cshrc.modules
+ma synthesis/2018.06sp5
+setenv LD_LIBRAY_PATH /software/synopsys/synthesis/2018.06sp5/syn/O-2018.06-SP5/bin/
+
+yes | cp -ri ${run_script_path}/dcFiles/dc_flow_for_small_case.tcl ${run_path}
+yes | cp -ri ${sdcPath} ${run_path}/dc_output
+
+set sdcPath="${run_path}/dc_output/`basename ${sdcPath}`"
+grep -i "set_case_analysis" ${sdcPath} >! ${run_path}/dc_output/DC_${topName}.sdc
+sed -i 's/-objects//g' ${run_path}/dc_output/DC_${topName}.sdc
+sed -i 's/'"${topName}"'\///g' ${run_path}/dc_output/DC_${topName}.sdc
+sed -i "s,#TopName,${topName}," ${run_path}/dc_flow_for_small_case.tcl
+sed -i "s,#Design_flist,${verilogPath},g" ${run_path}/dc_flow_for_small_case.tcl
+sed -i "s,#DC_sdc,${run_path}/dc_output/DC_${topName}.sdc," ${run_path}/dc_flow_for_small_case.tcl
+sed -i "s,#Current_exec_path,${run_path}/dc_output," ${run_path}/dc_flow_for_small_case.tcl
+#dc_shell -f ${run_path}/dc_flow_for_small_case.tcl -output_log_file ${run_path}/dc_output/dc_log
+
+++++++++++dc_flow_for_small_case.tcl++++++++++++++++++++++++
+echo "start_time is:[clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]"
+proc list_subtract {listA listB} {
+    set lookup_dict [dict create]
+    foreach item $listB {
+        dict set lookup_dict $item 1
+    }
+    set result {}
+    foreach item $listA {
+        if {![dict exist $lookup_dict $item]} {
+            set item [regsub {_reg$} $item {}]
+            set item [regsub {_reg\[} $item {[}]
+            lappend result $item
+        }
+    }
+    return $result
+}
+set_host_option -max 8
+set design #TopName
+set curExePath #Current_exec_path
+set_app_var compile_enable_register_merging false
+set compile_delete_unloaded_sequential_cells {true}
+set compile_seqmap_propagate_constants {true}
+set_app_var collection_result_display_limit 100000000
+
+set target_library "/foundry/kuorong/HiPDSLib/RE-K_LIBRARY/tsmc/N7/STDCELL/REK_V1.2/tcbn07_bwph240l11p57pd_base_svt_130b_h/timing_power_noise/CCS/tcbn07_bwph240l11p57pd_base_svt_130a/tcbn07_bwph240l11p57pd_base_svtssgnp_0p675v_m40c_cworst_CCworst_T_ccs.db"
+
+set link_library $target_library
+set HIUSBC3XV100_DESIGN_ROOT "/tmpdata/ranwu_staff_3/benchmark/hiusb3xv100/rtl/hdl"
+set designFile #Design_flist
+if {[regexp {\.f} ${designFile}]} {
+    analyze -format sverilog -vcs "-f ${designFile}"
+} else {
+    analyze -format sverilog -vcs "${designFile}"
+}
+
+elaborate $design
+source -echo -verbose "#DC_sdc"
+
+write_file -format verilog -hierarchy -output ${curExePath}/${design}.v
+set before_compile_regs [get_object_name [all_registers]]
+compile_ultra -no_autoungroup
+set after_compile_regs [get_object_name [all_registers]]
+
+list_subtract $before_compile_regs $after_compile_regs > ${curExePath}/remove_reg
+write_file -format verilog -hierarchy -output ${curExePath}/${design}_ultra.v
+check_design -designs > ${design}_bbox.log
+
+echo "end_time is:[clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]"
+exit
