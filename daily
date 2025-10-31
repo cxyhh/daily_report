@@ -38,3 +38,38 @@ xargs -P "$max_process" -I {} sh -c '
     output_file="$(dirname "{}")/dc_output/dc.log"
     dc_shell -f $tcl_file -output_log_file $output_file
 ' _ < $list_file
+
+split_file.sh
+#!/bin/bash
+if [ "$#" -ne 2 ]; then
+    echo "Usage : $0 <list to split> <number of parts >"
+    exit 1
+fi
+
+list="$1"
+num_parts="$2"
+base_name=$(basename "$list" .f)
+
+echo $base_name
+
+# echo "list is $list and num_parts is $num_parts"
+if [ ! -f $list ]; then
+    echo "File '$list' does not exist"
+    exit 1
+fi
+
+lines=$(wc -l < "$list")
+# echo "lines is $lines"
+line_per_part=$(($lines / ${num_parts}))
+# echo "line_per_part is $line_per_part"
+for ((i=1; i<= $num_parts; i++)); do
+    start_line=$((${i} * ${line_per_part} - ${line_per_part}+1))
+    end_line=$((${i} * ${line_per_part}))
+    # echo "Start_line is $start_line and end_line is $end_line"
+    if [ $i -eq $num_parts ]; then
+        end_line=$lines
+    fi
+    sed -n "${start_line},${end_line}p" "$list" > "${base_name}_${i}.f"
+#     awk "{if ($start_line <= $1 && $1 <= $end_line) print}" "$list" > "${base_name}_${i}.f"
+done
+echo "file $list has been split"
