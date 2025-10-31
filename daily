@@ -1,1725 +1,224 @@
-mapdict.tcl
-#!/bin/tclsh8.5
+#!/bin/csh
+echo "Begin running dc!"
+source /tmpdata/ranwu_staff_3/zWX1313644/GenData/USBC/SourceMe
+source /tmpdata/ranwu_staff_3/enno_script/config.sh
+set run_path="$1"
+set verilogPath="$2"
+set topName="$3"
+set sdcPath="$4"
+set ecdc_const_log="$5"
+set ecdc_log="$6"
+set GenName="$7"
+set lastTopName="$8"
+set gePath="/tmpdata/ranwu_staff_3/enno_script/General"
+set passSavePath="/tmpdata/ranwu_staff_3/CDC_COMMON/GenData/Const_Pass"
 
-dict set cmdMap "clock" "create_clock"
-dict set cmdMap "reset" "create_reset"
-dict set cmdMap "set_case_analysis" "set_case_analysis"
-dict set cmdMap "quasi_static" "create_static"
-dict set cmdMap "qualifier" "set_qualifier"
-dict set cmdMap "sync_cell" "set_sync_cell"
-dict set cmdMap "set_top" "current_design"
-dict set cmdMap "abstract_port" "set_abstract_port"
+rm -rf ${run_path}/dc_output	
+mkdir ${run_path}/dc_output
+cd ${run_path}/dc_output
 
-#dict set msgIdMap "MultiFlop" {Multi-flop reset synchronizer}
-#dict set msgIdMap "PortConstrained" {"Reset constrained through abstract_port constraint"}
-#dict set msgIdMap "UDS" {User-Defined reset Synchronizer}
-#dict set msgIdMap "MissingSynchronizer" {Reset_sync02}
-#dict set msgIdMap "GeneratedReset" {Generated reset}
+source /software/hicad/cshrc/cshrc.modules
+ma synthesis/2018.06sp5
+setenv LD_LIBRAY_PATH /software/synopsys/synthesis/2018.06sp5/syn/O-2018.06-SP5/bin/
 
-dict set reasonSync {^\"Conventional multi-flop .*} "MultiFlop"
-#dict set reasonSync {^\"Conventional multi-flop for metastability technique} "MultiFlop"
-#dict set reasonSync {^\"Conventional multi-flop (library-cell) for metastability technique} "MultiFlop"
-#dict set reasonSync {^\"Conventional multi-flop synchronizer is hanging} "MultiFlop"
-dict set reasonSync {^\"synchronizing cell(cell name : .*)} "UserDefinedCell"
-dict set reasonSync {^\"does not require synchronization (long-delay/quasi-static)} "LongDelaySignal"
-dict set reasonSync {^\"qualifier .* defined on destination} "UserDefinedQual"
-dict set reasonSync {^\"Synchronization at And gate.*} "ValidGate"
-dict set reasonSync {^\"Merges with valid .* qualifier} "ValidGate"
-dict set reasonSync {^\"Mux-select sync.*} "MuxSelect"
-dict set reasonSync {^\"Recirculation flop.*} "RecirculationMux"
-dict set reasonSync {^\"Enable Based [Synchronizer|User-Defined Qualifier]} "RecirculationMux"
-dict set reasonSync {^\"Clock Gate Synchronization (auto-detected clock gating)} "CGICAutoInferred"
-dict set reasonSync {^\"Clock Gate Synchronization (user-defined clock gating cell)} "CGICUserDefinedCell"
-dict set reasonSync {^\"Clock Gate Synchronization (library clock gating cell)} "CGICLibraryCell"
-dict set reasonSync {^\"Clock Based User-Defined Qualifier} "CGICUserDefinedQual"
-dict set reasonUnsync {^\"Clock domains of destination instance and synchronizer flop do not match} "CtrlClkDomainMismatch"
-dict set reasonUnsync {^\"Combinational logic used between crossing} "NonstaticComboInCrossing"
-dict set reasonUnsync {^\"Unsynchronized synchronous reset} "UnsyncSyncRst"
-dict set reasonUnsync {^\"Destination instance is driving multiple paths} "MultiFanout"
-dict set reasonUnsync {^\"Invalid synchronizer module/cell .*} "InvalidSyncCell"
-dict set reasonUnsync {^\"Sync reset used in multi-flop synchronizer} "CtrlPotentialSynRstUndefined"
-dict set reasonUnsync {^\"Gating logic not accepted: gate-type invalid} "InvalidGate"
-dict set reasonUnsync {^\"Gating logic not accepted: source drives MUX select input} "SrcMuxSelPin"
-dict set reasonUnsync {^\"Gating logic not accepted: source and \(qualifier\|user-defined qualifier\) drive MUX data inputs} "QualMuxDataPin"
-dict set reasonUnsync {^\"Gating logic not accepted: only sources drive MUX data inputs; atleast one destination domain signal should drive a MUX data input} "NoDestMuxDataPin"
-dict set reasonUnsync {^\"\(User-defined qualifier\|Qualifier\) merges with another source with non-deterministic enable condition before gating logic} "QualMergesOtherSrc"
-dict set reasonUnsync {^\"Qualifier not accepted: crossing sources is the same as source of qualifier} "SrcSameAsQualSrc"
-dict set reasonUnsync {^\"(User-defined qualifier\|Qualifier\) merges with the same source before gating logic} "QualMergesSameSrc"
-dict set reasonUnsync {^\"Qualifier not found} "MissingSynchronizer"
-dict set reasonNoSync {^\Synchronizer flop is the destination flop for another crossing} "MissingSynchronizer"
-dict set reasonNoSync {^\"Sources from different domains converge before being synchronized} "SrcConverge"
+yes | cp  -ri ${gePath}/dcFiles/dc_flow.tcl ${run_path}
+yes | cp  -ri ${gePath}/dcFiles/dc_flow_2nd.tcl ${run_path}
+yes	| cp  -ri ${gePath}/dcFiles/dc_flow_3rd.tcl ${run_path}
+yes | cp  -ri ${sdcPath} ${run_path}/dc_output
 
+sed -i '/^source/d' ${ecdc_const_log}
+sed -i '/^exit/d' ${ecdc_const_log}
+sed -i 's/^'"${topName}"'\///g' ${ecdc_const_log}
+sed -i 's/]_reg$/]/g' ${ecdc_const_log}
+sed -i 's/:[0-9]\+]$/]/g' ${ecdc_const_log}
+sed -i 's/\(.*\)\(\[[0-9]\+\]\[[0-9]\+\]$\)/\1_reg\2/g' ${ecdc_const_log}	
+sed -i 's/\(.*[0-9a-zA-Z]\)\(\[[0-9]\+\]$\)/\1_reg\2/g' ${ecdc_const_log}
 
-dict set setupMsgIdMap "Clock_info01" {"SetupClkInferred"}
-dict set setupMsgIdMap "Clock_info03a" {"SetupClkNetUndefined"}
-dict set setupMsgIdMap "Clock_info03b" {"SetupDataTiedToConst"}
-dict set setupMsgIdMap "Clock_info03c" {"SetupClkTiedToConst"}
-dict set setupMsgIdMap "Clock_info05b" {"SetupAsyncClkConvOnComb"}
-dict set setupMsgIdMap "Clock_info05" {"SetupAsyncClkConvOnMux"}
-dict set setupMsgIdMap "Clock_info05c" {"SetupClkMuxNotRcvClk"}
-dict set setupMsgIdMap "Setup_clockreset01" {"SetupClkUndefined" "SetupRstUndefined"}
-dict set setupMsgIdMap "Setup_check01" {"SetupConstraintConflict"}
-dict set setupMsgIdMap "Setup_port01" {"SetupFullyConstrained" "SetupPortPartiallyConstrained" "SetupPortNoConstraint" "SetupPortIgnoredSeqClkUnconstrained" "SetupPortIgnoredUnconnected" "SetupPortIgnoredNotToSeq"}
-dict set setupMsgIdMap "Setup_blackbox01" {"SetupBBoxPinNoConstraint" "SetupBBoxPinFullyConstrained" "SetupBBoxPinPartiallyConstrained" "SetupBBoxPinIgnored"}
-dict set setupMsgIdMap "Clock_glitch05" {"SetupClockGlitch"}
-dict set setupMsgIdMap "Clock_converge01" {"IntegrityClockConverge"}
-dict set setupMsgIdMap "Ar_converge01" {"IntegrityRstConvOnComb"}
-dict set setupMsgIdMap "Ac_coherency06" {"ChyAcSyncMultiTimes"}
-dict set setupMsgIdMap "Ac_conv03" {"ChyDiffSrcConv"}
-dict set setupMsgIdMap "Ac_conv04" {"ChyCtrlBusNoConv" "ChyDataBusDiffSyncScheme" "ChyDataBusDiffEnable"}
-dict set setupMsgIdMap "Ac_conv01" {"ChySameSrcConvIncSeq"}
-dict set setupMsgIdMap "Ac_conv02" {"ChySameSrcConvExcSeq"}
-dict set setupMsgIdMap "Clock_sync05a" {"SetupInputMultiClkSampled"}
-dict set setupMsgIdMap "Clock_sync05" {"SetupInputMultiClkSampled"}
-dict set setupMsgIdMap "Clock_sync06" {"SetupOutputMultiClkDriven"}
-dict set setupMsgIdMap "Ac_resetvalue01" {"SetupRstSenseMissing"}
-dict set setupMsgIdMap "Reset_info01" {"SetupRstInferred"}
-dict set setupMsgIdMap "Reset_info09a" {"SetupRstNetUndefined"}
-##builtins verify
-dict set builtinMsgIdMap "SGDCSTX_002" {"CmdInvalid"}
-dict set builtinMsgIdMap "SGDCSTX_003" {"CMD-1002" "ObjectIsNotFound" "CMD-1000" "CMD-1001" "CMD-1006" "CMD-1016"}
-dict set builtinMsgIdMap "SGDCSTX_004" {"CMD-1005" "CMD-1006" "CMD-1000" "ClockNameOrSourceMustSpecified" "CmdFailedInvalidObjArg"}
-dict set builtinMsgIdMap "SGDCSTX_008" {"CMD-1006" "CMD-1016" "CMD-1007" "OptionDependencyError" "RstSenseInvalid" "ClkSrcObjIllegal" "CmdOptionValueInvalid" "ObjectIsNotFound" "ConstraintValueFailed" "CmdArgValueInvalid" "CdcFalsePathOptionMissing" "CMD-1000" "CMD-1002" "CmdFailedInvalidObjArg" "CmdFailedInvalidObjOption"}
-dict set builtinMsgIdMap "SGDCSTX_009" {"CmdEndingDoubleQuoteMissing" "CMD-1006"}
-dict set builtinMsgIdMap "SGDCSTX_011" {"CMD-1000" "objectIsNotFound" "CMD-1005" "CMD-1016"}
-dict set builtinMsgIdMap "SGDCSTX_012" {"CMD-1000" "MultiArgsInvalid"}
-dict set builtinMsgIdMap "SGDCSTX_013" {"ObjectsNotFound" "CdcFalsePathOptionMissing" "ClkSrcObjIllegal" "CMD-1007" "ConstraintValueFailed" "RstSenseInvalid" "CmdArgValueInvalid"}
-dict set builtinMsgIdMap "SGDCSTX_019" {"ObjectsNotFound" "CmdFailedPathOptionMissing" "ClkSrcObjIllegal" "CMD-1007" "ConstraintValueFailed" "RstSenseInvalid" "CmdArgValueInvalid"}
-dict set builtinMsgIdMap "SGDCWNN_121" {"ClockNameExisted"}
-dict set builtinMsgIdMap "SGDCSTX_007" {"CMD-2085" "CmdArgValueNotSingle" "OptionDependencyError" "CMD-1002" "CMD-1006" "ClockNameExisted"}
-dict set builtinMsgIdMap "checkSGDC_nottogether01" {"CMD-1007"}
-dict set builtinMsgIdMap "checkSGDC_together02" {"OptionDependencyError" "CMD-1000" "CMD-1002" "CmdOptionValueInvalid"}
-dict set builtinMsgIdMap "Propagate_Clocks" {"SetupClkNotPropagated" "SetupClkPropagated"}
-dict set builtinMsgIdMap "Propagate_Resets" {"SetupRstNotPropagated" "SetupRstPropagated"}
-dict set builtinMsgIdMap "SGDC_clock01" {"CLKSrcObjIllegal" "ObjectUnusedInDesign" "CMD-1005"}
-dict set builtinMsgIdMap "SGDC_reset01" {"RstSrcObjIllegal" "CmdFailedInvalidObjArg"}
-dict set builtinMsgIdMap "SGDC_reset02" {"RstNameExisted" "CmdFailedInvalidObjArg"}
-dict set builtinMsgIdMap "SGDC_reset03" {"RstNameExisted"}
-dict set builtinMsgIdMap "SGDC_reset04" {"AstSenseInvalid" "CMD-1002"}
-dict set builtinMsgIdMap "SGDC_reset_synchronizer01" {"ObjectsNotFound" "ObjectUnusedInDesign"}
-dict set builtinMsgIdMap "SGDC_reset_synchronizer02" {"RstSynchronizerNotInFanoutPath"}
-dict set builtinMsgIdMap "SGDC_reset_synchronizer03" {"ObjectsNotFound" "ObjectUnusedInDesign" "CmdOptionValueInvalid" "CmdOverride" "CmdOptionValueNotSingle"}
-dict set builtinMsgIdMap "SGDC_reset_synchronizer04" {"CmdOptionValueInvalid"}
-dict set builtinMsgIdMap "SGDC_reset_synchronizer05" {"ObjectsNotFound" "ObjectUnusedInDesign"}
-dict set builtinMsgIdMap "SGDC_reset_synchronizer06" {"CmdOptionValueInvalid" "ObjectUnusedInDesign"}
-dict set builtinMsgIdMap "SGDC_reset_synchronizer07" {"CmdOptionValueInvalid" "ObjectsIsNotFound" "ObjectUnusedInDesign" "CmdOverride"}
-dict set builtinMsgIdMap "SGDC_reset_synchronizer08" {"RstSynchronizerUnused"}
-dict set builtinMsgIdMap "SGDC_reset_synchronizer10" {"CmdOverride"}
-dict set builtinMsgIdMap "FalsePathSetup" {"CdcFalsePathNoCrossing" "CmdOptionValueInvalid" "CdcFalsePathUnmatched" "CMD-1000" "MultipleFalsePath"}
-dict set builtinMsgIdMap "SGDC_cdc_false_path01" {"ObjectsIsNotFound" "CdcFalsePathOptionMissing" "CmdOptionValueInvalid" "CdcFalsePathNoCrossing"}
-dict set builtinMsgIdMap "SGDC_cdc_false_path02" {"ObjectsIsNotFound" "CdcFalsePathOptionMissing" "CMD-1000" "CmdOptionValueInvalid"}
-dict set builtinMsgIdMap "SGDC_cdc_false_path05" {"CmdNoOptionInput"}
-dict set builtinMsgIdMap "SGDC_cdc_false_path06" {"CdcFalsePathUnmatched" "CmdOptionValueInvalid" "CdcFalsePathNoCrossing" "CdcFalsePathOptionMissing" "CMD-1000"}
-dict set builtinMsgIdMap "SGDC_cdc_false_path07" {"CdcFalsePathOptionMissing" "CmdOptionValueInvalid" "CdcFalsePathNoCrossing" "CdcFalsePathUnmatched" "CMD-1000" "CMD-2085"}
-dict set builtinMsgIdMap "SGDC_qualifier01" {"ObjectsIsNotFound" "ObjectUnusedInDesign" "QualNameInvalid" "CMD-1002" "CMD-1006"}
-dict set builtinMsgIdMap "SGDC_qualifier02a" {"CmdOptionValueInvalid" "ObjectsIsNotFound"}
-dict set builtinMsgIdMap "SGDC_qualifier02b" {"ObjectsIsNotFound" "CmdOptionValueInvalid"}
-dict set builtinMsgIdMap "SGDC_qualifier02c" {"CmdOptionValueInvalid"}
-dict set builtinMsgIdMap "SGDC_qualifier03a" {"CmdOptionValueInvalid" "ObjectsIsNotFound"}
-dict set builtinMsgIdMap "SGDC_qualifier03b" {"ObjectsIsNotFound" "CmdOptionValueInvalid"}
-dict set builtinMsgIdMap "SGDC_qualifier03c" {"CmdOptionValueInvalid"}
-dict set builtinMsgIdMap "SGDC_qualifier09" {"CMD-1005" "CmdOptionNotSpecified" "QualNameInvalid"}
-dict set builtinMsgIdMap "SGDC_qualifier10" {"QualFromToDomainSame" "CmdOptionValueInvalid"}
-dict set builtinMsgIdMap "SGDC_qualifier15" {"CMD-1005" "CMD-1006" "CMD-1002"}
-dict set builtinMsgIdMap "SGDC_quasi_static01" {"ObjectsIsNotFound" "ObjectUnusedInDesign" "CmdFailedInvalidObjArg" "CMD-1006"}
-dict set builtinMsgIdMap "SGDC_abstract_port01" {"AbstractPortModuleUninstantiated" "ConstraintValueFailed" "CMD-2085"}
-dict set builtinMsgIdMap "SGDC_IP_block01" {"IPBlockModuleUninstantiated" "ObjectsIsNotFound"}
-dict set builtinMsgIdMap "SGDC_sync_cell04" {"SyncCellFromToDomainSame"}
-#dict set builtinMsgIdMap "QualifierSetup" {"CmdOptionValueInvalid"}
-#dict set builtinMsgIdMap "SYNTH_5255" {"OutOfRangeInBitSelect"}
+set sdcPath="${run_path}/dc_output/`basename ${sdcPath}`"
+grep -i "set_case_analysis" ${sdcPath}>! ${run_path}/dc_output/DC_${topName}.sdc
+sed -i 's/-objects//g' ${run_path}/dc_output/DC_${topName}.sdc	
+sed -i 's/'"${topName}"'\///g' ${run_path}/dc_output/DC_${topName}.sdc
 
+sed -i "s,#TopName,${topName}," ${run_path}/dc_flow.tcl	
+sed -i "s,#TopName,${topName}," ${run_path}/dc_flow_2nd.tcl	
+sed -i "s,#TopName,${topName}," ${run_path}/dc_flow_3rd.tcl
+sed -i "s,#run_path,${run_path}/dc_output," ${run_path}/dc_flow_2nd.tcl	
+sed -i "s,#run_path,${run_path}," ${run_path}/dc_flow_3rd.tcl
+sed -i "s,#Design_flist,${verilogPath},g" ${run_path}/dc_flow.tcl	
+sed -i "s,#DC_sdc,${run_path}/dc_output/DC_${topName}.sdc," ${run_path}/dc_flow.tcl	
+sed -i "s,#Current_exec_path,${run_path}/dc_output," ${run_path}/dc_flow.tcl	
+dc_shell -f ${run_path}/dc_flow.tcl -output_log_file ${run_path}/dc_output/dc.log
 
-####Ac and Setup anony
-dict set ennoRuleMap "MultiFlop" "E001"
-dict set ennoRuleMap "RecirculationMux" "E002"
-dict set ennoRuleMap "MuxSelect" "E003"
-dict set ennoRuleMap "ValidateGate" "E004"
-dict set ennoRuleMap "LongDelaySignal" "E005"
-dict set ennoRuleMap "UserDefinedCell" "E006"
-dict set ennoRuleMap "CGICLibraryCell" "E007"
-dict set ennoRuleMap "CGICUserDefinedQual" "E008"
-dict set ennoRuleMap "CGICAutoInferred" "Enno001"
-dict set ennoRuleMap "CGICUserDefinedCell" "Enno002"
-dict set ennoRuleMap "StaticCombInCrossing" "Enno003"
-dict set ennoRuleMap "UserDefinedQual" "Enno004"
-#dict set ennoRuleMap "QualifierNotFound" "AcUnsync001"
-dict set ennoRuleMap "NonstaticComboInCrossing" "AcUnsync002"
-dict set ennoRuleMap "SrcConverge" "AcUnsync003"
-dict set ennoRuleMap "CtrlClkDomainMismatch" "AcUnsync004"
-dict set ennoRuleMap "MultiFanout" "AcUnsync005"
-dict set ennoRuleMap "CtrlPotentialSynRstUndefined" "AcUnsync006"
-dict set ennoRuleMap "QualMergesOtherSrc" "AcUnsync007"
-dict set ennoRuleMap "QualMergesSameSrc" "AcUnsync008"
-dict set ennoRuleMap "SrcSameAsQualSrc" "AcUnsync009"
-dict set ennoRuleMap "InvalidGate" "AcUnsync010"
-dict set ennoRuleMap "SrcMuxSelPin" "AcUnsync011"
-dict set ennoRuleMap "QualMuxDataPin" "AcUnsync012"
-dict set ennoRuleMap "NoDestMuxDataPin" "AcUnsync013"
-dict set ennoRuleMap "UnsyncSyncRst" "Enno006"
-dict set ennoRuleMap "InvalidSyncCell" "Enno007"
-#dict set ennoRuleMap "ArSyncCtrlPath" "Enno008"
-#dict set ennoRuleMap "ArUnsyncCtrlPath" "Enno009"
-dict set ennoRuleMap "EnableBasedSync" "E009"
-#dict set ennoRuleMap "UDS" "ArSync002"
-#dict set ennoRuleMap "PortConstraint" "ArSync003"
-#dict set ennoRuleMap "GeneratedReset" "ArSync004"
-dict set ennoRuleMap "MissingSynchronizer" "Unsync001"
-dict set ennoRuleMap "SetupClkInferred" "Enno009"
-dict set ennoRuleMap "SetupClkUndefined" "Setup001"
-dict set ennoRuleMap "SetupRstUndefined" "Setup002"
-dict set ennoRuleMap "SetupClkNetUndefined" "Setup003"
-#dict set ennoRuleMap "SetupClkNetFromBB" "Setup004"
-#dict set ennoRuleMap "SetupClkNetUnconnected" "Setup005"
-dict set ennoRuleMap "SetupClkTiedToConst" "Setup007"
-dict set ennoRuleMap "SetupAsyncClkConvOnMux" "Setup008"
-dict set ennoRuleMap "SetupAsyncClkConvOnComb" "Setup009"
-#dict set ennoRuleMap "SetupSyncClkConvOnMux" "Setup012"
-#dict set ennoRuleMap "SetupSyncClkConvOnComb" "Setup013"
-dict set ennoRuleMap "SetupRstBlocked" "Setup020"
-dict set ennoRuleMap "SetupPortFullyConstrained" "Setup021"
-dict set ennoRuleMap "SetupPortIgnoredSeqClkUnconstrained" "Setup022"
-dict set ennoRuleMap "SetupPortIgnoredUnconnected" "Setup023"
-dict set ennoRuleMap "SetupPortIgnoredNotToSeq" "Setup024"
-dict set ennoRuleMap "SetupPortPartiallyConstrained" "Setup025"
-dict set ennoRuleMap "SetupPortNoConstraint" "Setup026"
-dict set ennoRuleMap "SetupConstraintConflict" "Setup027"
-dict set ennoRuleMap "SetupBBoxPinNoConstraint" "Setup028"
-dict set ennoRuleMap "SetupBBoxPinFullyConstrained" "Setup029"
-dict set ennoRuleMap "SetupInputMultiClkSampled" "Setup030"
-dict set ennoRuleMap "SetupOutputMultiClkDriven" "Setup031"
-dict set ennoRuleMap "SetupDataTiedToConst" "Setup032"
-dict set ennoRuleMap "SetupClkMuxNotRcvClk" "Setup033"
-dict set ennoRuleMap "SetupClockGlitch" "Setup034"
-dict set ennoRuleMap "SetupBBoxPinPartiallyConstrained" "Setup035"
-dict set ennoRuleMap "SetupBBoxPinIgnored" "Setup036"
-dict set ennoRuleMap "SetupRstSenseMissing" "Setup037"
-dict set ennoRuleMap "SetupRstInferred" "Setup038"
-dict set ennoRuleMap "SetupRstNetUndefined" "Setup039"
-dict set ennoRuleMap "IntegrityRstConvOnComb" "Integrity001"
-dict set ennoRuleMap "IntegrityClockConverge" "Integrity002"
-dict set ennoRuleMap "ArFromUnconstrainedClk" "Enno010"
-#dict set ennoRuleMap "ArFromAsyncClk" ""
-dict set ennoRuleMap "ChyAcSyncMultiTimes" "Chy002"
-dict set ennoRuleMap "ChyCtrlBusNoConv" "Chy003"
-dict set ennoRuleMap "ChyDataBusDiffEnable" "Chy004"
-dict set ennoRuleMap "ChyDataBusDiffSyncScheme" "Chy005"
-dict set ennoRuleMap "ChySameSrcConvIncSeq" "AcConv01"
-dict set ennoRuleMap "ChySameSrcConvExcSeq" "AcConv02"
-dict set ennoRuleMap "ChyDiffSrcConv" "AcConv03"
-#dict set ennoRuleMap "" ""
-#####builtIn verify
-dict set ennoRuleMap "CmdInvalid" "cmd01"
-dict set ennoRuleMap "CmdEndingDoubleQuoteMissing" "cmd02"
-dict set ennoRuleMap "CmdOverride" "cmd03"
-dict set ennoRuleMap "CmdOptionValueInvalid" "Cmd04"
-dict set ennoRuleMap "CmdNoOptionInput" "cmd05"
-dict set ennoRuleMap "CmdFailedInvalidObjArg" "cmd06"
-dict set ennoRuleMap "CmdArgValueInvalid" "cmd07"
-dict set ennoRuleMap "CmdArgValueNotSingle" "cmd08"
-#dict set ennoRuleMap "ClockNameOrSourceMustSpecified" "cmd09"
-dict set ennoRuleMap "CmdOptionValueNotSingle" "cmd10"
-dict set ennoRuleMap "CmdOptionNotSpecified" "cmd11"
-dict set ennoRuleMap "CmdFailedInvalidObjOption" "cmd12"
-dict set ennoRuleMap "ConstraintValueFailed" "con01"
-dict set ennoRuleMap "ConstraintValueInvalid" "con02"
-dict set ennoRuleMap "CMD-1000" "1000"
-dict set ennoRuleMap "CMD-1001" "1001"
-dict set ennoRuleMap "CMD-1002" "1002"
-dict set ennoRuleMap "CMD-1005" "1005"
-dict set ennoRuleMap "CMD-1006" "1006"
-dict set ennoRuleMap "CMD-1007" "1007"
-dict set ennoRuleMap "CMD-1016" "1016"
-dict set ennoRuleMap "CMD-2084" "2084"
-dict set ennoRuleMap "CMD-2085" "2085"
-dict set ennoRuleMap "ReadFailed" "failed01"
-dict set ennoRuleMap "ClockNameExisted" "clk01"
-dict set ennoRuleMap "SetupClkNotPropagated" "Clk02"
-dict set ennoRuleMap "SetupClkPropagated" "Clk03"
-dict set ennoRuleMap "ClkSrcObjIllegal" "Clk04"
-dict set ennoRuleMap "ClockNameOrSourceMustSpecified" "clk05"
-dict set ennoRuleMap "SetupRstNotPropagated" "Rst01"
-dict set ennoRuleMap "SetupRstPropagated" "Rst02"
-dict set ennoRuleMap "RstSrcObjIllegal" "Rst03"
-dict set ennoRuleMap "RstNameExisted" "Rst04"
-dict set ennoRuleMap "RstSenseInvalid" "Rst05"
-dict set ennoRuleMap "RstSynchronizerNotInFanoutPath" "Rst06"
-dict set ennoRuleMap "RstSynchronizerUnused" "Rst07"
-dict set ennoRuleMap "CdcFalsePathNoCrossing" "false01"
-dict set ennoRuleMap "CdcFalsePathUnmatched" "false02"
-dict set ennoRuleMap "CdcFalsePathOptionMissing" "false03"
-dict set ennoRuleMap "MultipleFalsePath" "false04"
-dict set ennoRuleMap "ObjectIsNotFound" "obj01"
-dict set ennoRuleMap "ObjectUnusedInDesign" "obj02"
-dict set ennoRuleMap "MultiArgsInvalid" "multi01"
-dict set ennoRuleMap "OptionDependencyError" "Depe01"
-dict set ennoRuleMap "QualFromToDomainSame" "Qual01"
-dict set ennoRuleMap "QualNameInvalid" "Qual02"
-dict set ennoRuleMap "AbstractPortModuleUninstantiated" "port01"
-dict set ennoRuleMap "IpBlockModuleUninstantiated" "ip01"
-dict set ennoRuleMap "SyncCellFromToDomainSame" "cell01"
-dict set ennoRuleMap "SyncCellFailed" "cell02"
-dict set ennoRuleMap "OutOfRangeInBitSelect" "out01"
-#Ar
-dict set ennoRuleMap "ArSyncCtrlPath" ArSync001
-dict set ennoRuleMap "ArUnsyncCtrlPath" ArSync002
-dict set ennoRuleMap "ChyArSyncMultiTimes" ArSync003
-####Ac and Setup anony
-dict set sgRuleMap {^\Conventional multi-flop .*} "A004"
-dict set sgRuleMap {^\synchronizing cell(cell name : .*)} "A009"
-dict set sgRuleMap {^\does not require synchronization (long-delay/quasi-static)}} "A003"
-dict set sgRuleMap {^\qualifier .* defined on destination} "A010"
-dict set sgRuleMap {^\Synchronization at And gate.*} "A011"
-dict set sgRuleMap {^\ Merges with valid .* qualifier} "A012"
-dict set sgRuleMap {^\ Mux-select sync.*} "A005"
-dict set sgRuleMap {^\ Recirculation flop.*} "A006"
-dict set sgRuleMap {^\ Clock Gate Synchronization (auto-detected clock gating)} "A001"
-dict set sgRuleMap {^\ Clock Gate Synchronization (user-defined clock gating cell)} "A002"
-dict set sgRuleMap {^\ Clock Gate Synchronization (library clock gating cell)} "A035"
-dict set sgRuleMap {^\ Enable Based [Synchronizer|User-Defined Qualifier]} "A007"
-dict set sgRuleMap {^\ Clock domains of destination instance and synchronizer flop do not match} "A013"
-dict set sgRuleMap {^\ Combinational logic used between crossing} "A019"
-dict set sgRuleMap {^\ Unsynchronized synchronous reset} "A033"
-dict set sgRuleMap {^\ Destination instance is driving multiple paths} "A017"
-dict set sgRuleMap {^\ Invalid synchronizer module/cell .*} "A016"
-dict set sgRuleMap {^\ Sync reset used in multi-flop synchronizer} "A014"
-dict set sgRuleMap {^\ Gating logic not accepted: gate-type invalid} "A015"
-dict set sgRuleMap {^\ Gating logic not accepted: source drives MUX select input} "A031"
-dict set sgRuleMap {^\ Gating logic not accepted: source and \qualifier|user-defined qualifier) drive MUX data inputs} "A028"
-dict set sgRuleMap {^\ Gating logic not accepted: only sources drive MUX data inputs; atleast one destination domain signal should drive a MUX data input} "A018"
-dict set sgRuleMap {^\ (\User-defined qualifier|Qualifier\) merges with another source with non-deterministic enable condition before gating logic} "A024"
-dict set sgRuleMap {^\ (\User-defined qualifier|Qualifier\) merges with the same source as source of qualifier} "A032"
-dict set sgRuleMap {^\ (\User-defined qualifier|Qualifier\) merges with the same source before gating logic} "A026"
-dict set sgRuleMap {^\ Qualifier not found} "A020"
-dict set sgRuleMap {^\ Sources from different domains converge before being synchronized} "A030"
-dict set sgRuleMap {^\ Synchronizer flop is the destination flop for another crossing} "A021"
-dict set sgRuleMap {^\ User-defined qualifier merges with another source before gating logic} "A022"
-dict set sgRuleMap {^\ Qualifier merges with another source before gating logic} "A023"
-dict set sgRuleMap {^\ Clock Based User-Defined Qualifier} "A034"
-#dict set sgRuleMap "Generated reset" "B001"
-#dict set sgRuleMap "GeneratedReset" "B001"
-dict set sgRuleMap "Multi-flop reset synchronizer" "B002"
-dict set sgRuleMap "MultiFlop" "B002"
-dict set sgRuleMap "Reset constrained through abstract_port constraint" "B003"
-dict set sgRuleMap "User-Defined reset Synchronizer" "B004"
-dict set sgRuleMap "UDS" "B004"
-dict set sgRuleMap "MissingSynchronizer" "B005"
-#dict set sgRuleMap "" ""
-#dict set sgRuleMap "" ""
-dict set sgRuleMap "Ac_coherency06" "C001"
-dict set sgRuleMap "Ac_conv01" "C002"
-dict set sgRuleMap "Ac_conv02" "C003"
-dict set sgRuleMap "Ac_conv03" "C004"
-dict set sgRuleMap "Ac_conv04" "C005"
-dict set sgRuleMap "Ar_converge01" "C006"
-dict set sgRuleMap "Clock_converge01" "C007"
-dict set sgRuleMap "Clock_glitch05" "C008"
-dict set sgRuleMap "Clock_info01" "C009"
-dict set sgRuleMap "Clock_info03a" "C010"
-dict set sgRuleMap "Clock_info03c" "C011"
-dict set sgRuleMap "Clock_info05" "C012"
-dict set sgRuleMap "Clock_info05b" "C013"
-dict set sgRuleMap "Clock_info05c" "C014"
-dict set sgRuleMap "Setup_blackbox01" "C016"
-dict set sgRuleMap "Setup_check01" "C017"
-dict set sgRuleMap "Setup_clockreset01" "C018"
-dict set sgRuleMap "Setup_port01" "C019"
-dict set sgRuleMap "Clock_info03b" "C020"
-dict set sgRuleMap "Clock_sync05a" "C021"
-dict set sgRuleMap "Clock_sync05" "C026"
-dict set sgRuleMap "Clock_sync06" "C022"
-dict set sgRuleMap "Ac_resetvalue01" "C023"
-dict set sgRuleMap "Reset_info01" "C024"
-dict set sgRuleMap "Reset_info09a" "C025"
-#dict set splitMap "gating_logic" {"AcUnsyncInvalidGate" "AcUnsyncSrcMuxSelPin" "AcUnsyncNoDestMuxDataPin" "AcUnsyncQualMuxDataPin"}
-#dict set splitMap "clock_gating" {"AcSyncCGICLibrary" "AcSyncCGICAutoInferred" "AcSyncCGICUserDefinedCell" "AcSyncCGICUserDefinedQual"}
-####builtIn anon
-dict set sgRuleMap "FalsePathSetup" "D001"
-dict set sgRuleMap "Propagate_Clocks" "D002"
-dict set sgRuleMap "Propagate_Resets" "D003"
-dict set sgRuleMap "SGDCSTX_002" "D004"
-dict set sgRuleMap "SGDCSTX_003" "D006"
-dict set sgRuleMap "SGDCSTX_004" "D007"
-dict set sgRuleMap "SGDCSTX_007" "D008"
-dict set sgRuleMap "SGDCSTX_008" "D009"
-dict set sgRuleMap "SGDCSTX_009" "D010"
-dict set sgRuleMap "SGDCSTX_011" "D011"
-dict set sgRuleMap "SGDCSTX_012" "D012"
-dict set sgRuleMap "SGDCSTX_013" "D013"
-dict set sgRuleMap "SGDCSTX_019" "D014"
-dict set sgRuleMap "SGDCSTX_020" "D015"
-dict set sgRuleMap "SGDCWRN_121" "D016"
-dict set sgRuleMap "SGDCWRN_123" "D017"
-dict set sgRuleMap "SGDC_cdc_false_path01" "D018"
-dict set sgRuleMap "SGDC_cdc_false_path02" "D019"
-dict set sgRuleMap "SGDC_cdc_false_path05" "D020"
-dict set sgRuleMap "SGDC_cdc_false_path06" "D021"
-dict set sgRuleMap "SGDC_cdc_false_path07" "D022"
-dict set sgRuleMap "SGDC_clock01" "D023"
-dict set sgRuleMap "SGDC_qualifier01" "D024"
-dict set sgRuleMap "SGDC_qualifier02a" "D025"
-dict set sgRuleMap "SGDC_qualifier02b" "D026"
-dict set sgRuleMap "SGDC_qualifier02c" "D027"
-dict set sgRuleMap "SGDC_qualifier03a" "D028"
-dict set sgRuleMap "SGDC_qualifier03b" "D029"
-dict set sgRuleMap "SGDC_qualifier03c" "D030"
-dict set sgRuleMap "SGDC_qualifier08" "D031"
-dict set sgRuleMap "SGDC_qualifier09" "D032"
-dict set sgRuleMap "SGDC_qualifier10" "D033"
-dict set sgRuleMap "SGDC_qualifier15" "D034"
-dict set sgRuleMap "SGDC_quasi_static01" "D035"
-dict set sgRuleMap "SGDC_reset01" "D036"
-dict set sgRuleMap "SGDC_reset02" "D037"
-dict set sgRuleMap "SGDC_reset03" "D038"
-dict set sgRuleMap "SGDC_reset04" "D039"
-dict set sgRuleMap "SGDC_reset_synchronizer01" "D040"
-dict set sgRuleMap "SGDC_reset_synchronizer02" "D041"
-dict set sgRuleMap "SGDC_reset_synchronizer03" "D042"
-dict set sgRuleMap "SGDC_reset_synchronizer04" "D043"
-dict set sgRuleMap "SGDC_reset_synchronizer05" "D044"
-dict set sgRuleMap "SGDC_reset_synchronizer06" "D045"
-dict set sgRuleMap "SGDC_reset_synchronizer07" "D046"
-dict set sgRuleMap "SGDC_reset_synchronizer08" "D047"
-dict set sgRuleMap "SGDC_reset_synchronizer10" "D048"
-dict set sgRuleMap "checkSGDC_Together02" "D049"
-dict set sgRuleMap "checkSGDC_nottogether01" "D050"
-dict set sgRuleMap "SGDC_IP_block01" "D051"
-dict set sgRuleMap "SGDC_sync_cell04" "D053"
-dict set sgRuleMap "SGDC_abstract_port01" "D52"
-dict set sgRuleMap "SyncCellSetup" "D54"
-dict set sgRuleMap "SYNTH_5255" "D55"
+echo "========================================================="
+echo "rm -rf ${run_path}/dc_output/{*.pvl,*.mr,*.syn,*.pvk}"
+echo "grep -i will be removed. ${run_path}/dc_output/dc.log >! ${run_path}/dc_output/DC_const.log"
+rm -rf ${run_path}/dc_output/{*.pvl,*.mr,*.syn,*.pvk}
 
+grep -i "will be removed." ${run_path}/dc_output/dc.log >! ${run_path}/dc_output/DC_const.log
+sed -i "s/^Information: The register '\(.*\)'.* will be removed.*/\1/g" ${run_path}/dc_output/DC_const.log	
+#awk 'NR==FNR {lines[$0]=1;next} {if ($0 in lines) print > "PASS.tcl"; else print > "FALL.tcl"}' ${run_path}/dc_output/DC_const.log ${ecdc_const_log}
+echo "---------------------------------------------------Yi Hang Change----------------------------------------------------------------------"
+awk 'NR==FNR {lines[$1]=1;next} {if ($1 in lines) print > "PASS.tcl"; else print > "FALL.tcl"}'${run_path}/dc_output/DC_const.log ${ecdc_const_log}
+echo "---------------------------------------------------Yi Hang Change----------------------------------------------------------------------"
+sed -i 's/^/get_cells  /g' FALL.tcl
+echo "========================"
 
-#####Ar
-dict set arRuleMap "Ar_sync01" AR01
-dict set arRuleMap "Ar_unsync01" AR02
-dict set arRuleMap "Reset_sync02" AR03
-dict set arRuleMap "Reset_sync04" AR04
+ma synthesis/2018.06sp5
+dc_shell -f ${run_path}/dc_flow_2nd.tcl -output_log_file ${run_path}/dc_output/dc_2nd.log
 
-dict set arMsgIdMap "Ar_sync01" {"ArSyncCtrlPath"}
-dict set arMsgIdMap "Ar_unsync01" {"ArUnsyncCtrlPath"}
-dict set arMsgIdMap "Reset_sync02" {"ArUnsyncCtrlPath"}
-dict set arMsgIdMap "Reset_sync04" {"ChyArSyncMultiTimes"}
+set a=`grep "Warning: Can't find object '" ${run_path}/dc_output/cell.log | wc -l`
+#if ($a > 0) then	
+	grep "Warning: Can't find object '" ${run_path}/dc_output/cell.log >! ${run_path}/dc_output/no_found.tcl
+	sed -i "s/'//g" ${run_path}/dc_output/no_found.tcl
+	sed -i 's/Warning: Cant find object/get cells /g' ${run_path}/dc_output/no_found.tcl	
+	sed -i 's/in design.*(UID-95)$//g'${run_path}/dc_output/no_found.tcl
+#endif
 
-#dict set arMsgMap "PortConstraint" "Reset constrained through abstract_port constraint"
-#dict set arMsgMap "MultiFlop" {"(Multi-flop reset synchronizer|MultiFlop\)}"
-#dict set arMsgMap "UDS" {"(User-Defined reset Synchronizer|UDS\)"}
-#dict set arMsgMap "GeneratedReset" {"(Generated reset|GeneratedReset\)}
+set b=`grep "{" ${run_path}/dc_output/cell_none.log | wc -l`
+#if ($b > 0) then
+	grep '{' ${run_path}/dc_output/cell_none.log >! ${run_path}/dc_output/no_opt.tcl
+	sed -i 's/^{/get_attribute \[get_pins  /g' ${run_path}/dc_output/no_opt.tcl
+	sed -i 's/}$/\/D\] constant_value/g' ${run_path}/dc_output/no_opt.tcl
+#endif
 
+if ( ${a} > 0 | ${b} > 0 ) then
+	cd ${run_path}/dc_output
+	ma synthesis/2018.06sp5
+	dc_shell -f ${run_path}/dc_flow_3rd.tcl -output_log_file ${run_path}/dc_output/dc_3rd.log
+	grep "Warning: Can't find object '" ${run_path}/dc_output/no_found.log >! ${run_path}/dc_output/no_found_debug.log	
+	grep "Warning: Attribute 'constant_value' does not exist" ${run_path}/dc_output/no_opt.log >! ${run_path}/dc_output/no_opt_debug.log	
+	sed -i "s/'//g" ${run_path}/dc_output/no_found_debug.log
+	sed -i 's/Warning: Cant find object //g' ${run_path}/dc_output/no_found_debug.log	
+	sed -i 's/in design.*(UID-95)$//g'${run_path}/dc_output/no_found_debug. log
+	sed -i "s/'//g" ${run_path}/dc_output/no_opt_debug.log
+	sed -i 's/Warning: Attribute constant_value does not exist on pin //g' ${run_path}/dc_output/no_opt_debug.log	
+	sed -i 's/\/D. (UID-101)$//g' ${run_path}/dc_output/no_opt_debug.log
+endif
 
-newcount.tcl
-#!/bin/tclsh8.5
+##PV #####
+#sed -i 's/^/'"${topName}"'\//g' ${run_path}/dc_output/PASS.tcl
+sed -i 's/_reg$//g' ${run_path}/dc_output/PASS.tcl
+sed -i 's/_reg\[/\[/g' ${run_path}/dc_output/PASS.tcl
+####SUMMARY DATA###############
+echo "------------------------------------------------------------------------------------------"
+set a=`wc -l ${run_path}/dc_output/PASS.tcl`
+set b=`wc -l ${run_path}/dc_output/no_found_debug. log`
+set c=`wc -l ${run_path}/dc_output/no_opt_debug.log`
+set d=`wc -l ${ecdc_const_log}`
+echo "constant pass num is $a" >! ${run_path}/dc_output/summary_rpt.log
+echo "constant no_found num is $b" >>${run_path}/dc_output/summary_rpt.log
+echo "constant no opt num is $c" >> ${run_path}/dc_output/summary_rpt.log
+echo "constant all constant num is $d" >> ${run_path}/dc_output/summary_rpt.log	
+grep "Total number of instances"${ecdc_log} >> ${run_path}/dc_output/summary_rpt.log
+grep "^start_time" ${run_path}/dc_output/dc.log >> ${run_path}/dc_output/summary_rpt.log	
+grep "^end_time" ${run_path}/dc_output/dc. log >> ${run_path}/dc_output/summary_rpt.log
+echo "------------------------------------------------------------------------------------------"
 
-proc print_help {} {
-    puts "Usage: newcount.tcl \[option\] \[value\]"
-    puts "Options:"
-    puts "-v | -version <value> 	set ECDC version of the result csv file. e.g. 0513"
-    puts "-f | -file <value> 		set the date of the result csv file. e.g. 2024_05_13"
-    puts "-r | -rule <value> 		set the rules list for running. e.g. \"\\ar ac setup\", ac, ar..."
-    puts "-an | -anonymize <value> 	set the flag to: 1 - means anonymize sensitive information, 0 - means no need to anonymize sensitive information. By default 0" 
-    puts "-h print help message"
-}
-#set args [lassign $argv arg]
-for {set i 0} {$i < [llength $argv]} {incr i} {
-    set arg [lindex $argv $i]
-    switch -- $arg {
-        -v {
-            set version [lindex $argv [expr $i + 1]]
-        }
-        -version {
-            set version [lindex $argv [expr $i + 1]]
-        }
-        -f {
-            set file_name [lindex $argv [expr $i + 1]]
-        }
-        -file_name {
-            set file_name [lindex $argv [expr $i + 1]]
-        }
-        -an {
-            set anony [lindex $argv [expr $i + 1]]
-        }
-        -anonymize {
-            set anony [lindex $argv [expr $i + 1]]
-        }
-        -r {
-            set ruleList [string tolower [lindex $argv [expr $i + 1]]]
-        }
-        -rule {
-            set ruleList [string tolower [lindex $argv [expr $i + 1]]]
-        }
-        -h {
-            print_help
-            exit 0
-        }
-        -help {
-            print_help
-            exit 0
-			}
-		}
+set moduleNames=(Hi18XXE Hi1813 LIGHTV300 USBC)
+set genSwitch="0"
+foreach moduleName (${moduleNames})
+	if ( "${GenName}" =~ *"${moduleName}"* )then
+		set genSwitch="1"
+		if ( "${GenName}" =~ *"_split"* )then
+			set topName=`dirname ${run_path}`
+			set topName=`basename ${run_path}`
+		endif
+	endif
+end
+if ( ${genSwitch} == "1" )then	
+	if ( ! -d "${passSavePath}/${GenName}" )then
+		mkdir ${passSavePath}/${GenName}
+		chmod +775 ${passSavePath}/${GenName}
+	endif
+	echo "lastTopName: ${lastTopName}"
+	echo "TopName: ${topName}"
+	if ( ${lastTopName} == "0" )then
+		if ( ! -d "${passSavePath}/${GenName}/${topName}" )then
+			mkdir ${passSavePath}/${GenName}/${topName}	
+			chmod +775 ${passSavePath}/${GenName}/${topName}
+		endif
+		yes | cp ${run_path}/dc_output/PASS. tcl ${passSavePath}/${GenName}/${topName}/${GenName}-${topName}-PASS.tcl
+		chmod +775 ${passSavePath}/${GenName}/${topName}/${GenName}-${topName}-PASS.tcl
+	else
+		if ( ! -d "${passSavePath}/${GenName}/${lastTopName}" )then
+			mkdir ${passSavePath}/${GenName}/${lastTopName}
+			chmod +775 ${passSavePath}/${GenName}/${lastTopName}
+		endif
+		if ( ! -d "${passSavePath}/${GenName}/${lastTopName}/${topName}" )then
+			mkdir ${passSavePath}/${GenName}/${lastTopName}/${topName}
+			chmod +775 ${passSavePath}/${GenName}/${lastTopName}/${topName}
+		endif
+		yes | cp ${run_path}/dc_output/PASS.tcl ${passSavePath}/${GenName}/${lastTopName}/${topName}/${GenName}-${lastTopName}-${topName}-PASS.tcl
+		chmod +775 ${passSavePath}/${GenName}/${lastTopName}/${topName}/${GenName}-${lastTopName}-${topName}-PASS.tcl
+	endif
+endif
+
++++++++dcFiles/dc_flow.tcl+++++++
+echo "start_time is:[clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]"
+set_host_option -max 8
+set design #TopName
+set curExePath #Current_exec_path
+set_app_var compile_enable_register_merging false
+set compile_delete_unloaded_sequential_cells {true}
+set compile_seqmap_propagate_constants {true}
+set target_library "/foundry/kuorong/HiPDSLib/RE-K_LIBRARY/tsmc/N7/STDCELL/REK_V1.2/tcbn07_bwph240l11p57pd_base_svt_130b_h/timing_power_noise/CCS/tcbn07_bwph240l11p57pd_base_svt_130a/tcbn07_bwph240l11p57pd_base_svtssgnp_0p675v_m40c_cworst_CCworst_T_ccs.db"
+set link_library $target_library
+set HIUSBC3XV100_DESIGN_ROOT "/tmpdata/ranwu_staff_3/benchmark/hiusb3xv100/rtl/hdl"
+set designFile #Design_flist
+if {[regexp {\.f} ${designFile}]} {
+    analyze -format sverilog -vcs "-f ${designFile}"
+} else {
+    analyze -format sverilog -vcs "${designFile}"
 }
 
-if {![info exists version]} {
-    puts "Please input \[version\] according to the help messages\n"
-    print_help
-    exit 0
-}
-if {![info exists file_name]} {
-    puts "Please input \[date\] according to the help messages\n"
-    print_help
-    exit 0
-}
-if {![info exists anony]} {
-    puts "No anonymization flag is set, use the default value 0 - means no need to anonymize sensitive information\n"
-    set anony 0
-}
-#set ruleList {AC AR SETUP}
-#set ruleList {AC}
-set ac_csv $file_name
-set ar_csv $file_name
-set setup_csv $file_name
-set builtin_csv $file_name
-set cur_dir [file dirname [info script]]
-source "/tmpdata/ranwu_staff_3/yWX1311860/workspace/bin/script/main.tcl"
-source "$cur_dir/mapdict.tcl"
-set csh_dir "$cur_dir/new_count_csv.sh"
-set csv "csv_summary.csv"
-set output "CDC_V${version}_date[clock format [clock seconds] -format "%m%d"].csv"
-##set tags "2 3 4 5 6 8 9"
-set tags "7"
-set reasons_need_tell_rules {"MultiFlop" "MissingSynchronizer"}
-proc clean_env {fileNameList} {
-    foreach fileName $fileNameList {
-        catch {exec ls | grep $fileName} result
-        if {![regexp "child process exited abnormally" $result]} {
-            set ret [file delete $result]
-            if {$ret eq ""} {
-                puts "delete file $fileName"
-            } else {
-                puts "failed to delete file $fileName"
-            }
-        }
-    }
-}
-proc unique_e_reasons {e_reasons return_list} {
-	upvar $return_list in_return_list
-    foreach reason $e_reasons {
-        if {[lsearch -exact $in_return_list $reason] eq -1} {
-            lappend in_return_list $reason
-        }
-    }
-}
+elaborate $design
 
-proc get_sg_reasons_count_dict {sg_reasons data_csv sg_reason_count_dict} {
-    upvar $sg_reason_count_dict reason_count_dict
-    foreach reason $sg_reasons {
-        set s_total 0
-        set s_missing 0
-        #set s_match 0
-        #set s_pass 0
-        set i 1
-        while {$i < 10} {
-            set s_mark_$i 0
-            set i [expr $i + 1]
-        }
-        catch {exec grep $reason $data_csv} grep_lines
-		if {![regexp {child process exited abnormally} $grep_lines]} {
-            set lines [split $grep_lines "\n"]
-            foreach line $lines {
-                set columns [split $line ","]
-                set s_reason [lindex $columns 0]
-                set s_total [lindex $columns 1]
-                set s_missing [lindex $columns 2]
-                #set s_match [lindex $columns 3]
-                #set s_pass [lindex $columns 4]
-                set s_mark_1 [lindex $columns 7]
-                set s_mark_2 [lindex $columns 8]
-                set s_mark_3 [lindex $columns 9]
-                set s_mark_4 [lindex $columns 10]
-                set s_mark_5 [lindex $columns 11]
-                set s_mark_6 [lindex $columns 12]
-                set s_mark_7 [lindex $columns 13]
-                set s_mark_8 [lindex $columns 14]
-                set s_mark_9 [lindex $columns 15]
-                dict set tmp_dict total $s_total
-                dict set tmp_dict missing $s_missing
-#                dict set tmp_dict match $s_match
-#                dict set tmp_dict pass $s_pass
-                dict set tmp_dict s_mark_1 $s_mark_1
-                dict set tmp_dict s_mark_2 $s_mark_2
-                dict set tmp_dict s_mark_3 $s_mark_3
-				dict set tmp_dict s_mark_4 $s_mark_4
-				dict set tmp_dict s_mark_5 $s_mark_5
-				dict set tmp_dict s_mark_6 $s_mark_6
-				dict set tmp_dict s_mark_7 $s_mark_7
-				dict set tmp_dict s_mark_8 $s_mark_8
-				dict set tmp_dict s_mark_9 $s_mark_9
-				dict set reason_count_dict $reason $s_reason $tmp_dict
-			}
-		} else {
-			dict set tmp_dict total 0
-			dict set tmp_dict missing 0
-#			dict set tmp_dict match 0
-#			dict set tmp_dict pass 0
-			dict set tmp_dict s_mark_1 0
-			dict set tmp_dict s_mark_2 0
-			dict set tmp_dict s_mark_3 0
-			dict set tmp_dict s_mark_4 0
-			dict set tmp_dict s_mark_5 0
-			dict set tmp_dict s_mark_6 0
-			dict set tmp_dict s_mark_7 0
-			dict set tmp_dict s_mark_8 0
-			dict set tmp_dict s_mark_9 0
-			dict set reason_count_dict $reason $reason $tmp_dict
+source -echo -verbose "#DC_sdc"
+write_file -format ddc -hierarchy -output ${curExePath}/${design}_link.ddc
+
+compile -map_effort low
+
+write_file -format ddc -hierarchy -output ${curExePath}/${design}_low.ddc
+compile -map_effort medium -ungroup_all -incremental_mapping
+write_file -format ddc -hierarchy -output ${curExePath}/${design}_medium.ddc
+compile -map_effort high -ungroup_all -incremental_mapping
+write_file -format ddc -hierarchy -output ${curExePath}/${design}_high.ddc
+compile -map_effort high -ungroup_all -incremental_mapping -area_effort high -boundary_optimization
+write_file -format ddc -hierarchy -output ${curExePath}/${design}_high_opt.ddc
+compile_ultra -incremental
+
+write_file -format ddc -hierarchy -output ${curExePath}/${design}_ultra.ddc
+check_design -designs > ${design}_bbox.log
+
+echo "end_time is:[clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]"
+exit
++++++++++dcFiles/dc_flow_2nd.tcl+++++++++++++++++++++++++++++++++++++++++++
+set run_path #run_path
+set topName #TopName
+read_ddc ${run_path}/${topName}_low.ddc
+source -echo -verbose "${run_path}/FALL.tcl" > ${run_path}/cell.log
+read_ddc ${run_path}/${topName}_ultra.ddc
+source -echo -verbose "${run_path}/FALL.tcl" > ${run_path}/cell_none.log
+exit
++++++++++++dc_flow_3rd.tcl++++++++++++++
+set run_path #run_path
+set topName #TopName
+read_ddc ${run_path}/dc_output/${topName}_link.ddc
+source -echo -verbose ${run_path}/dc_output/no_found.tcl > ${run_path}/dc_output/no_found.log
+read_ddc ${run_path}/dc_output/${topName}_ultra.ddc
+source -echo -verbose ${run_path}/dc_output/no_opt.tcl > ${run_path}/dc_output/no_opt.log
+exit
+
++++++++++cdc_const_DC.tcl++++++++++
+set allMsg [get_messages -message_id SetupDataTiedToConst]
+foreach msg $allMsg {
+	set constValue [get_attributes $msg -attribute Instance1 -attribute String3]
+	if [llength $constValue] == 2 } {
+		puts "[lindex $constValue 0]_reg"
+	} else {
+		set constValue [get_attributes $msg -attribute InstanceList1 -attribute String3]
+		if [llength $constValue] == 2 } {
+			puts "[lindex $constValue 0]_reg"
 		}
 	}
 }
-
-proc get_enno_reasons_count_dict {enno_lines data_csv enno_reason_count_dict} {
-    upvar $enno_reason_count_dict reason_count_dict
-    set reason_count_dict {}
-    set tmp_dict {}
-    set total 0
-    set false 0
-    set match 0
-    set pass 0
-    set rate 0
-    set rate_without_issue 0
-    set i 1
-    while {$i < 10} {
-        set e_mark_$i 0
-        set i [expr $i + 1]
-    }
-    set enno_lines [split $enno_lines "\n"]
-    foreach line $enno_lines {
-        set columns [split $line ","]
-        set e_reason_list [lindex $columns 0]
-		set total [lindex $columns 1]
-		set false [lindex $columns 2]
-		set match [lindex $columns 3]
-		set pass [lindex $columns 4]
-		set e_mark_1 [lindex $columns 7]
-		set e_mark_2 [lindex $columns 8]
-		set e_mark_3 [lindex $columns 9]
-		set e_mark_4 [lindex $columns 10]
-		set e_mark_5 [lindex $columns 11]
-		set e_mark_6 [lindex $columns 12]
-		set e_mark_7 [lindex $columns 13]
-		set e_mark_8 [lindex $columns 14]
-		set e_mark_9 [lindex $columns 15]
-		foreach e_reason $e_reason_list {
-			if {[dict exists $reason_count_dict $e_reason]} {
-				set attributes [dict get $reason_count_dict $e_reason]
-				dict set tmp_dict total [expr $total + [dict get $attributes total]]
-				dict set tmp_dict false [expr $false + [dict get $attributes false]]
-				dict set tmp_dict match [expr $match + [dict get $attributes match]]
-				dict set tmp_dict pass [expr $pass + [dict get $attributes pass]]
-				set i 1
-				while {$i < 10} {
-					dict set tmp_dict e_mark_$i [expr [set e_mark_$i] + [dict get $attributes e_mark_$i]]
-					set i [expr $i + 1]
-				}
-			} else {
-				dict set tmp_dict total $total
-				dict set tmp_dict false $false
-				dict set tmp_dict match $match
-				dict set tmp_dict pass $pass
-				dict set tmp_dict rate $rate
-				set i 1
-				while {$i < 10} {
-					dict set tmp_dict e_mark_$i [set e_mark_$i]
-					set i [expr $i + 1]
-				}
-			}
-			if {[dict get $tmp_dict total] ne 0} {
-				dict set tmp_dict rate [expr {round(double([dict get $tmp_dict false]) / double([dict get $tmp_dict total]) * 10000) / 100.0}]
-			}
-			dict set reason_count_dict $e_reason $tmp_dict
-		}
-	}
-}
-
-proc write_ac_v2_data {data_csv output_csv enno_msg} {
-    set e_rule ""
-    set s_rule ""
-    set e_total 0
-    set e_false 0
-    set e_match 0
-    set e_pass 0
-    set e_rate 0
-    set e_rate_without_issue 0
-	
-    set sTotal_all 0
-    set s_missing_all 0
-    set s_missing_issue_all 0
-    set missing_rate_all 0
-    set missing_rate_without_issue_all 0
-    set eTotal_all 0
-    set e_false_all 0
-    set e_false_issue_all 0
-    set false_rate_all 0
-    set false_rate_without_issue_all 0
-	
-    set reason_dict [concat $::reasonSync $::reasonUnsync $::reasonNosync]
-    set sg_reasons [dict keys $reason_dict]
-    set e_reasons [dict values $reason_dict]
-    set enno_reasons {}
-    unique_e_reasons $e_reasons enno_reasons
-    set sg_reason_count_dict {}
-    set enno_reason_count_dict {}
-    get_sg_reasons_count_dict $sg_reasons $data_csv sg_reason_count_dict
-    get_enno_reasons_count_dict $enno_msg $data_csv enno_reason_count_dict
-    if {$sg_reason_count_dict ne {}} {
-        foreach {s_reason_pattern s_reason_dict} $sg_reason_count_dict {
-            set s_total 0
-            set s_missing 0
-#            set s_match 0
-#            set s_pass 0
-            set s_rate 0
-            set s_rate_without_issue 0
-            #set s_rate_without_const 0
-            set i 1
-            while {$i < 10} {
-                set s_mark_$i 0
-                incr i
-            }
-            foreach {s_reason s_count} $s_reason_dict {
-                set s_total [expr $s_total + [dict get $s_count total]]
-                set s_missing [expr $s_missing + [dict get $s_count missing]]
-				
-#				set s_match [expr $s_match + [dict get $s_count match]]
-#				set s_pass [expr $s_pass + [dict get $s_count pass]]
-				set i 1
-				while {$i < 10} {
-					set s_mark_$i [expr [dict get $s_count s_mark_$i] + [set s_mark_${i}]]
-					set i [expr $i + 1]
-				}
-				set sTotal_all [expr $sTotal_all + $s_total]
-				set s_missing_all [expr $s_missing_all + $s_missing - $s_mark_5]
-				set s_missing_issue_all [expr $s_missing_issue_all + $s_mark_1 + $s_mark_2]
-				}
-				if {$s_total ne 0} {
-					set s_rate [expr {round(double($s_missing - $s_mark_5) / double($s_total) * 10000) / 100.0}]
-					set s_rate_without_issue [expr {round(double($s_missing - $s_mark_1-$s_mark_2 - $s_mark_5) / double($s_total) * 10000) / 100.0}]
-					#set s_rate_without_const [expr {round(double($s_missing - $s_mark_2 - $s_mark_5) / double($s_total) * 10000) / 100.0}]
-				}
-				set s_rate "$s_rate%"
-				set s_rate_without_issue "$s_rate_without_issue%"
-				#set s_rate_without_const "$s_rate_without_const%"
-				if {[dict exists $reason_dict $s_reason_pattern]} {
-					set e_reason [dict get $reason_dict $s_reason_pattern]
-					if {[dict exists $enno_reason_count_dict $e_reason]} {
-						set e_count [dict get $enno_reason_count_dict $e_reason]
-						set e_total [dict get $e_count total]
-						set e_false [dict get $e_count false]
-						set e_match [expr [dict get $e_count match] + [dict get $e_count pass]]
-#						set e_pass [dict get $e_count pass]
-						set e_rate [dict get $e_count rate]
-						set e_rate_without_issue 0
-						#set e_rate_without_const 0
-						set i 1
-						while {$i < 10} {
-							set e_mark_$i [dict get $e_count e_mark_$i]
-							set i [expr $i + 1]
-						}
-						set eTotal_all [expr $e_total + $eTotal_all]
-						set e_false_all [expr $e_false_all + $e_false - $e_mark_5]
-						set e_false_issue_all [expr $e_false_issue_all +$e_mark_1 + $e_mark_2]
-						if {$e_total ne 0} {
-							set e_rate [expr {round(double($e_false - $e_mark_5) / double($e_total) * 10000) / 100.0}]
-							set e_rate_without_issue [expr {round(double($e_false - $e_mark_1 - $e_mark_2 - $e_mark_5) / double($e_total) * 10000) / 100.0}]
-						}
-						dict unset enno_reason_count_dict $e_reason
-					} else {
-						set e_count 0
-						set e_total 0
-						set e_false 0
-						set e_match 0  
-						set e_pass 0  
-						set e_rate 0  
-						set e_rate_without_issue 0  
-						#set e_rate_without_const 0  
-						set i 1  
-						while {$i < 10} {  
-							set e_mark_$i 0  
-							incr i  
-						}
-					}
-						set e_rate "$e_rate%"  
-						set e_rate_without_issue "$e_rate_without_issue%"  
-						#set e_rate_without_const "$e_rate_without_const%"  
-						} else {  
-							set e_total ""  
-							set e_false ""  
-							set e_match ""  
-							set e_pass ""  
-							set e_rate ""  
-							set e_rate_without_issue ""  
-							#set e_rate_without_const ""  
-							set i 1  
-							while {$i < 10} {  
-								set e_mark_$i ""  
-								set i [expr $i + 1]  
-							}
-						}
-						if {$e_reason ne ""} {  
-							set e_rule [dict get $::ennoRuleMap $e_reason]  
-							set s_rule [dict get $::sgRuleMap $s_reason_pattern]  
-							if {[lsearch $::reasons_need_tell_rules $e_reason] ne -1} {  
-								set e_rule "Ac$e_rule"  
-							}  
-						}  
-						if {$::anony} {  
-							set enno $e_rule  
-							set sg $s_rule  
-						} else {  
-							set enno $e_reason  
-							set sg $s_reason_pattern  
-						}  
-						write_to_file $output_csv "$enno,$sg,$s_total,$e_total,$e_match,$s_missing,$e_false,$s_rate,$e_rate,$s_rate_without_issue,$e_rate_without_issue,$s_mark_1,$s_mark_5,$s_mark_7,$e_mark_1,$e_mark_5,$e_mark_7"  
-						} 
-					}
-					if {$enno_reason_count_dict ne {}} {  
-						foreach {e_reason e_count} $enno_reason_count_dict {  
-								set e_total [dict get $e_count total]
-								set e_false [dict get $e_count false]
-								set e_match [dict get $e_count match]
-								set e_pass [dict get $e_count pass]
-								set e_rate [dict get $e_count rate]
-								if {$e_total ne 0} {
-									set e_rate [expr {round(double($e_false - $e_mark_5) / double($e_total) * 10000) / 100.0}]
-									set e_rate_without_issue [expr {round(double($e_false - $e_mark_1 - $e_mark_5) / double($e_total) * 10000) / 100.0}]
-								}
-								set e_rate "$e_rate%"
-								set e_rate_without_issue "$e_rate_without_issue"
-								if {$e_reason ne ""} {
-									set e_rule [dict get $::ennoRuleMap $e_reason]
-									foreach {k v} $reason_dict {
-										if {$v eq $e_reason} {
-											set s_reason $k
-											break
-										}
-									}
-									set s_rule [dict get $::sgRuleMap $s_reason]
-								}
-								if {$::anony} {
-									set enno $e_rule
-									set sg $s_rule
-								} else {
-									set enno $e_reason
-									set sg $s_reason
-								}
-								write_to_file $output_csv "$enno,$sg,,$e_total,[expr $e_match + $e_pass],,$e_false,,$e_rate,,$e_rate_without_issue"
-							}
-						}
-						if {$sTotal_all ne 0} {
-							set missing_rate_all [expr {round(double($s_missing_all) / double($sTotal_all) * 10000) / 100.0}]
-							set missing_rate_without_issue_all [expr {round(double($s_missing_all - $s_missing_issue_all) / double($sTotal_all) * 10000) / 100.0}]
-						}
-						if {$eTotal_all ne 0} {
-							set false_rate_all [expr {round(double($e_false_all) / double($eTotal_all) * 10000) / 100.0}]
-							set false_rate_without_issue_all [expr {round(double($e_false_all - $e_false_issue_all) / double($eTotal_all) * 10000) / 100.0}]
-						}
-						set missing_rate_all "$missing_rate_all%"
-						set false_rate_all "$false_rate_all%"
-						set missing_rate_without_issue_all "$missing_rate_without_issue_all%"
-						set false_rate_without_issue_all "$false_rate_without_issue_all%"
-						write_to_file $output_csv ",,,,,,,$missing_rate_all,$false_rate_all,$missing_rate_without_issue_all,$false_rate_without_issue_all,,,,,,"
-}
-
-proc write_setup_data {data_csv output_csv {sg_msg ""}} {
-    set sg_flag 1
-    if {$sg_msg eq ""} {
-        set sg_msg [dict keys $::setupMsgIdMap]
-        set sg_flag 0
-    }
-    set sTotal_all 0
-    set eTotal_all 0
-    set s_missing_all 0
-    set e_false_all 0
-    set s_missing_issue_all 0
-    set e_false_issue_all 0
-    set missing_rate_all 0
-    set false_rate_all 0
-    set missing_rate_without_issue_all 0
-    set missing_rate_without_issue 0
-    set false_rate_without_issue_all 0
-    foreach sMsg $sg_msg {
-        if {$sg_flag} {
-            set sRule [lindex [split $sMsg ","] 0]
-        } else {
-            set sRule $sMsg
-        }
-        #if {"Ac_conv02" eq $sRule} {
-        #    continue
-        #}
-        set sTotal 0
-        set sMissing 0
-        set missing_rate 0
-        set missing_rate_without_issue 0
-        set i 1
-        while {$i < 10} {
-            set s_mark_$i 0
-            set i [expr $i + 1]
-        }
-        set eMsgIds [dict get $::setupMsgIdMap $sRule]
-        set flag 1
-        if {[dict exists $::setupMsgIdMap $sRule]} {
-            foreach eId $eMsgIds {
-                set eTotal 0
-                set eFalse 0
-                set false_rate 0
-                set false_rate_without_issue 0
-                set match 0
-                set i 1
-                while {$i < 10} {
-					set e_mark_$i 0  
-					set i [expr $i + 1]  
-				}  
-				#puts "Enno message Id: $eId"  
-				set eRule [dict get $::ennoRuleMap $eId]  
-				catch {exec grep $eId $data_csv} eLine  
-				catch {exec grep "^$sRule," $data_csv} sLine  
-				if {[regexp {child process exited abnormally} $sLine] && [regexp {child process exited abnormally} $eLine]} {  
-					continue  
-				} else {  
-					if {[regexp "child process exited abnormally" $eLine]} {  
-						set eTotal 0  
-						set eFalse 0  
-						set false_rate 0  
-						set false_rate_without_issue 0  
-						set match 0  
-						set i 1  
-						while {$i < 10} {  
-							set e_mark_$i ""  
-							set i [expr $i + 1]  
-						}  
-					} else {  
-						set eList [split $eLine ","]  
-						set eTotal [lindex $eList 1]  
-						set eFalse [lindex $eList 2]  
-						set match [expr $eTotal - $eFalse]  
-						set e_mark_1 [lindex $eList 6]  
-						set e_mark_2 [lindex $eList 7]  
-						set e_mark_3 [lindex $eList 8]  
-						#set e_mark_4 [lindex $eList 9]  
-						set e_mark_5 [lindex $eList 10]  
-						#set e_mark_6 [lindex $eList 11]  
-						set e_mark_7 [lindex $eList 12]  
-						#set e_mark_8 [lindex $eList 13]  
-						#set e_mark_9 [lindex $eList 14]  
-						set eTotal_all [expr $eTotal + $eTotal_all]  
-						set e_false_all [expr $e_false_all + $eFalse - $e_mark_5]  
-						set e_false_issue_all [expr $e_false_issue_all + $e_mark_1 + $e_mark_2 + $e_mark_3]  
-						if {$eTotal ne 0} {  
-							set false_rate [expr {round(double($eFalse - $e_mark_5) / double($eTotal) * 10000) / 100.0}]  
-							set false_rate_without_issue [expr {round(double($eFalse-$e_mark_1-$e_mark_2-$e_mark_5-$e_mark_3) / double($eTotal) * 10000) / 100.0}]  
-						}  
-						#set false_rate "$false_rate%"  
-					}  
-				if {$flag} {  
-					if {[regexp {child process exited abnormally} $sLine]} {  
-						set sTotal 0
-						set sMissing 0  
-						set missing_rate 0  
-						set missing_rate_without_issue 0  
-						set i 1  
-						while {$i < 10} {  
-							set s_mark_$i 0  
-							set i [expr $i + 1]  
-						}  
-						} else {  
-							set lines [split $sLine "\n"]  
-							foreach line $lines {  
-								set sLineList [split $line ","]  
-								set sTotal [lindex $sLineList 1]  
-								set sMissing [lindex $sLineList 2]  
-								set s_mark_1 [lindex $sLineList 5]  
-								set s_mark_2 [expr $s_mark_2 + [lindex $sLineList 6]]  
-								set s_mark_3 [expr $s_mark_3 + [lindex $sLineList 7]]  
-								#set s_mark_4 [expr $s_mark_4 + [lindex $sLineList 8]]  
-								set s_mark_5 [lindex $sLineList 9]  
-								#set s_mark_6 [expr $s_mark_6 + [lindex $sLineList 10]]  
-								set s_mark_7 [lindex $sLineList 11]  
-								#set s_mark_8 [expr $s_mark_8 + [lindex $sLineList 12]]  
-								#set s_mark_9 [expr $s_mark_9 + [lindex $sLineList 13]]  
-								set sTotal_all [expr $sTotal_all + $sTotal]  
-								set s_missing_all [expr $s_missing_all + $sMissing - $s_mark_5]  
-								set s_missing_issue_all [expr $s_missing_issue_all + $s_mark_1 + $s_mark_2 + $s_mark_3]  
-							}  
-							if {$sTotal ne 0} {  
-								set missing_rate [expr {round(double($sMissing - $s_mark_5) / double($sTotal) * 10000) / 100.0}]  
-								set missing_rate_without_issue [expr {round(double($sMissing- $s_mark_1-$s_mark_2 - $s_mark_5 - $s_mark_3) / double($sTotal) * 10000) / 100.0}]  
-							}
-							}
-							set sRulePattern [dict get $::sgRuleMap $sRule]  
-							set flag 0  
-						} else {  
-							set sTotal 0  
-							set sMissing 0  
-							set missing_rate 0  
-							set missing_rate_without_issue 0  
-							set i 1  
-							while {$i < 10} {  
-								set s_mark_$i 0  
-								set i [expr $i + 1]  
-							}  
-						}  
-						set eRule [dict get $::ennoRuleMap $eId]
-						if {$sTotal eq "" && $eTotal eq ""} {
-							continue
-						}
-						if {$::anony} {
-							set enno $eRule
-							set sg $sRulePattern
-						} else {
-							set enno $eId
-							set sg $sRule
-						}
-						set missing_rate "$missing_rate%"
-						set false_rate "$false_rate%"
-						set missing_rate_without_issue "$missing_rate_without_issue%"
-						set false_rate_without_issue "$false_rate_without_issue%"
-						write_to_file $output_csv "$enno,$sg,$sTotal,$eTotal,$match,$sMissing,$eFalse,$missing_rate,$false_rate,$missing_rate_without_issue,$false_rate_without_issue,$s_mark_1,$s_mark_5,$s_mark_7,$e_mark_1,$e_mark_5,$e_mark_7"
-						}
-					}
-				}
-			}
-			if {$sTotal_all ne 0} {
-				set missing_rate_all [expr {round(double($s_missing_all) / double($sTotal_all) * 10000) / 100.0}]
-				set missing_rate_without_issue_all [expr {round(double($s_missing_all - $s_missing_issue_all) / double($sTotal_all) * 10000) / 100.0}]
-			}
-			if {$eTotal_all ne 0} {
-				set false_rate_all [expr {round(double($e_false_all) / double($eTotal_all) * 10000) / 100.0}]
-				set false_rate_without_issue_all [expr {round(double($e_false_all - $e_false_issue_all) / double($eTotal_all) * 10000) / 100.0}]
-			}
-			set missing_rate_all "$missing_rate_all%"
-			set false_rate_all "$false_rate_all%"
-			set missing_rate_without_issue_all "$missing_rate_without_issue_all%"
-			set false_rate_without_issue_all "$false_rate_without_issue_all%"
-write_to_file $output_csv ",,,,,,,$missing_rate_all,$false_rate_all,$missing_rate_without_issue_all,$false_rate_without_issue_all,,,,,,"
-}
-
-proc write_builtin_data {data_csv output_csv {sg_msg ""}} {
-    set sg_flag 1
-    if {$sg_msg eq ""} {
-        set sg_msg [dict keys $::builtinMsgIdMap]
-        set sg_flag 0
-    }
-    set sTotal_all 0
-    set eTotal_all 0
-    set s_missing_all 0
-    set e_false_all 0
-    set s_missing_issue_all 0
-    set e_false_issue_all 0
-    set missing_rate_all 0
-    set false_rate_all 0
-    set missing_rate_without_issue_all 0
-    set missing_rate_without_issue 0
-    set false_rate_without_issue_all 0
-    foreach sMsg $sg_msg {
-        if {$sg_flag} {
-            set sRule [lindex [split $sMsg ","] 0]
-        } else {
-            set sRule $sMsg
-        }
-		
-        set sTotal 0
-        set sMissing 0
-        set missing_rate 0
-        set missing_rate_without_issue 0
-        set i 1
-        while {$i < 10} {
-            set s_mark_$i 0
-            set i [expr $i + 1]
-        }
-        set eMsgIds [dict get $::builtinMsgIdMap $sRule]
-        set flag 1
-        if {[dict exists $::builtinMsgIdMap $sRule]} {
-            foreach eId $eMsgIds {
-                set eTotal 0
-                set eFalse 0
-                set false_rate 0
-                set false_rate_without_issue 0
-                set match 0
-                set i 1
-                while {$i < 10} {
-					set e_mark_$i 0  
-					set i [expr $i + 1]  
-				}  
-				#puts "Enno message Id: $eId"  
-				set eRule [dict get $::ennoRuleMap $eId]  
-				catch {exec grep $eId $data_csv} eLine  
-				catch {exec grep "^$sRule," $data_csv} sLine  
-				if {[regexp {child process exited abnormally} $sLine] && [regexp {child process exited abnormally} $eLine]} {  
-					continue  
-				} else {  
-					if {[regexp "child process exited abnormally" $eLine]} {  
-						set eTotal 0  
-						set eFalse 0  
-						set false_rate 0  
-						set false_rate_without_issue 0  
-						set match 0  
-						set i 1  
-						while {$i < 10} {  
-							set e_mark_$i ""  
-							set i [expr $i + 1]  
-						}  
-					} else {  
-						set eList [split $eLine ","]  
-						set eTotal [lindex $eList 1]  
-						set eFalse [lindex $eList 2]  
-						set match [expr $eTotal - $eFalse]  
-						set e_mark_1 [lindex $eList 6]  
-						set e_mark_2 [lindex $eList 7]  
-						#set e_mark_3 [lindex $eList 8]  
-						#set e_mark_4 [lindex $eList 9]  
-						set e_mark_5 [lindex $eList 10]  
-						#set e_mark_6 [lindex $eList 11]  
-						set e_mark_7 [lindex $eList 12]  
-						#set e_mark_8 [lindex $eList 13]  
-						#set e_mark_9 [lindex $eList 14]  
-						set eTotal_all [expr $eTotal + $eTotal_all]  
-						set e_false_all [expr $e_false_all + $eFalse - $e_mark_5]  
-						set e_false_issue_all [expr $e_false_issue_all + $e_mark_1 + $e_mark_2]  
-						if {$eTotal ne 0} {  
-							set false_rate [expr {round(double($eFalse - $e_mark_5) / double($eTotal) * 10000) / 100.0}]  
-							set false_rate_without_issue [expr {round(double($eFalse-$e_mark_1-$e_mark_2-$e_mark_5) / double($eTotal) * 10000) / 100.0}]  
-						}  
-						#set false_rate "$false_rate%"  
-					}  
-				}  
-				if {$flag} {  
-					if {[regexp {child process exited abnormally} $sLine]} {  
-						set sTotal 0
-						set sMissing 0  
-						set missing_rate 0  
-						set missing_rate_without_issue 0  
-						set i 1  
-						while {$i < 10} {  
-							set s_mark_$i 0  
-							set i [expr $i + 1]  
-						}  
-						} else {  
-							set lines [split $sLine "\n"]  
-							foreach line $lines {  
-								set sLineList [split $line ","]  
-								set sTotal [expr $sTotal + [lindex $sLineList 1]]
-								set sMissing [expr $sMissing + [lindex $sLineList 2]]
-								set s_mark_1 [expr $s_mark_1 + [lindex $sLineList 5]]
-								set s_mark_2 [expr $s_mark_2 + [lindex $sLineList 6]]  
-								set s_mark_3 [expr $s_mark_3 + [lindex $sLineList 7]]  
-								#set s_mark_4 [expr $s_mark_4 + [lindex $sLineList 8]]  
-								set s_mark_5 [expr $s_mark_5 + [lindex $sLineList 9]]
-								#set s_mark_6 [expr $s_mark_6 + [lindex $sLineList 10]]  
-								set s_mark_7 [expr $s_mark_7 + [lindex $sLineList 11]]
-								#set s_mark_8 [expr $s_mark_8 + [lindex $sLineList 12]]  
-								#set s_mark_9 [expr $s_mark_9 + [lindex $sLineList 13]]  
-								set sTotal_all [expr $sTotal_all + $sTotal]  
-								set s_missing_all [expr $s_missing_all + $sMissing - $s_mark_5]  
-								set s_missing_issue_all [expr $s_missing_issue_all + $s_mark_1 + $s_mark_2]  
-							}  
-							if {$sTotal ne 0} {  
-								set missing_rate [expr {round(double($sMissing - $s_mark_5) / double($sTotal) * 10000) / 100.0}]  
-								set missing_rate_without_issue [expr {round(double($sMissing- $s_mark_1-$s_mark_2 - $s_mark_5) / double($sTotal) * 10000) / 100.0}]
-								}
-							}  
-							set sRulePattern [dict get $::sgRuleMap $sRule]  
-							set flag 0  
-						} else {  
-							set sTotal 0  
-							set sMissing 0  
-							set missing_rate 0  
-							set missing_rate_without_issue 0  
-							set i 1  
-							while {$i < 10} {  
-								set s_mark_$i 0  
-								set i [expr $i + 1]  
-							}  
-						}  
-						set eRule [dict get $::ennoRuleMap $eId]
-						if {$sTotal eq "" && $eTotal eq ""} {
-							continue
-						}
-						if {$::anony} {
-							set enno $eRule
-							set sg $sRulePattern
-						} else {
-							set enno $eId
-							set sg $sRule
-						}
-						set missing_rate "$missing_rate%"
-						set false_rate "$false_rate%"
-						set missing_rate_without_issue "$missing_rate_without_issue%"
-						set false_rate_without_issue "$false_rate_without_issue%"
-						write_to_file $output_csv "$enno,$sg,$sTotal,$eTotal,$match,$sMissing,$eFalse,$missing_rate,$false_rate,$missing_rate_without_issue,$false_rate_without_issue,$s_mark_1,$s_mark_5,$s_mark_7,$e_mark_1,$e_mark_5,$e_mark_7"
-						}
-					}
-				}
-			}
-			if {$sTotal_all ne 0} {
-				set missing_rate_all [expr {round(double($s_missing_all) / double($sTotal_all) * 10000) / 100.0}]
-				set missing_rate_without_issue_all [expr {round(double($s_missing_all - $s_missing_issue_all) / double($sTotal_all) * 10000) / 100.0}]
-			}
-			if {$eTotal_all ne 0} {
-				set false_rate_all [expr {round(double($e_false_all) / double($eTotal_all) * 10000) / 100.0}]
-				set false_rate_without_issue_all [expr {round(double($e_false_all - $e_false_issue_all) / double($eTotal_all) * 10000) / 100.0}]
-			}
-			set missing_rate_all "$missing_rate_all%"
-			set false_rate_all "$false_rate_all%"
-			set missing_rate_without_issue_all "$missing_rate_without_issue_all%"
-			set false_rate_without_issue_all "$false_rate_without_issue_all%"
-			write_to_file $output_csv ",,,,,,,$missing_rate_all,$false_rate_all,$missing_rate_without_issue_all,$false_rate_without_issue_all,,,,,,"
-}
-
-proc write_ar_data {data_csv output_csv {sg_msg ""}} {
-    set sg_flag 1
-    if {$sg_msg eq ""} {
-        set sg_msg [dict keys $::arMsgIdMap]
-        set sg_flag 0
-    }
-    set sTotal_all 0
-    set s_missing_all 0
-    set s_missing_issue_all 0
-    set missing_rate_all 0
-    set missing_rate_without_issue_all 0
-    set eTotal_all 0
-    set e_false_all 0
-    set e_false_issue_all 0
-    set false_rate_all 0
-    set false_rate_without_issue_all 0
-    foreach sMsg $sg_msg {
-        if {$sg_flag} {
-            set sRule [lindex [split $sMsg ","] 0]
-        } else {
-            set sRule $sMsg
-        }
-        set sTotal 0
-        set sMissing 0
-        set missing_rate 0
-        set missing_rate_without_issue 0
-        set i 1
-        while {$i < 10} {
-            set s_mark_$i 0
-            set i [expr $i + 1]
-        }
-        set eMsgIds [dict get $::arMsgIdMap $sRule]
-        set flag 1
-        if {[dict exists $::arMsgIdMap $sRule]} {
-            foreach eId $eMsgIds {
-                set eTotal 0
-                set eFalse 0
-                set false_rate 0
-                set false_rate_without_issue 0
-                set match 0
-                set i 1
-                while {$i < 10} {
-					set e_mark_$i 0  
-					set i [expr $i + 1]  
-				}  
-				#puts "Enno message Id: $eId"  
-				set eRule [dict get $::ennoRuleMap $eId]  
-				catch {exec grep $eId $data_csv} eLine  
-				catch {exec grep "^$sRule," $data_csv} sLine  
-				if {[regexp {child process exited abnormally} $sLine] && [regexp {child process exited abnormally} $eLine]} {  
-					continue  
-				} else {  
-					if {[regexp "child process exited abnormally" $eLine]} {  
-						set eTotal 0  
-						set eFalse 0  
-						set false_rate 0  
-						set false_rate_without_issue 0  
-						set match 0  
-						set i 1  
-						while {$i < 10} {  
-							set e_mark_$i ""  
-							set i [expr $i + 1]  
-						}  
-					} else {  
-						set eList [split $eLine ","]  
-						set eTotal [lindex $eList 1]  
-						set eFalse [lindex $eList 2]  
-						set match [expr $eTotal - $eFalse]  
-						set e_mark_1 [lindex $eList 6]  
-						set e_mark_2 [lindex $eList 7]  
-						set e_mark_5 [lindex $eList 10]  
-						set e_mark_7 [lindex $eList 12]  
-						set eTotal_all [expr $eTotal + $eTotal_all]  
-						set e_false_all [expr $e_false_all + $eFalse - $e_mark_5]  
-						set e_false_issue_all [expr $e_false_issue_all + $e_mark_1 + $e_mark_2]  
-						if {$eTotal ne 0} {  
-							set false_rate [expr {round(double($eFalse - $e_mark_5) / double($eTotal) * 10000) / 100.0}]  
-							set false_rate_without_issue [expr {round(double($eFalse-$e_mark_1 - $e_mark_2 - $e_mark_5) / double($eTotal) * 10000) / 100.0}]  
-						}  
-					}  
-				if {$flag} {  
-					if {[regexp {child process exited abnormally} $sLine]} {  
-						set sTotal 0  
-						set sMissing 0  
-						set missing_rate 0  
-						set i 1  
-						while {$i < 10} {  
-							set s_mark_$i 0  
-							set i [expr $i + 1]
-						}
-					} else {
-							set lines [split $sLine "\n"]
-							foreach line $lines {
-								set sLineList [split $line ","]
-								set sTotal [expr $sTotal + ([lindex $sLineList 1])]
-								set sMissing [expr $sMissing + ([lindex $sLineList 2])]
-								set s_mark_1 [expr $s_mark_1 + ([lindex $sLineList 5])]
-								set s_mark_5 [expr $s_mark_5 + ([lindex $sLineList 9])]
-								set s_mark_7 [expr $s_mark_7 + ([lindex $sLineList 11])]
-							}
-							set sTotal_all [expr $sTotal_all + $sTotal]
-							set s_missing_all [expr $s_missing_all + $sMissing - $s_mark_5]
-							set s_missing_issue_all [expr $s_missing_issue_all +$s_mark_1 + $s_mark_2]
-							if {$sTotal ne 0} {
-								set missing_rate [expr {round(double($sMissing - $s_mark_5) / double($sTotal) * 10000) / 100.0}]
-								set missing_rate_without_issue [expr {round(double($sMissing-$s_mark_1 - $s_mark_2 - $s_mark_5) / double($sTotal) * 10000) / 100.0}]
-							}
-						}
-						set sRulePattern [dict get $::sgRuleMap $sRule]
-							set flag 0
-					} else {
-						set sTotal 0
-						set sMissing 0
-						set missing_rate 0
-						set missing_rate_without_issue 0
-						set i 1
-						while {$i < 10} {
-							set s_mark_$i 0
-							set i [expr $i + 1]
-						}
-						}
-						#set eRule [dict get $::ennoRuleMap $eId]
-						if {$sTotal eq "" && $eTotal eq ""} {
-							continue
-						}
-						if {$::anony} {
-							set enno $eRule
-							set sg $sRulePattern
-						} else {
-							set enno $eId
-							set sg $sRule
-						}
-						set missing_rate "$missing_rate%"
-						set false_rate "$false_rate%"
-						set missing_rate_without_issue "$missing_rate_without_issue%"
-						set false_rate_without_issue "$false_rate_without_issue%"
-						write_to_file $output_csv "$enno,$sg,$sTotal,$eTotal,$match,$sMissing,$eFalse,$missing_rate,$false_rate,$missing_rate_without_issue,$false_rate_without_issue,$s_mark_1,$s_mark_5,$s_mark_7,$e_mark_1,$e_mark_5,$e_mark_7"
-						}
-					}
-				}
-			}
-			if {$sTotal_all ne 0} {
-				set missing_rate_all [expr {round(double($s_missing_all) / double($sTotal_all) * 10000) / 100.0}]
-				set missing_rate_without_issue_all [expr {round(double($s_missing_all - $s_missing_issue_all) / double($sTotal_all) * 10000) / 100.0}]
-			}
-			if {$eTotal_all ne 0} {
-				set false_rate_all [expr {round(double($e_false_all) / double($eTotal_all) * 10000) / 100.0}]
-				set false_rate_without_issue_all [expr {round(double($e_false_all - $e_false_issue_all) / double($eTotal_all) * 10000) / 100.0}]
-			}
-			set missing_rate_all "$missing_rate_all%"
-			set false_rate_all "$false_rate_all%"
-			set missing_rate_without_issue_all "$missing_rate_without_issue_all%"
-			set false_rate_without_issue_all "$false_rate_without_issue_all%"
-			write_to_file $output_csv ",,,,,,,$missing_rate_all,$false_rate_all,$missing_rate_without_issue_all,$false_rate_without_issue_all,,,,,,"
-}
-
-set start [clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]
-puts "run start..."
-puts "Start time:$start"
-puts "Environment..."
-clean_env "$csv"
-#clean_env "$output"
-puts "counting..."
-foreach rule $ruleList {
-    puts "rule $rule"
-    exec $csh_dir -f [set ${rule}_csv] -i $tags 2&>1 | tee /dev/tty;
-    #return
-    puts "file $csv for $rule is generated."
-    set output "[file dirname $output]/[file rootname [file tail $output]]_${rule}.csv"
-    clean_env "[file tail $output]"
-    set flag 0
-    if {$flag == 0} {
-        write_to_file $output "Enno_rule,A_rule,A_report_num,Enno_report_num,Enno_match_num,A_report_only,Enno_report_only,miss_rate,false_rate,miss_rate_without_issue,false_rate_without_issue,miss_report_issue(1),miss_report_script(5),miss_report_diff(7),false_report_issue(1),false_report_script(5),false_report_diff(7)"
-        set flag 1
-    }
-    set rule [string toupper $rule]
-#   set msg [exec awk 'F, {"if ($1!~/^[a-z]/) print \\"$1\\""}' $csv]
-    set start_line [exec grep -n "${rule}_ENNO_RULE_NAME" $csv | cut -d: -f1]
-    set end_line [exec grep -n "${rule}_SG_MESSAGE" $csv | cut -d: -f1]
-    if {[expr $start_line +1]} != $end_line} {
-        set enno_msg [exec sed -n "[expr ${start_line} + 1],[expr ${end_line} - 1]p" $csv]
-    } else {
-        set enno_msg ""
-    }
-    set sg_msg [exec tail -n +[expr ${end_line} + 1] $csv]
-    if ($rule eq "AC") {
-        write_ac_v2_data $csv $output $enno_msg
-    } elseif ($rule eq "AR") {
-        #write_ar_data $csv $output $enno_msg $sg_msg
-        write_ar_data $csv $output
-    } elseif ($rule eq "BUILTIN") {
-        write_builtin_data $csv $output
-    } else {
-        write_setup_data $csv $output
-    }
-puts "$rule end:[clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]"
-}
-puts "run end!"
-set end [clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]
-puts "Start time:$start  End time:$end"
-
-new_count.sh
-#!/bin/bash
-__print_font_color__ () {	
-		color=$1
-		string=$2
-		case ${color} in
-			-red)		echo -e "\033[31m${string}\033[0m";;
-			-green)		echo -e "\033[32m${string}\033[0m";;
-			-yellow)	echo -e "\033[33m${string}\033[0m";;
-			-blue)		echo -e "\033[34m${string}\033[0m";;
-		esac
-}
-ignore=""
-count=0
-for simple in $ignore; do
-		if [ $count -eq 0]
-		then
-			tab="^$simple$"
-		else
-			tab="$tab|^$simple$"
-		fi
-		((count++))
-done
-do_ac_msg(){
-	
-	echo "AC_ENNO_MESSAGE_ID,TOTAL,FALSE,MATCH,PASS,RATE,FAKE_MATCH">>csv_summary.csv	
-	for i in $(cat $1 | awk -F',' 'NR>1 && $1 != "" {print $1}'| sort | uniq);do
-		enno_msgid=$i;
-		enno_total=$(grep -c "${i}" $1 );
-		real_match=$(awk -v key="$i" -v tab="$tab" -F, '$1 == key && $15 ~ /^match$/ {print}' $1 | wc -l);
-		pass=$(awk -v key="$i" -v tab="$tab" -F, '$1 == key && $15 ~ /pass.*$/ {print}' $1 | wc -l);
-		fake_match=0
-		if ["$ignore" = "" ]
-		then
-			match=$((real_match+pass));
-		else
-			match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $17 ~tab) || ($1 == key && $15 ~ /^(match|pass.*)$/) {print}' $1 |wc -l);
-			fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $17 ~ tab) {print}' $1 | wc -l);
-		fi
-		mark_1=$(awk -v key="$i" -F , '($14 == key && $17 ~ /^1$/) {print}' $1 | wc -l);
-		mark_2=$(awk -v key="$i" -F , '($14 == key && $17 ~ /^2$/) {print}' $1 | wc -l);
-		mark_3=0;#mark_3=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^3$/) {print}' $1 | wc -l);
-		mark_4=0;#mark_4=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^4$/) {print}' $1 | wc -l);
-		mark_5=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^5$/) {print}' $1 | wc -l);
-		mark_6=0;#mark_6=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^6$/) {print}' $1 | wc -l);
-		mark_7=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^7$/) {print}' $1 | wc -l);
-		mark_8=0;#mark_8=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^8$/) {print}' $1 | wc -l);
-		mark_9=0;#mark_9=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^9$/) {print}' $1 | wc -l);
-		mark_a=0;#mark_a=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^a$/) {print}' $1 | wc -l);
-		mark_b=0;#mark_b=$(awk -v key="$i" -F , '($1 == key && $17 ~ /^b$/) {print}' $1 | wc -l);
-		
-		enno_false=$((enno_total-match));
-		rate=`echo "scale=4; $enno_false / $enno_total * 100" | bc`
-		echo "$i,$enno_total,$enno_false,$real_match,$pass,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b">> csv_summary.csv;
-	done
-
-
-	echo "AC_ENNO_RULE_NAME,TOTAL, FALSE,MATCH,PASS,RATE,FAKE_MATCH" >>csv_summary.csv
-	awk -F',' 'NR>1 && $13 != "" {print $13}' $1 | sort | uniq |while read line
-	do
-		sg_msg=$line;
-		sg_total=$(awk -v key="$line" -F,'$13 == key {print}' $1 | wc -l)
-		real_match=$(awk -v key="$line" -v tab="$tab" -F,'$13 == key && $15 ~ /^match$/ {print}' $1 | wc -l);
-		pass=$(awk -v key="$line" -v tab="$tab" -F, '$13 == key && $15 ~ /pass.*$/ {print}' $1 | wc -l);
-		fake_match=0
-		if [ "$ignore" = "" ]
-		then
-			match=$(awk -v key="$line" -v tab="$tab" -F, '$13 == key && $15 ~ /^(match|pass.*)$/ {print}' $1 | wc -l);
-		else
-			match=$(awk -v key="$line" -v tab="$tab" -F, '($13 == key && $17 ~ tab) || ($13 ==key && $15 ~ /^(match|pass.*)$/) {print}' $1 | wc -l);
-			fake_match=$(awk -v key="$line" -v tab="$tab" -F, '($13 == key && $17 ~ tab) {print}' $1 | wc -l);
-		fi
-		mark_1=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^1$/) {print}' $1 | wc -l);
-		mark_2=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^2$/) {print}' $1 | wc -l);
-		mark_3=0;#mark_3=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^3$/) {print}' $1 | wc -l);
-		mark_4=0;#mark_4=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^4$/) {print}' $1 | wc -l);
-		mark_5=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^5$/) {print}' $1 | wc -l);
-		mark_6=0;#mark_6=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^6$/) {print}' $1 | wc -l);
-		mark_7=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^7$/) {print}' $1 | wc -l);
-		mark_8=0;#mark_8=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^8$/) {print}' $1 | wc -l);
-		mark_9=0;#mark_9=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^9$/) {print}' $1 | wc -l);
-		mark_a=0;#mark_a=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^a$/) {print}' $1 | wc -l);
-		mark_b=0;#mark_b=$(awk -v key="$line" -F , '($13 == key && $17 ~ /^b$/) {print}' $1 | wc -l);
-		sg_missing=$((sg_total-match));
-		rate=`echo "scale=4; $sg_missing / $sg_total * 100" | bc`
-		echo "$line,$sg_total,$sg_missing,$real_match,$pass,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b">> csv_summary.csv;
-	done
-	
-	echo "AC_SG_MESSAGE,TOTAL,MISSING,MATCH,PASS,RATE,FAKE_MATCH" >> csv_summary.csv
-	awk -F',' 'NR>1 && $14 != "" {print $14}' $1 | sort | uniq | while read line
-		do
-		sg_msg=$line;
-		sg_total=$(awk -v key="$line" -F , '$14 == key {print}' $1 | wc -l)
-		real_match=$(awk -v key="$line" -v tab="$tab" -F , '$14 == key && $15 ~ /^match$/ {print}' $1 | wc -l);
-		pass=$(awk -v key="$line" -v tab="$tab" -F , '$14 == key && $15 ~ /pass.*$/ {print}' $1 | wc -l);
-		fake_match=0
-		if [ "$ignore" = "" ]
-		then
-			match=$((real_match+pass));
-		else
-			match=$(awk -v key="$line" -v tab="$tab" -F , '($14 == key && $17 ~ tab) || ($14 == key && $15 ~ /^(match|pass.*)$/) {print}' $1 | wc -l);
-			fake_match=$(awk -v key="$line" -v tab="$tab" -F , '($14 == key && $17 ~ tab) {print}' $1 | wc -l);
-		fi
-		mark_1=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^1$/) {print}' $1 | wc -l);
-		mark_2=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^2$/) {print}' $1 | wc -l);
-		mark_3=0;#mark_3=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^3$/) {print}' $1 | wc -l);
-		mark_4=0;#mark_4=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^4$/) {print}' $1 | wc -l);
-		mark_5=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^5$/) {print}' $1 | wc -l);
-		mark_6=0;#mark_6=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^6$/) {print}' $1 | wc -l);
-		mark_7=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^7$/) {print}' $1 | wc -l);
-		mark_8=0;#mark_8=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^8$/) {print}' $1 | wc -l);
-		mark_9=0;#mark_9=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^9$/) {print}' $1 | wc -l);
-		mark_a=0;#mark_a=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^a$/) {print}' $1 | wc -l);
-		mark_b=0;#mark_b=$(awk -v key="$line" -F , '($14 == key && $17 ~ /^b$/) {print}' $1 | wc -l);
-		sg_missing=$((sg_total-match));
-		rate=`echo "scale=4; $sg_missing / $sg_total * 100" | bc`
-		echo "$line,$sg_total,$sg_missing,$real_match,$pass,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b" >> csv_summary.csv;
-	done
-}
-
-do_ar_msg() {
-	echo "AR_ENNO_RULE_NAME,TOTAL, FALSE,MATCH,RATE,FAKE_MATCH" >>csv_summary.csv
-	for i in $(cat $1 | awk -F',' 'NR>1 {print $1}'| sort | uniq);do
-		enno_msgid=$i;
-		enno_total=$(grep "^${i}," "$1" | wc -l);
-		real_match=$(awk -v key="$i" -F, '$1 == key && $7 ~ /match/ {print}' $1 | wc -l);
-		pass=0
-		fake match=0
-		if ["$ignore" = "" ]
-		then
-			enno_match=$real_match;
-		else
-			enno_match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $9 ~ tab) || $1 == key && ($7 ~ /match/ || $7 ~/.*pass.*/ ) {print}' $1 |wc -l);
-			fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $9 ~ tab) {print}' $1 | wc -l);
-			pass=$(awk -v key="$i" -v tab="$tab" -F , '$1 == key && $7 ~ /.*pass.*/ {print}' $1 | wc -l);
-		fi
-		mark_1=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^1$/) {print}' $1 | wc -l);
-		mark_2=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^2$/) {print}' $1 | wc -l);
-		mark_3=0;#mark_3=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^3$/) {print}' $1 | wc -l);
-		mark_4=0;#mark_4=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^4$/) {print}' $1 | wc -l);
-		mark_5=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^5$/) {print}' $1 | wc -l);
-		mark_6=0;#mark_6=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^6$/) {print}' $1 | wc -l);
-		mark_7=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^7$/) {print}' $1 | wc -l);
-		mark_8=0;#mark_8=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^8$/) {print}' $1 | wc -l);
-		mark_9=0;#mark_9=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^9$/) {print}' $1 | wc -l);
-		mark_a=0;#mark_a=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^a$/) {print}' $1 | wc -l);
-		mark_b=0;#mark_b=$(awk -v key="$i" -F , '($9 == key && $17 ~ /^b$/) {print}' $1 | wc -l);
-		
-		enno_false_report_num=$((enno_total-enno_match));
-		rate=`echo "scale=4; $enno_false_report_num / $enno_total * 100" | bc`
-		echo "$enno_msgid,$enno_total,$enno_false_report_num,$real_match,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass">> csv_summary.csv
-	done
-	
-	echo "AR_SG_MESSAGE,TOTAL,MISSING,RATE,FAKE_MATCH" >> csv_summary.csv
-	for i in $(cat $1 | awk -F',' 'NR>1 {print $2}'| sort | uniq);do
-		sg_rule=$i;
-		sg_total=$(grep ",${i}," $1 | wc -l);
-		pass=0
-		fake match=0
-		if ["$ignore" = "" ];then
-			sg_match=$(awk -v key="$i" -F, '$2 == key && ($7 ~ /match/ || $7 ~/.*pass.*$/ {print}' $1 |wc -l);
-		else
-			sg_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $9 ~tab) || ($2 == key && ($7 ~ /match/ || $7 ~ /.*pass.*$/)) {print}' $1 |wc -l);
-			fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $9 ~ tab) {print}' $1 | wc -l);
-			pass=$(awk -v key="$i" -v tab="$tab" -F , '$2 == key && $7 ~ /.*pass.*/ {print}' $1 | wc -l);
-		fi
-		
-		mark_1=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^1$/) {print}' $1 | wc -l);
-		mark_2=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^2$/) {print}' $1 | wc -l);
-		mark_3=0;#mark_3=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^3$/) {print}' $1 | wc -l);
-		mark_4=0;#mark_4=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^4$/) {print}' $1 | wc -l);
-		mark_5=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^5$/) {print}' $1 | wc -l);
-		mark_6=0;#mark_6=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^6$/) {print}' $1 | wc -l);
-		mark_7=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^7$/) {print}' $1 | wc -l);
-		mark_8=0;#mark_8=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^8$/) {print}' $1 | wc -l);
-		mark_9=0;#mark_9=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^9$/) {print}' $1 | wc -l);
-		mark_a=0;#mark_a=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^a$/) {print}' $1 | wc -l);
-		mark_b=0;#mark_b=$(awk -v key="$i" -F , '($2 == key && $9 ~ /^b$/) {print}' $1 | wc -l);
-		sg_missing_report_num=$((sg_total-sg_match));
-		rate=`echo "scale=4; $sg_missing_report_num / $sg_total * 100" | bc`
-		echo "$sg_rule,$sg_total,$sg_missing_report_num,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass" >> csv_summary.csv;
-	done	
-}
-
-do_setup_msg() {
-    echo "SETUP_ENNO_RULE_NAME,TOTAL,FALSE,MATCH,RATE,FAKE_MATCH" >> csv_summary.csv
-    awk -F',' 'NR>1 && $1 != "" {print $1}' $1 | sort | uniq | while read line;
-    do
-        #for i in $(cat $1 | awk -F'',' 'NR>1 {print $1}' | sort | uniq); do
-            enno_msgid=$line ;
-            enno_total=$(grep "^${line}" $1 | wc -l) ;
-            real_match=$(awk -v key="$line" -F, '$1 == key && $8 ~ /^match$/ {print}' $1 | wc -l);
-            fake_match=0
-            pass=0
-            if [ "$ignore" = "" ]
-            then
-                enno_match=$real_match;
-            else
-                enno_match=$(awk -v key="$line" -v tab="$tab" -F, '($1 == key && $10 ~ tab || $1 == key && ($8 ~ /^match$/ || $8 ~/.*pass.*$/) {print}' $1 | wc -l);
-                fake_match=$(awk -v key="$line" -v tab="$tab" -F, '($1 == key && $10 ~ tab) {print}' $1 | wc -l);
-                pass=$(awk -v key="$line" -v tab="$tab" -F, '$1 == key && $8 ~ /^pass$/ {print}' $1 | wc -l);
-            fi
-			mark_1=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^1$/) {print}' $1 | wc -l);
-			mark_2=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^2$/) {print}' $1 | wc -l);
-			mark_3=0;#mark_3=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^3$/) {print}' $1 | wc -l);
-			mark_4=0;#mark_4=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^4$/) {print}' $1 | wc -l);
-			mark_5=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^5$/) {print}' $1 | wc -l);
-			mark_6=0;#mark_6=$(awk -v key="$line" -F , '($14 == key && $10 ~ /^6$/) {print}' $1 | wc -l);
-			mark_7=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^7$/) {print}' $1 | wc -l);
-			mark_8=0;#mark_8=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^8$/) {print}' $1 | wc -l);
-			mark_9=0;#mark_9=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^9$/) {print}' $1 | wc -l);
-			mark_a=0;#mark_a=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^a$/) {print}' $1 | wc -l);
-			mark_b=0;#mark_b=$(awk -v key="$line" -F , '($1 == key && $10 ~ /^b$/) {print}' $1 | wc -l);
-            enno_false_report_num=$((enno_total-enno_match)) ;
-            rate=`echo "scale=4; $enno_false_report_num / $enno_total * 100" | bc`
-            echo "$enno_msgid,$enno_total,$enno_false_report_num,$real_match,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass" >> csv_summary.csv
-done
-echo "SETUP_SG_MESSAGE,TOTAL,MISSING,RATE,FAKE_MATCH" >> csv_summary.csv
-for i in $(cat $1 | awk -F',' 'NR>1 {print $2}'| sort | uniq);do
-		sg_rule=$i;
-		sg_total=$(grep ",${i}," $1 | wc -l);
-		fake_match=0
-		pass=0
-		if ["$ignore" = "" ];then
-			sg_match=$(awk -v key="$i" -F, '$2 == key && ($8 ~ /^match$/ || $8 ~/.*pass.*$/) {print}' $1 |wc -l);
-		else
-			sg_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $10 ~ tab) || ($2 == key && ($8 ~ /^match$/ || $8 ~ /.*pass*$/)) {print}' $1 |wc -l);
-			fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $10 ~ tab) {print}' $1 | wc -l);
-			pass=$(awk -v key="$i" -v tab="$tab" -F , '$2 == key && $8 ~ /^pass$/ {print}' $1 | wc -l);
-		fi
-		mark_1=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^1$/) {print}' $1 | wc -l);
-		mark_2=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^2$/) {print}' $1 | wc -l);
-		mark_3=0;#mark_3=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^3$/) {print}' $1 | wc -l);
-		mark_4=0;#mark_4=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^4$/) {print}' $1 | wc -l);
-		mark_5=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^5$/) {print}' $1 | wc -l);
-		mark_6=0;#mark_6=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^6$/) {print}' $1 | wc -l);
-		mark_7=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^7$/) {print}' $1 | wc -l);
-		mark_8=0;#mark_8=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^8$/) {print}' $1 | wc -l);
-		mark_9=0;#mark_9=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^9$/) {print}' $1 | wc -l);
-		mark_a=0;#mark_a=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^a$/) {print}' $1 | wc -l);
-		mark_b=0;#mark_b=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^b$/) {print}' $1 | wc -l);
-		
-		sg_missing_report_num=$((sg_total-sg_match));
-		rate=`echo "scale=4; $sg_missing_report_num / $sg_total * 100" | bc`
-		echo "$sg_rule,$sg_total,$sg_missing_report_num,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass" >> csv_summary.csv;
-	done
-}
-
-do_builtin_msg() {
-    echo "BUILTIN_ENNO_RULE_NAME,TOTAL,FALSE,MATCH,RATE,FAKE_MATCH" >> csv_summary.csv
-    for i in $(cat $1 | awk -F',' 'NR>1 {print $1}' | sort | uniq); do
-            enno_msgid=$i ;
-            enno_total=$(grep "^${i}" "$1" | wc -l) ;
-            real_match=$(awk -v key="$i" -F, '$1 == key && $8 ~ /^match$/ {print}' $1 | wc -l);
-            fake_match=0
-            pass=0
-            if [ "$ignore" = "" ]
-            then
-                enno_match=$real_match;
-            else
-                enno_match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $10 ~ tab) || $1 == key && ($8 ~ /^match$/ || $8 ~/.*pass.*$/) {print}' $1 | wc -l);
-                fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($1 == key && $10 ~ tab) {print}' $1 | wc -l);
-                pass=$(awk -v key="$i" -v tab="$tab" -F, '$1 == key && $8 ~ /^pass$/ {print}' $1 | wc -l);
-            fi
-			mark_1=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^1$/) {print}' $1 | wc -l);
-			mark_2=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^2$/) {print}' $1 | wc -l);
-			mark_3=0;#mark_3=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^3$/) {print}' $1 | wc -l);
-			mark_4=0;#mark_4=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^4$/) {print}' $1 | wc -l);
-			mark_5=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^5$/) {print}' $1 | wc -l);
-			mark_6=0;#mark_6=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^6$/) {print}' $1 | wc -l);
-			mark_7=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^7$/) {print}' $1 | wc -l);
-			mark_8=0;#mark_8=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^8$/) {print}' $1 | wc -l);
-			mark_9=0;#mark_9=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^9$/) {print}' $1 | wc -l);
-			mark_a=0;#mark_a=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^a$/) {print}' $1 | wc -l);
-			mark_b=0;#mark_b=$(awk -v key="$i" -F , '($1 == key && $10 ~ /^b$/) {print}' $1 | wc -l);
-            enno_false_report_num=$((enno_total-enno_match)) ;
-            rate=`echo "scale=4; $enno_false_report_num / $enno_total * 100" | bc`
-            echo "$enno_msgid,$enno_total,$enno_false_report_num,$real_match,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass" >> csv_summary.csv
-done
-echo "BUILTIN_SG_MESSAGE,TOTAL,MISSING,RATE,FAKE_MATCH" >> csv_summary.csv
-for i in $(cat $1 | awk -F',' 'NR>1 {print $2}'| sort | uniq);do
-		sg_rule=$i;
-		sg_total=$(grep ",${i}," $1 | wc -l);
-		fake_match=0
-		pass=0
-		if ["$ignore" = "" ]
-		then
-			sg_match=$(awk -v key="$i" -F, '$2 == key && ($8 ~ /^match$/ || $8 ~/.*pass.*$/ {print}' $1 |wc -l);
-		else
-			sg_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $10 ~tab) || ($2 == key && ($8 ~ /^match$/ || $8 ~/^pass$/) ) {print}' $1 |wc -l);
-			fake_match=$(awk -v key="$i" -v tab="$tab" -F, '($2 == key && $10 ~ tab) {print}' $1 | wc -l);
-			pass=$(awk -v key="$i" -v tab="$tab" -F , '$2 == key && $8 ~ /^pass$/ {print}' $1 | wc -l);
-		fi
-		mark_1=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^1$/) {print}' $1 | wc -l);
-		mark_2=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^2$/) {print}' $1 | wc -l);
-		mark_3=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^3$/) {print}' $1 | wc -l);
-		mark_4=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^4$/) {print}' $1 | wc -l);
-		mark_5=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^5$/) {print}' $1 | wc -l);
-		mark_6=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^6$/) {print}' $1 | wc -l);
-		mark_7=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^7$/) {print}' $1 | wc -l);
-		mark_8=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^8$/) {print}' $1 | wc -l);
-		mark_9=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^9$/) {print}' $1 | wc -l);
-		mark_a=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^a$/) {print}' $1 | wc -l);
-		mark_b=$(awk -v key="$i" -F , '($2 == key && $10 ~ /^b$/) {print}' $1 | wc -l);
-		
-		sg_missing_report_num=$((sg_total-sg_match));
-		rate=`echo "scale=4; $sg_missing_report_num / $sg_total * 100" | bc`
-		echo "$sg_rule,$sg_total,$sg_missing_report_num,$rate%,$fake_match,$mark_1,$mark_2,$mark_3,$mark_4,$mark_5,$mark_6,$mark_7,$mark_8,$mark_9,$mark_a,$mark_b,$pass" >> csv_summary.csv;
-	done
-}
-
-print_help() {
-    echo "Usage: count_csv.sh [option]"
-    echo "Options:"
-    echo "-f <value>    Set csv file name which you wanna do count."
-    echo "-i            ignore mark"
-    echo "-h            Print help info"
-}
-
-while getopts "i:f:h" opt; do
-    case ${opt} in
-        f) filename=${OPTARG} ;;
-        i) ignore=${OPTARG} ;;
-        h)
-            print_help
-            exit 0
-            ;;
-    esac
-done
-
-for simple in $ignore; do
-    if [ $count -eq 0 ]
-    then
-        tab="^$simple$"
-    else
-        tab="$tab|^$simple$"
-    fi
-    ((count++))
-done
-echo "file:$filename"
-if echo "$filename" | grep -q "ac"; then
-    do_ac_msg $filename
-elif echo "$filename" | grep -q "setup"; then
-    do_setup_msg $filename
-elif echo "$filename" | grep -q "ar_"; then
-    do_ar_msg $filename
-elif echo "$filename" | grep -q "builtin"; then
-    do_builtin_msg $filename
-else
-    echo "ERROR: Invalid filename"
-	exit 1
-fi
