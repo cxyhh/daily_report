@@ -1,3 +1,6 @@
+runDC.sh	/tmpdata/ranwu_staff_3/enno_script/General	跑DC工具，检查常值问题	runDC.sh <run path> <verilog path> <top name> <sdc path> <ecdc const log> <ecdc log> <GenName> <last top name>
+runLEC.sh	/tmpdata/ranwu_staff_3/enno_script/General	跑Format工具，检查常值问题	runLEC.sh <run path> <verilog path> <top name> <config switch>
+
 #!/bin/csh
 echo "Begin running dc!"
 source /tmpdata/ranwu_staff_3/zWX1313644/GenData/USBC/SourceMe
