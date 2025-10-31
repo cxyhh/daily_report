@@ -73,3 +73,37 @@ for ((i=1; i<= $num_parts; i++)); do
 #     awk "{if ($start_line <= $1 && $1 <= $end_line) print}" "$list" > "${base_name}_${i}.f"
 done
 echo "file $list has been split"
+
+批量并行转sgdc
+sgdc_trance() {
+    dir=$1
+    log_file=$2
+    if [ ! -e $log_file ]; then
+        touch $log_file
+    fi
+    cd $dir
+    #for dir in $(cat $file); do
+    echo -e "\033[36m dir is $dir\033[0m"
+    sgdc_name=$(find $dir -name "*.sgdc" -type f)
+    if [ "$sgdc_name" == "" ]; then
+        echo "22:dir is no sgdc file $dir" >> ${log_file}
+    else
+        /tmpdata/ranwu_staff_3/xycai/0928/c_scripts/runsgdc -s ${sgdc_name} -p $dir > /dev/null
+        if [ $? != 0 ]; then
+            echo "11:trans may failed $sgdc_name" >> ${log_file}
+        fi
+    fi
+    #done
+    cd ..
+}
+cast_list=$1
+process_num=8
+if [ ! -e $log_file ]; then
+    touch $log_file
+fi
+export -f sgdc_trance
+xargs -P "$process_num" -I {} sh -c '
+    caseLists="{}"
+    output_file="/tmpdata/ranwu_staff_3/xycai/work/newcase/CDC_case/aa.log"
+    sgdctrance "$caseLists" "$output_file"
+' < ${cast_list}
