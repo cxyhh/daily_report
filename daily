@@ -28,3 +28,104 @@ proc rst_set_ff {sToolMsgObj reset_sig_path} {
     }
     return $result
 }
+
+
+if {$Rule == "Reset_info01"} {
+    set sg_log_path [file dirname $sg_rpt_file]
+    set reset_sig_path "$sg_log_path/spyglass-1/[get_top]/cdc/cdc_verify_struct/spyglass_reports/clock-reset/reset_sig.csv"
+    if {[rst_set_ff $sToolMsgObj $reset_sig_path]} {
+        dict set sToolMsgObj runningFlag "pass-rst_set_ff"
+        writeSetupMsgLine ${resultCsvFileName} "" "${sToolMsgObj} ${testName} "pass" ${oldResultCsvFile}
+        continue
+    }
+}
+
+
+
+第200行开始--213
+if {$SP::check_type eq "cdc"} {
+    set SP::e_rule_to_msg_body_template_map $SP::e_cdc_rule_to_msg_body_template_map
+} elseif {$SP::check_type eq "rdc"} {
+    set SP::e_rule_to_msg_body_template_map $SP::e_rdc_rule_to_msg_body_template_map
+} elseif {$SP::check_type eq "all"} {
+    set SP::e_rule_to_msg_body_template_map [concat $SP::e_cdc_rule_to_msg_body_template_map $SP::e_rdc_rule_to_msg_body_template_map]
+}
+## 储存所有rule的关键字
+set SP::e_rule [dict keys $SP::e_rule_to_msg_body_template_map]
+## 储存所有rdc_rule的关键字
+#set SP::e_rdc_rule [dict keys $SP::e_rdc_rule_to_msg_body_template_map]
+截图
+
+第250行开始-307
+
+if {![info exists ::case_path]} {
+    throw "PROGRAM_TERMINATION" "termination-1: \n\tPlease set variable 'case_path' full case path"
+}
+if {![info exists $::case_path]} {
+    throw "PROGRAM_TERMINATION" "termination-1: \n\tFile '$::case_path' not exists!"
+}
+set SP::case_path [file normalize $::case_path]
+
+if {[info exists ::result_dir]} {
+    set SP::result_dir $::result_dir
+    file mkdir $SP::result_dir
+}
+if {![info exists ::case_name]} {
+    set SP::case_name [file tail $SP::case_path]
+}
+if {[info exists ::case_name]} {
+    set SP::case_name $::case_name
+}
+
+set SP::case_flag $SP::case_name
+if {[info exists ::case_flag]} {
+    set SP::case_flag $::case_flag
+}
+set SP::debug_file_name "${SP::case_flag}_compare_debug_file.log"
+if {[info exists ::debug_file_name]} {
+    set SP::debug_file_name $::debug_file_name
+}
+set SP::debug_file_name [file join $SP::result_dir $SP::debug_file_name]
+
+
+set SP::result_csv_file_name "${SP::case_flag}_${SP::check_type}_compare_result_${SP::csv_date}.csv"
+if {[info exists ::result_csv_file_name]} {
+    set SP::result_csv_file_name $::result_csv_file_name
+}
+set SP::result_csv_file_name [file join $SP::result_dir $SP::result_csv_file_name]
+
+set SP::summary_file_name "${SP::case_flag}_compare_summary.csv"
+if {[info exists ::summary_file_name]} {
+    set SP::summary_file_name $::summary_file_name
+}
+set SP::summary_file_name [file join $SP::result_dir $SP::summary_file_name]
+
+set SP::store_file_name "${SP::case_flag}_compare_store_data.dat"
+if {[info exists ::store_file_name]} {
+    set SP::store_file_name $::store_file_name
+}
+set SP::store_file_name [file join $SP::result_dir $SP::store_file_name]
+
+if {[info exists ::save_case_md5]} {
+    set SP::save_case_md5 $::save_case_md5
+}
+if {$SP::save_case_md5 == 1} {
+    foreach i [exec find $SP::case_path -type f -name "*.v" -o -name "*.sdc" -o -name "*.sgdc" -o -name "*.f"] {
+        dict set SP::md5_map [file tail $i] [lindex [exec md5sum $i] 0]
+    }
+}
+
+
+392---402
+namespace eval ::SP::GD:: {
+    variable e_idx_to_msg_map ""
+    variable e_idx_to_key_map ""
+    variable e_key_to_idx_map ""
+    variable e_idx_to_rule_map ""
+    variable e_rule_to_idx_map ""
+    variable commit_id ""
+    variable stage ""
+    variable case_name ""
+    variable case_path ""
+    variable gen_time ""
+    variable md5_map ""
